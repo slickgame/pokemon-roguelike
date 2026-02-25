@@ -320,7 +320,41 @@ export default function Home() {
 
           {/* Category sections */}
           <div className="space-y-4 max-h-[calc(100vh-260px)] overflow-y-auto pr-1">
-            {MODIFIER_CATEGORIES.map(cat => (
+            {/* Progression: XP Share radio */}
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-white/25 font-semibold mb-1.5 px-0.5">Progression</p>
+              <div className="flex gap-2">
+                {[
+                  { mode: "on",  label: "XP Share: ON",  pct: "±0%",  desc: "All party members gain XP (default)." },
+                  { mode: "off", label: "XP Share: OFF", pct: "+10%", desc: "Only active battler gains XP." },
+                ].map(({ mode, label, pct, desc }) => {
+                  const active = xpShareMode === mode;
+                  const wouldExceedCap = mode === "off" && !active && selectedCount >= MAX_MODIFIERS;
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => setXpShare(mode)}
+                      disabled={wouldExceedCap}
+                      className={`flex-1 text-left px-3 py-2.5 rounded-lg border transition-all text-sm
+                        ${active
+                          ? "bg-violet-500/15 border-violet-500/40 text-white"
+                          : wouldExceedCap
+                            ? "bg-white/2 border-white/5 text-white/25 cursor-not-allowed"
+                            : "bg-white/4 border-white/8 text-white/70 hover:bg-white/8 hover:border-white/15 hover:text-white cursor-pointer"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium leading-snug">{label}</span>
+                        <span className={`font-mono text-xs font-bold ${active && mode === "off" ? "text-emerald-400" : "text-white/30"}`}>{pct}</span>
+                      </div>
+                      <p className="text-xs text-white/35 mt-0.5 leading-snug">{desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {MODIFIER_CATEGORIES.filter(c => c !== "Progression").map(cat => (
               modifiersByCategory[cat]?.length > 0 && (
                 <ModifierCategorySection
                   key={cat}
