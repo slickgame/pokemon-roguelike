@@ -18,7 +18,7 @@ export default function DevPanel() {
   };
 
   const handleStartRun = async () => {
-    setLoading(true);
+    setLoadingStart(true);
     try {
       const res = await base44.functions.invoke("startRun", {
         isRanked: false,
@@ -30,7 +30,7 @@ export default function DevPanel() {
     } catch (err) {
       showToast(`Error: ${err.message}`, "error");
     } finally {
-      setLoading(false);
+      setLoadingStart(false);
     }
   };
 
@@ -39,7 +39,7 @@ export default function DevPanel() {
       showToast("Please enter a runId first", "error");
       return;
     }
-    setLoading(true);
+    setLoadingAppend(true);
     try {
       const res = await base44.functions.invoke("appendRunAction", {
         runId,
@@ -50,7 +50,7 @@ export default function DevPanel() {
     } catch (err) {
       showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
     } finally {
-      setLoading(false);
+      setLoadingAppend(false);
     }
   };
 
@@ -59,7 +59,7 @@ export default function DevPanel() {
       showToast("Please enter a runId first", "error");
       return;
     }
-    setLoading(true);
+    setLoadingFinish(true);
     try {
       await base44.functions.invoke("finishRun", {
         runId,
@@ -69,7 +69,7 @@ export default function DevPanel() {
     } catch (err) {
       showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
     } finally {
-      setLoading(false);
+      setLoadingFinish(false);
     }
   };
 
@@ -106,8 +106,8 @@ export default function DevPanel() {
           </h3>
           <GameButton
             onClick={handleStartRun}
-            disabled={loading}
-            loading={loading}
+            disabled={loadingStart}
+            loading={loadingStart}
             variant="primary"
           >
             Start Run
@@ -146,8 +146,8 @@ export default function DevPanel() {
           </h3>
           <GameButton
             onClick={handleAppendAction}
-            disabled={loading || !runId}
-            loading={loading}
+            disabled={loadingAppend || !runId}
+            loading={loadingAppend}
             variant="success"
           >
             Append Test Action
@@ -162,8 +162,8 @@ export default function DevPanel() {
           </h3>
           <GameButton
             onClick={handleFinishRun}
-            disabled={loading || !runId}
-            loading={loading}
+            disabled={loadingFinish || !runId}
+            loading={loadingFinish}
             variant="amber"
           >
             Finish Run
