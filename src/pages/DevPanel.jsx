@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import RunDebugPanel from "../components/dev/RunDebugPanel";
+import DbVersionCard from "../components/dev/DbVersionCard";
 import { Beaker, PlayCircle, Plus, CheckCircle } from "lucide-react";
 
 export default function DevPanel() {
