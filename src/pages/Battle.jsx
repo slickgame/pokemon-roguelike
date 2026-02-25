@@ -24,6 +24,7 @@ export default function Battle() {
   const [committing, setCommitting] = useState(false);
   const [commands, setCommands] = useState({});
   const [showDebug, setShowDebug] = useState(false);
+  const [choosing, setChoosing] = useState(false);
 
   // Load / reload battle state from Battle entity (persistence on refresh)
   useEffect(() => {
