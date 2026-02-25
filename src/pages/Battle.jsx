@@ -271,6 +271,16 @@ export default function Battle() {
               >
                 Back to Run Map
               </GameButton>
+              {winner === "enemy" && (
+                <GameButton
+                  variant="secondary"
+                  size="md"
+                  className="w-full"
+                  onClick={() => navigate(createPageUrl(`Results?runId=${runId}`))}
+                >
+                  View Results
+                </GameButton>
+              )}
             </div>
           )}
         </GameCard>
