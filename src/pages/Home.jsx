@@ -11,20 +11,29 @@ import ModifierSummaryBar from "../components/modifiers/ModifierSummaryBar";
 import { MODIFIERS, MODIFIER_CATEGORIES, MAX_MODIFIERS } from "../components/modifiers/modifiersConfig";
 import { Swords, Zap, Shield, Star, ArrowRight, LogIn } from "lucide-react";
 
+// IDs that don't count toward the cap (default baseline modifiers)
+const NO_CAP_IDS = new Set(MODIFIERS.filter(m => m.noCapCount).map(m => m.id));
+// Default selected on mount
+const DEFAULT_SELECTED = new Set(MODIFIERS.filter(m => m.isDefault).map(m => m.id));
+
+function capCount(ids) {
+  return [...ids].filter(id => !NO_CAP_IDS.has(id)).length;
+}
+
 function useModifiers() {
-  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [selectedIds, setSelectedIds] = useState(new Set(DEFAULT_SELECTED));
   const [validationError, setValidationError] = useState("");
 
   const totalPct = useMemo(() => {
     let sum = 0;
     for (const id of selectedIds) {
       const mod = MODIFIERS.find(m => m.id === id);
-      if (mod) sum += mod.aetherPct;
+      // Only count non-default (noCapCount) modifiers toward Aether
+      if (mod && !mod.noCapCount) sum += mod.aetherPct;
     }
     return Math.max(-90, Math.min(200, sum));
   }, [selectedIds]);
 
-  // Build disabled map: for each modifier, why it can't be toggled
   const disabledMap = useMemo(() => {
     const map = {};
     for (const mod of MODIFIERS) {
@@ -32,8 +41,8 @@ function useModifiers() {
         map[mod.id] = { disabled: false };
         continue;
       }
-      // Cap check
-      if (selectedIds.size >= MAX_MODIFIERS) {
+      // Cap check (only non-default mods count)
+      if (!mod.noCapCount && capCount(selectedIds) >= MAX_MODIFIERS) {
         map[mod.id] = { disabled: true, reason: `Maximum ${MAX_MODIFIERS} modifiers reached` };
         continue;
       }
@@ -56,18 +65,32 @@ function useModifiers() {
 
     setSelectedIds(prev => {
       const next = new Set(prev);
+
+      // Radio-group: selecting one deselects the other in the same group
+      if (mod.radioGroup) {
+        const siblings = MODIFIERS.filter(m => m.radioGroup === mod.radioGroup && m.id !== id);
+        if (next.has(id)) {
+          // Can't deselect a radio item directly; switch to the default sibling instead
+          const defaultSibling = siblings.find(m => m.isDefault);
+          if (defaultSibling) {
+            next.delete(id);
+            next.add(defaultSibling.id);
+          }
+          return next;
+        }
+        // Deselect all siblings, add this one
+        siblings.forEach(s => next.delete(s.id));
+        next.add(id);
+        return next;
+      }
+
+      // Normal toggle
       if (next.has(id)) {
         next.delete(id);
         return next;
       }
-      if (next.size >= MAX_MODIFIERS) {
+      if (!mod.noCapCount && capCount(next) >= MAX_MODIFIERS) {
         setValidationError(`You can only select up to ${MAX_MODIFIERS} modifiers.`);
-        return prev;
-      }
-      const clash = mod.incompatibleWith.find(otherId => next.has(otherId));
-      if (clash) {
-        const clashName = MODIFIERS.find(m => m.id === clash)?.name || clash;
-        setValidationError(`"${mod.name}" is incompatible with "${clashName}".`);
         return prev;
       }
       next.add(id);
@@ -75,7 +98,14 @@ function useModifiers() {
     });
   };
 
-  return { selectedIds, totalPct, disabledMap, validationError, toggle };
+  // modifierIds for startRun: omit default/noCapCount mods (xp_share_on baseline)
+  const modifierIds = useMemo(() =>
+    [...selectedIds].filter(id => !NO_CAP_IDS.has(id)),
+  [selectedIds]);
+
+  const selectedCount = capCount(selectedIds);
+
+  return { selectedIds, totalPct, disabledMap, validationError, toggle, modifierIds, selectedCount };
 }
 
 export default function Home() {
