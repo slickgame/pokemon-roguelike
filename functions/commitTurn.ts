@@ -387,8 +387,11 @@ Deno.serve(async (req) => {
         if (poke.currentHp === 0) {
           poke.fainted = true;
           log.push(`Your ${poke.name} fainted!`);
-          if (!state.pendingReplacement) {
+          const validBenchStatus = state.player.bench.filter(p => p && !p.fainted && p.currentHp > 0);
+          if (validBenchStatus.length > 0 && !state.pendingReplacement) {
             state.pendingReplacement = { side: "player", slot: ai, faintedName: poke.name, reason: "status" };
+          } else if (validBenchStatus.length === 0) {
+            log.push("No Pokémon left to send out!");
           }
         }
       }
