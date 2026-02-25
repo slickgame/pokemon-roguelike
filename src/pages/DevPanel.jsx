@@ -170,6 +170,9 @@ export default function DevPanel() {
             Finish Run
           </GameButton>
         </GameCard>
+
+        {/* Run Debug */}
+        <RunDebugPanel runId={runId} onToast={showToast} />
       </div>
 
       {/* Debug info */}
