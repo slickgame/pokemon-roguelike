@@ -54,6 +54,7 @@ import Battle from './pages/Battle';
 import Results from './pages/Results';
 import Leaderboard from './pages/Leaderboard';
 import CarryoverRoster from './pages/CarryoverRoster';
+import Seasons from './pages/Seasons';
 import __Layout from './Layout.jsx';
 
 
@@ -65,6 +66,7 @@ export const PAGES = {
     "Results": Results,
     "Leaderboard": Leaderboard,
     "CarryoverRoster": CarryoverRoster,
+    "Seasons": Seasons,
 }
 
 export const pagesConfig = {
