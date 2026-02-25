@@ -52,6 +52,54 @@ function calcDamage(attacker, move, defender, rng) {
   return { dmg, typeEff };
 }
 
+// ── Target validation ─────────────────────────────────────────────────────────
+function isValidTarget(state, side, slot) {
+  const sideState = side === "player" ? state.player : state.enemy;
+  const poke = sideState.active[slot];
+  return !!(poke && !poke.fainted && poke.currentHp > 0);
+}
+
+// ── Damage estimate (fixed roll = 0.925, no RNG consumed) ────────────────────
+function estimateDamage(attacker, move, defender) {
+  if (!move.power) return 0;
+  const lvl = attacker.level;
+  const atkStat = move.category === "physical" ? attacker.baseStats.atk : attacker.baseStats.spa;
+  const defStat = move.category === "physical" ? defender.baseStats.def : defender.baseStats.spd;
+  const stab = attacker.types.includes(move.type) ? 1.5 : 1;
+  const typeEff = effectiveness(move.type, defender.types);
+  const FIXED_ROLL = 0.925;
+  return Math.max(1, Math.floor(
+    Math.floor(Math.floor(2 * lvl / 5 + 2) * move.power * atkStat / defStat / 50 + 2)
+    * stab * typeEff * FIXED_ROLL
+  ));
+}
+
+// ── Smart retarget (deterministic, no RNG) ────────────────────────────────────
+// Returns { slot } for the best valid enemy target, or null if none.
+function chooseSmartTarget(state, attacker, move, originalTargetSide) {
+  const enemySideState = originalTargetSide === "enemy" ? state.enemy : state.player;
+  const candidates = [];
+  for (let slot = 0; slot < enemySideState.active.length; slot++) {
+    const poke = enemySideState.active[slot];
+    if (!poke || poke.fainted || poke.currentHp <= 0) continue;
+    const est = estimateDamage(attacker, move, poke);
+    const typeEff = effectiveness(move.type, poke.types);
+    const canKO = est >= poke.currentHp ? 100000 : 0;
+    const hpPct = poke.currentHp / poke.maxHp;
+    // Score: KO bonus + damage weight + low-HP preference
+    const score = canKO + est * 100 + typeEff * 10 + (1 - hpPct) * 500;
+    candidates.push({ slot, score, hpPct });
+  }
+  if (candidates.length === 0) return null;
+  // Sort: score desc, hpPct asc (lower HP wins tie), slot asc (leftmost wins)
+  candidates.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.hpPct !== b.hpPct) return a.hpPct - b.hpPct;
+    return a.slot - b.slot;
+  });
+  return { slot: candidates[0].slot };
+}
+
 // ── Auto-replace fainted active slot from bench ───────────────────────────────
 // sideState: { active: [...], bench: [...] }
 // activeIdx: index into active array that just fainted
