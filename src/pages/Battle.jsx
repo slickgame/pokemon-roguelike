@@ -16,6 +16,8 @@ export default function Battle() {
   const params = new URLSearchParams(window.location.search);
   const runId = params.get("runId");
   const battleId = params.get("battleId");
+  const nodeId = params.get("nodeId");
+  const routeId = params.get("routeId") ?? "route1";
 
   const { toasts, toast, dismiss } = useToast();
   const [state, setState] = useState(null);
