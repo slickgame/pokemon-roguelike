@@ -100,8 +100,13 @@ Deno.serve(async (req) => {
         pickedIds.push(Number(a.payload.speciesId));
       }
     }
-    if (pickedIds.length < 3) {
-      return Response.json({ error: "starter_confirm not found — complete starter selection first." }, { status: 400 });
+    const hasConfirm = actions.some(a => a.actionType === "starter_confirm");
+    if (!hasConfirm || pickedIds.length < 3) {
+      return Response.json({
+        errorCode: "STARTERS_NOT_CONFIRMED",
+        error: "Complete starter selection first.",
+        message: "starter_confirm action not found. Use Starter Select or DEV Auto-Confirm Starters.",
+      }, { status: 400 });
     }
 
     const LEVEL = 5;
