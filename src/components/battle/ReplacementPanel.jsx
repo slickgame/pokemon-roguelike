@@ -6,7 +6,25 @@ export default function ReplacementPanel({ pendingReplacement, playerBench, onCh
 
   const availableBench = playerBench
     .map((p, i) => ({ p, i }))
-    .filter(({ p }) => p && !p.fainted);
+    .filter(({ p }) => p && !p.fainted && p.currentHp > 0);
+
+  // Safety: if no valid options, show a dismissible fallback (should not normally be reached)
+  if (availableBench.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
+        <GameCard className="w-full max-w-sm border-red-500/30 shadow-2xl shadow-red-500/10 text-center">
+          <p className="text-red-400 font-black text-lg mb-2">No Pokémon Left!</p>
+          <p className="text-white/50 text-sm mb-4">All your Pokémon have fainted.</p>
+          <button
+            onClick={() => onChoose(null)}
+            className="w-full py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition-all"
+          >
+            Continue
+          </button>
+        </GameCard>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm px-4">
@@ -22,12 +40,7 @@ export default function ReplacementPanel({ pendingReplacement, playerBench, onCh
           </p>
         </div>
 
-        {availableBench.length === 0 ? (
-          <p className="text-red-400 text-sm text-center py-2">
-            No healthy Pokémon left on your bench.
-          </p>
-        ) : (
-          <div className="space-y-2">
+        <div className="space-y-2">
             {availableBench.map(({ p, i }) => {
               const hpPct = p.currentHp / p.maxHp;
               const barColor = hpPct > 0.5 ? "bg-emerald-400" : hpPct > 0.2 ? "bg-amber-400" : "bg-red-400";
