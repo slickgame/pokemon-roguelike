@@ -278,7 +278,8 @@ Deno.serve(async (req) => {
 
         if (target.currentHp === 0) {
           target.fainted = true;
-          log.push(`${target.name} fainted!`);
+          const faintLabel = side === "player" ? `Rival's ${target.name}` : `Your ${target.name}`;
+          log.push(`${faintLabel} fainted!`);
 
           if (side === "player") {
             // Player KO'd an enemy — auto-replace enemy from bench
