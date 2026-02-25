@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -6,14 +6,86 @@ import { useCurrentPlayer } from "../components/hooks/useCurrentPlayer";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import { ToastContainer, useToast } from "../components/ui/Toast";
+import ModifierCategorySection from "../components/modifiers/ModifierCategorySection";
+import ModifierSummaryBar from "../components/modifiers/ModifierSummaryBar";
+import { MODIFIERS, MODIFIER_CATEGORIES, MAX_MODIFIERS } from "../components/modifiers/modifiersConfig";
 import { Swords, Zap, Shield, Star, ArrowRight, LogIn } from "lucide-react";
+
+function useModifiers() {
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [validationError, setValidationError] = useState("");
+
+  const totalPct = useMemo(() => {
+    let sum = 0;
+    for (const id of selectedIds) {
+      const mod = MODIFIERS.find(m => m.id === id);
+      if (mod) sum += mod.aetherPct;
+    }
+    return Math.max(-90, Math.min(200, sum));
+  }, [selectedIds]);
+
+  // Build disabled map: for each modifier, why it can't be toggled
+  const disabledMap = useMemo(() => {
+    const map = {};
+    for (const mod of MODIFIERS) {
+      if (selectedIds.has(mod.id)) {
+        map[mod.id] = { disabled: false };
+        continue;
+      }
+      // Cap check
+      if (selectedIds.size >= MAX_MODIFIERS) {
+        map[mod.id] = { disabled: true, reason: `Maximum ${MAX_MODIFIERS} modifiers reached` };
+        continue;
+      }
+      // Incompatibility check
+      const clash = mod.incompatibleWith.find(otherId => selectedIds.has(otherId));
+      if (clash) {
+        const clashName = MODIFIERS.find(m => m.id === clash)?.name || clash;
+        map[mod.id] = { disabled: true, reason: `Incompatible with "${clashName}"` };
+        continue;
+      }
+      map[mod.id] = { disabled: false };
+    }
+    return map;
+  }, [selectedIds]);
+
+  const toggle = (id) => {
+    setValidationError("");
+    const mod = MODIFIERS.find(m => m.id === id);
+    if (!mod) return;
+
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        return next;
+      }
+      if (next.size >= MAX_MODIFIERS) {
+        setValidationError(`You can only select up to ${MAX_MODIFIERS} modifiers.`);
+        return prev;
+      }
+      const clash = mod.incompatibleWith.find(otherId => next.has(otherId));
+      if (clash) {
+        const clashName = MODIFIERS.find(m => m.id === clash)?.name || clash;
+        setValidationError(`"${mod.name}" is incompatible with "${clashName}".`);
+        return prev;
+      }
+      next.add(id);
+      return next;
+    });
+  };
+
+  return { selectedIds, totalPct, disabledMap, validationError, toggle };
+}
 
 export default function Home() {
   const navigate = useNavigate();
   const { player, user, loading: playerLoading, error: playerError } = useCurrentPlayer();
   const [loading, setLoading] = useState(false);
+  const [isRanked, setIsRanked] = useState(false);
   const [season, setSeason] = useState(null);
   const { toasts, toast, dismiss } = useToast();
+  const { selectedIds, totalPct, disabledMap, validationError, toggle } = useModifiers();
 
   useEffect(() => {
     base44.functions.invoke("getCurrentSeason", {})
@@ -26,8 +98,8 @@ export default function Home() {
     setLoading(true);
     try {
       const res = await base44.functions.invoke("startRun", {
-        isRanked: false,
-        modifierIds: [],
+        isRanked,
+        modifierIds: Array.from(selectedIds),
       });
       const { runId, seed } = res.data;
       toast(`Run created! Seed: ${seed.slice(0, 8)}…`, "success");
@@ -44,42 +116,49 @@ export default function Home() {
     base44.auth.redirectToLogin(window.location.href);
   };
 
-  // Show loading state
+  const modifiersByCategory = useMemo(() =>
+    MODIFIER_CATEGORIES.reduce((acc, cat) => {
+      acc[cat] = MODIFIERS.filter(m => m.category === cat);
+      return acc;
+    }, {}),
+  []);
+
+  const runMeta = `${isRanked ? "Ranked" : "Unranked"} · ${
+    selectedIds.size === 0 ? "No modifiers" : `${selectedIds.size} modifier${selectedIds.size !== 1 ? "s" : ""}`
+  }`;
+
+  // ── Loading ──────────────────────────────────────────────────────────────
   if (playerLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        <div className="text-center py-20">
-          <div className="animate-spin w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full mx-auto mb-4"></div>
-          <p className="text-white/40">Loading...</p>
-        </div>
+      <div className="max-w-6xl mx-auto px-4 py-12 text-center py-20">
+        <div className="animate-spin w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full mx-auto mb-4" />
+        <p className="text-white/40">Loading...</p>
         <ToastContainer toasts={toasts} onDismiss={dismiss} />
       </div>
     );
   }
 
-  // Show error state
+  // ── Error ────────────────────────────────────────────────────────────────
   if (playerError) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 py-12">
         <GameCard className="text-center py-10">
           <p className="text-red-400 mb-4">Error: {playerError}</p>
-          <GameButton onClick={() => window.location.reload()} variant="primary">
-            Retry
-          </GameButton>
+          <GameButton onClick={() => window.location.reload()} variant="primary">Retry</GameButton>
         </GameCard>
         <ToastContainer toasts={toasts} onDismiss={dismiss} />
       </div>
     );
   }
 
-  // Show login prompt if not authenticated
+  // ── Not logged in ────────────────────────────────────────────────────────
   if (!user || !player) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium mb-6">
             <Zap className="w-3 h-3" />
-            v0.0.1 · M1 Authentication
+            v0.0.1 · M4 Modifiers
           </div>
           <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight mb-4">
             Poké<span className="text-violet-400">Rogue</span>
@@ -87,15 +166,12 @@ export default function Home() {
           <p className="text-white/40 text-lg max-w-md mx-auto leading-relaxed mb-12">
             A browser-based Pokémon roguelike. Build your team. Conquer the run. Claim the Aether.
           </p>
-
           <GameCard className="max-w-md mx-auto text-center py-12">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-6">
               <LogIn className="w-8 h-8 text-violet-400" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">Welcome, Trainer!</h2>
-            <p className="text-white/50 mb-8">
-              Sign in to start your adventure and compete on the leaderboard.
-            </p>
+            <p className="text-white/50 mb-8">Sign in to start your adventure and compete on the leaderboard.</p>
             <GameButton onClick={handleLogin} variant="primary" size="lg" className="w-full">
               <LogIn className="w-4 h-4" />
               Sign In to Play
@@ -107,96 +183,120 @@ export default function Home() {
     );
   }
 
+  // ── Authenticated ────────────────────────────────────────────────────────
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12">
-      {/* Hero */}
-      <div className="text-center mb-14">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium mb-6">
-          <Zap className="w-3 h-3" />
-          v0.0.1 · M1 Authentication
-        </div>
-        <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight mb-4">
-          Poké<span className="text-violet-400">Rogue</span>
-        </h1>
-        <p className="text-white/40 text-lg max-w-md mx-auto leading-relaxed">
-          Welcome back, <span className="text-white font-medium">{player.displayName}</span>!
-        </p>
-        <div className="flex items-center justify-center gap-2 mt-4">
-          <div className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <span className="text-amber-300 font-bold text-lg">{player.aether}</span>
-            <span className="text-amber-300/60 text-sm ml-2">Aether</span>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Two-column layout on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
 
-      {/* CTA */}
-      <div className="flex flex-col items-center gap-4 mb-14">
-        <GameButton
-          size="xl"
-          onClick={handleStartRun}
-          loading={loading}
-          className="w-full max-w-xs"
-        >
-          <Swords className="w-5 h-5" />
-          Start Run
-          <ArrowRight className="w-4 h-4 ml-1" />
-        </GameButton>
-        <p className="text-white/25 text-xs">Unranked · No modifiers</p>
-      </div>
-
-      {/* Feature Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-        {[
-          {
-            icon: Swords,
-            color: "text-violet-400",
-            bg: "bg-violet-500/10 border-violet-500/15",
-            title: "Roguelike Runs",
-            desc: "Every run is unique with seeded generation, modifiers, and escalating difficulty.",
-          },
-          {
-            icon: Star,
-            color: "text-amber-400",
-            bg: "bg-amber-500/10 border-amber-500/15",
-            title: "Seasons & Leaderboard",
-            desc: "Compete each season for the top Aether score across categories.",
-          },
-          {
-            icon: Shield,
-            color: "text-emerald-400",
-            bg: "bg-emerald-500/10 border-emerald-500/15",
-            title: "Carryover Roster",
-            desc: "Your best Pokémon persist across seasons with inherited talents.",
-          },
-        ].map(({ icon: Icon, color, bg, title, desc }) => (
-          <GameCard key={title} className="group hover:border-white/12 transition-all">
-            <div className={`inline-flex p-2.5 rounded-xl border ${bg} mb-4`}>
-              <Icon className={`w-5 h-5 ${color}`} />
+        {/* LEFT: Hero + CTA + feature grid */}
+        <div className="space-y-6">
+          {/* Hero */}
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium mb-4">
+              <Zap className="w-3 h-3" />
+              v0.0.1 · M4 Modifiers
             </div>
-            <h3 className="font-semibold text-white mb-1.5">{title}</h3>
-            <p className="text-white/40 text-sm leading-relaxed">{desc}</p>
-          </GameCard>
-        ))}
-      </div>
-
-      {/* Season Status */}
-      {season && (
-        <GameCard className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-white/60 text-sm">Season {season.seasonId}</span>
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2">
+              Poké<span className="text-violet-400">Rogue</span>
+            </h1>
+            <p className="text-white/40 leading-relaxed">
+              Welcome back, <span className="text-white font-medium">{player.displayName}</span>!
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <span className="text-amber-300 font-bold text-lg">{player.aether}</span>
+                <span className="text-amber-300/60 text-sm ml-2">Aether</span>
+              </div>
+            </div>
           </div>
-          <span className="text-white/20">·</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${
-            season.state === "ACTIVE_EVENT"
-              ? "bg-emerald-500/15 text-emerald-300"
-              : "bg-amber-500/15 text-amber-300"
-          }`}>
-            {season.state}
-          </span>
-          <span className="ml-auto text-white/25 text-xs font-mono">{season.dbVersionHash}</span>
-        </GameCard>
-      )}
+
+          {/* CTA */}
+          <div className="flex flex-col gap-3">
+            {/* Ranked toggle */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsRanked(r => !r)}
+                className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border transition-colors
+                  ${isRanked ? "bg-violet-500 border-violet-500" : "bg-white/10 border-white/15"}`}
+              >
+                <span className={`my-auto mx-0.5 block h-4 w-4 rounded-full bg-white shadow transition-transform ${isRanked ? "translate-x-4" : "translate-x-0"}`} />
+              </button>
+              <span className="text-white/50 text-sm">{isRanked ? "Ranked" : "Unranked"}</span>
+            </div>
+
+            <GameButton size="xl" onClick={handleStartRun} loading={loading} className="w-full max-w-xs">
+              <Swords className="w-5 h-5" />
+              Start Run
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </GameButton>
+            <p className="text-white/25 text-xs">{runMeta}</p>
+          </div>
+
+          {/* Feature grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { icon: Swords, color: "text-violet-400", bg: "bg-violet-500/10 border-violet-500/15", title: "Roguelike Runs",      desc: "Every run is unique with seeded generation, modifiers, and escalating difficulty." },
+              { icon: Star,   color: "text-amber-400",  bg: "bg-amber-500/10 border-amber-500/15",   title: "Seasons & Leaderboard", desc: "Compete each season for the top Aether score across categories." },
+              { icon: Shield, color: "text-emerald-400",bg: "bg-emerald-500/10 border-emerald-500/15",title: "Carryover Roster",   desc: "Your best Pokémon persist across seasons with inherited talents." },
+            ].map(({ icon: Icon, color, bg, title, desc }) => (
+              <GameCard key={title} className="group hover:border-white/12 transition-all">
+                <div className={`inline-flex p-2 rounded-xl border ${bg} mb-3`}>
+                  <Icon className={`w-4 h-4 ${color}`} />
+                </div>
+                <h3 className="font-semibold text-white text-sm mb-1">{title}</h3>
+                <p className="text-white/40 text-xs leading-relaxed">{desc}</p>
+              </GameCard>
+            ))}
+          </div>
+
+          {/* Season status */}
+          {season && (
+            <GameCard className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-white/60 text-sm">Season {season.seasonId}</span>
+              </div>
+              <span className="text-white/20">·</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${
+                season.state === "ACTIVE_EVENT" ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"
+              }`}>{season.state}</span>
+              <span className="ml-auto text-white/25 text-xs font-mono">{season.dbVersionHash}</span>
+            </GameCard>
+          )}
+        </div>
+
+        {/* RIGHT: Modifier panel */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-white font-semibold text-sm">Run Modifiers</h2>
+            <span className="text-white/30 text-xs">{selectedIds.size} / {MAX_MODIFIERS}</span>
+          </div>
+
+          {/* Summary bar */}
+          <ModifierSummaryBar
+            selectedCount={selectedIds.size}
+            totalPct={totalPct}
+            validationError={validationError}
+          />
+
+          {/* Category sections */}
+          <div className="space-y-4 max-h-[calc(100vh-260px)] overflow-y-auto pr-1">
+            {MODIFIER_CATEGORIES.map(cat => (
+              modifiersByCategory[cat]?.length > 0 && (
+                <ModifierCategorySection
+                  key={cat}
+                  category={cat}
+                  modifiers={modifiersByCategory[cat]}
+                  selectedIds={selectedIds}
+                  disabledMap={disabledMap}
+                  onToggle={toggle}
+                />
+              )
+            ))}
+          </div>
+        </div>
+      </div>
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
