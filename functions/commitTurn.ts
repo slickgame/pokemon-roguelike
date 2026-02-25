@@ -419,7 +419,7 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.RunAction.create({
         runId, idx: nextIdx,
         actionType: "battle_turn_commit",
-        payload: { battleId, turnNumber, playerCommands, log, rngUsed, actionOrder },
+        payload: { battleId, turnNumber, playerCommands, log, rngUsed, actionOrder, retargets: actions.filter(a => a.wasRetargeted).map(a => ({ side: a.side, activeIdx: a.activeIdx, originalTargetSlot: a.originalTargetSlot, finalTargetSlot: a.finalTargetSlot })) },
       }),
       base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: nextIdx }),
     ]);
