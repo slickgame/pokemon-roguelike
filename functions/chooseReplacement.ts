@@ -10,28 +10,35 @@ Deno.serve(async (req) => {
     if (!runId || !battleId || slot === undefined || benchIndex === undefined)
       return Response.json({ error: "runId, battleId, slot, benchIndex required" }, { status: 400 });
 
-    // Load battle
-    const battles = await base44.entities.Battle.filter({ id: battleId });
-    const battle = battles[0];
-    if (!battle) return Response.json({ error: "Battle not found" }, { status: 404 });
+    // Load Run and verify ownership
+    const runs = await base44.asServiceRole.entities.Run.filter({ id: runId });
+    const run = runs[0];
+    if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
+    if (run.playerId !== user.id) return Response.json({ error: "Forbidden" }, { status: 403 });
+
+    // Load Battle via runId (safer than filtering by id directly)
+    const allBattles = await base44.asServiceRole.entities.Battle.filter({ runId });
+    const battle = allBattles.find(b => b.id === battleId);
+    if (!battle) return Response.json({ error: "Battle not found for this run" }, { status: 404 });
     if (battle.status !== "active") return Response.json({ error: "Battle already finished" }, { status: 400 });
 
     const state = battle.state;
 
     // Verify pendingReplacement exists and matches
     const pr = state.pendingReplacement;
-    if (!pr || pr.side !== "player" || pr.slot !== slot)
-      return Response.json({ error: "No pending replacement for that slot." }, { status: 400 });
+    if (!pr) return Response.json({ error: "No pending replacement." }, { status: 400 });
+    if (pr.side !== "player") return Response.json({ error: "Pending replacement is not for player side." }, { status: 400 });
+    if (pr.slot !== slot) return Response.json({ error: `Pending replacement is for slot ${pr.slot}, not ${slot}.` }, { status: 400 });
 
     // Verify bench mon is valid
     const bench = state.player.bench[benchIndex];
     if (!bench) return Response.json({ error: `No bench Pokémon at index ${benchIndex}.` }, { status: 400 });
-    if (bench.fainted) return Response.json({ error: `${bench.name} has fainted.` }, { status: 400 });
-    // Check not already active
-    if (state.player.active.some(p => p === bench))
-      return Response.json({ error: `${bench.name} is already active.` }, { status: 400 });
+    if (bench.fainted) return Response.json({ error: `${bench.name} has fainted and cannot battle.` }, { status: 400 });
+    // Ensure not already active
+    const alreadyActive = state.player.active.some((p, i) => p && p.name === bench.name && !p.fainted && i !== slot);
+    if (alreadyActive) return Response.json({ error: `${bench.name} is already active.` }, { status: 400 });
 
-    // Perform the swap: bench mon → active slot, fainted mon → bench slot
+    // Perform the swap: bench → active slot, fainted mon → bench slot
     const fainted = state.player.active[slot];
     state.player.active[slot] = bench;
     state.player.bench[benchIndex] = fainted;
@@ -42,15 +49,15 @@ Deno.serve(async (req) => {
     // Clear pendingReplacement
     state.pendingReplacement = null;
 
-    await base44.entities.Battle.update(battleId, { state });
+    // Persist
+    await base44.asServiceRole.entities.Battle.update(battleId, { state });
 
     // Append RunAction
-    const runs = await base44.asServiceRole.entities.Run.filter({ id: runId });
-    const run = runs[0];
-    const nextIdx = (run?.nextActionIdx ?? 0) + 1;
+    const nextIdx = (run.nextActionIdx ?? 0) + 1;
     await Promise.all([
       base44.asServiceRole.entities.RunAction.create({
-        runId, idx: nextIdx,
+        runId,
+        idx: nextIdx,
         actionType: "battle_choose_replacement",
         payload: { battleId, slot, benchIndex, sentOut: bench.name },
       }),
