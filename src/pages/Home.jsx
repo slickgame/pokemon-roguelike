@@ -123,7 +123,7 @@ export default function Home() {
   const [isRanked, setIsRanked] = useState(false);
   const [season, setSeason] = useState(null);
   const { toasts, toast, dismiss } = useToast();
-  const { selectedIds, totalPct, disabledMap, validationError, toggle, modifierIds, selectedCount } = useModifiers();
+  const { selectedIds, xpShareMode, setXpShare, totalPct, disabledMap, validationError, toggle, modifierIds, selectedCount } = useModifiers();
 
   useEffect(() => {
     base44.functions.invoke("getCurrentSeason", {})
