@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { label: "Leaderboard", page: "Leaderboard", icon: Trophy },
   { label: "Carryover Roster", page: "CarryoverRoster", icon: Users },
   { label: "Seasons", page: "Seasons", icon: Star },
+  { label: "Dev Panel", page: "DevPanel", icon: Star },
 ];
 
 export default function AppShell({ children, currentPageName }) {

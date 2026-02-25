@@ -29,7 +29,8 @@ Deno.serve(async (req) => {
     }
 
     const existing = await base44.entities.RunAction.filter({ runId });
-    const idx = existing.length;
+    const maxIdx = existing.length > 0 ? Math.max(...existing.map(a => a.idx)) : -1;
+    const idx = maxIdx + 1;
 
     await base44.entities.RunAction.create({
       runId,

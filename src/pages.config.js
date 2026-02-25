@@ -47,26 +47,28 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Home from './pages/Home';
-import StarterSelect from './pages/StarterSelect';
-import RunMap from './pages/RunMap';
 import Battle from './pages/Battle';
-import Results from './pages/Results';
-import Leaderboard from './pages/Leaderboard';
 import CarryoverRoster from './pages/CarryoverRoster';
+import Home from './pages/Home';
+import Leaderboard from './pages/Leaderboard';
+import Results from './pages/Results';
+import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
+import StarterSelect from './pages/StarterSelect';
+import DevPanel from './pages/DevPanel';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "StarterSelect": StarterSelect,
-    "RunMap": RunMap,
     "Battle": Battle,
-    "Results": Results,
-    "Leaderboard": Leaderboard,
     "CarryoverRoster": CarryoverRoster,
+    "Home": Home,
+    "Leaderboard": Leaderboard,
+    "Results": Results,
+    "RunMap": RunMap,
     "Seasons": Seasons,
+    "StarterSelect": StarterSelect,
+    "DevPanel": DevPanel,
 }
 
 export const pagesConfig = {
