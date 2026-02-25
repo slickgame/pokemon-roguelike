@@ -60,6 +60,21 @@ export default function DevPanel() {
     }
   };
 
+  const handleStartBattle = async () => {
+    if (!runId) { showToast("Enter a runId first", "error"); return; }
+    setLoadingBattle(true);
+    try {
+      const res = await base44.functions.invoke("buildBattleFromRun", { runId });
+      const { battleId } = res.data;
+      showToast(`Battle created! battleId=${battleId}`, "success");
+      setTimeout(() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${battleId}`)), 800);
+    } catch (err) {
+      showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
+    } finally {
+      setLoadingBattle(false);
+    }
+  };
+
   const handleFinishRun = async () => {
     if (!runId) {
       showToast("Please enter a runId first", "error");
