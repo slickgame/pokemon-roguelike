@@ -278,12 +278,17 @@ Deno.serve(async (req) => {
           target.fainted = true;
           log.push(`${target.name} fainted!`);
 
-          // Find which side the target belongs to and auto-replace
-          const targetSide = side === "player" ? state.enemy : state.player;
-          const targetActiveIdx = targetSide.active.indexOf(target);
-          if (targetActiveIdx !== -1) {
-            const label = side === "player" ? "Enemy" : "Player";
-            autoReplace(targetSide, targetActiveIdx, label, log);
+          if (side === "player") {
+            // Player KO'd an enemy — auto-replace enemy from bench
+            const targetActiveIdx = state.enemy.active.indexOf(target);
+            if (targetActiveIdx !== -1) autoReplace(state.enemy, targetActiveIdx, "Enemy", log);
+          } else {
+            // Enemy KO'd a player mon — set pendingReplacement, do NOT auto-replace
+            const targetActiveIdx = state.player.active.indexOf(target);
+            if (targetActiveIdx !== -1) {
+              state.pendingReplacement = { side: "player", slot: targetActiveIdx, reason: "fainted" };
+              log.push(`Choose a replacement for slot ${targetActiveIdx}!`);
+            }
           }
         }
       } else {
