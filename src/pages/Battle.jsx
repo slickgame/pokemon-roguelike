@@ -75,7 +75,21 @@ export default function Battle() {
       setState(data.state);
       setTurnNumber(data.turnNumber);
       setWinner(data.winner ?? null);
-      if (data.winner) toast(data.winner === "player" ? "You won! 🎉" : "You lost...", data.winner === "player" ? "success" : "error");
+      if (data.winner) {
+        toast(data.winner === "player" ? "You won! 🎉" : "You lost...", data.winner === "player" ? "success" : "error");
+        // On win: log gym_defeated if this was a gym node
+        if (data.winner === "player" && nodeId) {
+          // Check if this was a gym battle by inspecting state
+          if (data.state?.nodeId && data.state?.routeId) {
+            // If battle state has gym nodeType, log gym_defeated
+            const battleActions = await base44.entities.RunAction.filter({ runId });
+            const enterAction = battleActions.find(a => a.actionType === "node_enter" && a.payload?.nodeId === nodeId);
+            if (enterAction?.payload?.nodeType === "gym") {
+              await runApi.appendAction(runId, "gym_defeated", { gymId: "gym1", routeId });
+            }
+          }
+        }
+      }
     } catch (e) {
       toast(e.response?.data?.error || e.message || "Failed to commit turn", "error");
     } finally {
