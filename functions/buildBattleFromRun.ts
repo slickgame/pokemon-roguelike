@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// ── Inline DB (mirrors dbLoader) ──────────────────────────────────────────────
+// ── Inline DB ─────────────────────────────────────────────────────────────────
 const SPECIES = [
   { id: 1,  name: "Bulbasaur",  types: ["grass","poison"],   baseStats: { hp:45, atk:49, def:49, spa:65, spd:65, spe:45 }, abilities: ["overgrow"] },
   { id: 4,  name: "Charmander", types: ["fire"],             baseStats: { hp:39, atk:52, def:43, spa:60, spd:50, spe:65 }, abilities: ["blaze"] },
@@ -8,22 +8,21 @@ const SPECIES = [
   { id: 10, name: "Caterpie",   types: ["bug"],              baseStats: { hp:45, atk:30, def:35, spa:20, spd:20, spe:45 }, abilities: ["shield_dust"] },
   { id: 25, name: "Pikachu",    types: ["electric"],         baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"] },
 ];
-const MVP_ALLOWED = [1, 4, 7, 10, 25];
 
 const MOVES_BY_TYPE = {
-  grass: { id: "vine_whip", name: "Vine Whip", type: "grass", category: "physical", power: 45, accuracy: 100, pp: 25, priority: 0 },
-  fire:  { id: "ember",     name: "Ember",     type: "fire",  category: "special",  power: 40, accuracy: 100, pp: 25, priority: 0 },
-  water: { id: "water_gun", name: "Water Gun", type: "water", category: "special",  power: 40, accuracy: 100, pp: 25, priority: 0 },
-  bug:   { id: "string_shot", name: "String Shot", type: "bug", category: "status", power: null, accuracy: 95, pp: 40, priority: 0 },
-  electric: { id: "thunder_shock", name: "ThunderShock", type: "electric", category: "special", power: 40, accuracy: 100, pp: 30, priority: 0 },
-  poison: { id: "growl", name: "Growl", type: "normal", category: "status", power: null, accuracy: 100, pp: 40, priority: 0 },
+  grass:    { id: "vine_whip",     name: "Vine Whip",     type: "grass",    category: "physical", power: 45,   accuracy: 100, pp: 25 },
+  fire:     { id: "ember",         name: "Ember",         type: "fire",     category: "special",  power: 40,   accuracy: 100, pp: 25 },
+  water:    { id: "water_gun",     name: "Water Gun",     type: "water",    category: "special",  power: 40,   accuracy: 100, pp: 25 },
+  bug:      { id: "string_shot",   name: "String Shot",   type: "bug",      category: "status",   power: null, accuracy: 95,  pp: 40 },
+  electric: { id: "thunder_shock", name: "ThunderShock",  type: "electric", category: "special",  power: 40,   accuracy: 100, pp: 30 },
+  poison:   { id: "poison_sting",  name: "Poison Sting",  type: "poison",   category: "physical", power: 15,   accuracy: 100, pp: 35 },
+  normal:   { id: "tackle",        name: "Tackle",        type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35 },
 };
-const TACKLE = { id: "tackle", name: "Tackle", type: "normal", category: "physical", power: 40, accuracy: 100, pp: 35, priority: 0 };
-const GROWL   = { id: "growl",  name: "Growl",  type: "normal", category: "status",   power: null, accuracy: 100, pp: 40, priority: 0 };
+const TACKLE = { id: "tackle", name: "Tackle", type: "normal", category: "physical", power: 40, accuracy: 100, pp: 35 };
 
 const NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
-// ── Deterministic RNG (mulberry32) ────────────────────────────────────────────
+// ── Deterministic RNG ─────────────────────────────────────────────────────────
 function hashString(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
@@ -47,10 +46,10 @@ function buildPokemon(species, level, subSeed) {
   const abilityId = species.abilities[rngInt(rng, species.abilities.length)];
   const shiny = rngInt(rng, 1024) === 0;
 
-  const stab = MOVES_BY_TYPE[species.types[0]] ?? GROWL;
+  const stab = MOVES_BY_TYPE[species.types[0]] ?? MOVES_BY_TYPE.normal;
   const moves = [
     { ...TACKLE, currentPp: TACKLE.pp },
-    { ...stab, currentPp: stab.pp },
+    { ...stab,   currentPp: stab.pp },
   ];
 
   const hp = Math.floor((2 * species.baseStats.hp * level) / 100) + level + 10;
@@ -63,15 +62,25 @@ function buildPokemon(species, level, subSeed) {
     nature,
     abilityId,
     shiny,
-    ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 }, // MVP stub
+    ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
     baseStats: species.baseStats,
     maxHp: hp,
     currentHp: hp,
-    status: null, // burn|poison|paralysis|sleep|freeze|null
+    status: null,
     statusTurns: 0,
     moves,
     fainted: false,
   };
+}
+
+// ── Deterministic shuffle using rng ──────────────────────────────────────────
+function deterministicShuffle(arr, rng) {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = rngInt(rng, i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 Deno.serve(async (req) => {
@@ -83,14 +92,12 @@ Deno.serve(async (req) => {
     const { runId } = await req.json();
     if (!runId) return Response.json({ error: "runId required" }, { status: 400 });
 
-    // Load run
     const runs = await base44.entities.Run.filter({ id: runId });
     const run = runs[0];
     if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
     if (run.playerId !== user.id && user.role !== "admin")
       return Response.json({ error: "Forbidden" }, { status: 403 });
 
-    // Load run actions to find picked starters
     const actions = await base44.asServiceRole.entities.RunAction.filter({ runId });
     actions.sort((a, b) => a.idx - b.idx);
 
@@ -105,7 +112,6 @@ Deno.serve(async (req) => {
       return Response.json({
         errorCode: "STARTERS_NOT_CONFIRMED",
         error: "Complete starter selection first.",
-        message: "starter_confirm action not found. Use Starter Select or DEV Auto-Confirm Starters.",
       }, { status: 400 });
     }
 
@@ -113,31 +119,64 @@ Deno.serve(async (req) => {
     const speciesMap = {};
     for (const s of SPECIES) speciesMap[s.id] = s;
 
-    // Build player team
-    const playerTeam = pickedIds.slice(0, 3).map((sid, i) => {
+    // ── Player team: 3 active (confirmed starters) + 3 bench ─────────────────
+    const playerActive = pickedIds.slice(0, 3).map((sid, i) => {
       const sp = speciesMap[sid];
       if (!sp) return null;
-      return buildPokemon(sp, LEVEL, `${run.seed}:player:${i}:${sid}`);
+      return buildPokemon(sp, LEVEL, `${run.seed}:player:active:${i}:${sid}`);
     }).filter(Boolean);
 
-    // Build enemy team (exclude player species)
-    const enemyPool = SPECIES.filter(s => !pickedIds.includes(s.id));
-    const enemyRng = makeRng(`${run.seed}:enemy_select`);
-    const shuffled = [...enemyPool].sort(() => enemyRng() - 0.5); // deterministic sort via rng
-    const enemySpecies = shuffled.slice(0, Math.min(3, shuffled.length));
-    // Pad with player species if needed (edge case: small db)
-    while (enemySpecies.length < 3) enemySpecies.push(SPECIES[rngInt(enemyRng, SPECIES.length)]);
-
-    const enemyTeam = enemySpecies.map((sp, i) =>
-      buildPokemon(sp, LEVEL, `${run.seed}:enemy:${i}:${sp.id}`)
+    // Bench: pick from species NOT in player actives
+    const playerBenchPool = deterministicShuffle(
+      SPECIES.filter(s => !pickedIds.includes(s.id)),
+      makeRng(`${run.seed}:player:bench_select`)
+    );
+    const playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
+      buildPokemon(sp, LEVEL, `${run.seed}:player:bench:${i}:${sp.id}`)
     );
 
+    // ── Enemy team: 3 active + 3 bench ───────────────────────────────────────
+    const enemyActiveRng = makeRng(`${run.seed}:enemy:active_select`);
+    const enemyActivePool = deterministicShuffle(
+      SPECIES.filter(s => !pickedIds.includes(s.id)),
+      enemyActiveRng
+    );
+    // Ensure at least 6 slots from full pool if needed
+    const fullEnemyPool = deterministicShuffle([...SPECIES], makeRng(`${run.seed}:enemy:full_pool`));
+    const usedEnemyIds = new Set();
+    const enemyActiveSpecies = [];
+    for (const sp of [...enemyActivePool, ...fullEnemyPool]) {
+      if (enemyActiveSpecies.length >= 3) break;
+      if (!usedEnemyIds.has(sp.id)) { enemyActiveSpecies.push(sp); usedEnemyIds.add(sp.id); }
+    }
+    const enemyBenchSpecies = [];
+    for (const sp of fullEnemyPool) {
+      if (enemyBenchSpecies.length >= 3) break;
+      if (!usedEnemyIds.has(sp.id)) { enemyBenchSpecies.push(sp); usedEnemyIds.add(sp.id); }
+    }
+
+    const enemyActive = enemyActiveSpecies.map((sp, i) =>
+      buildPokemon(sp, LEVEL, `${run.seed}:enemy:active:${i}:${sp.id}`)
+    );
+    const enemyBench = enemyBenchSpecies.map((sp, i) =>
+      buildPokemon(sp, LEVEL, `${run.seed}:enemy:bench:${i}:${sp.id}`)
+    );
+
+    // State uses separate active/bench arrays (indices 0-2 map to active/bench arrays directly)
     const battleState = {
-      player: { team: playerTeam, active: [0, 1, 2] },
-      enemy:  { team: enemyTeam,  active: [0, 1, 2] },
+      player: {
+        active: playerActive,   // array of 3 active Pokémon objects
+        bench:  playerBench,    // array of 3 bench Pokémon objects
+      },
+      enemy: {
+        active: enemyActive,
+        bench:  enemyBench,
+      },
       turnLog: [],
       rngCallCount: 0,
       winner: null,
+      // Track enemy AI switch usage
+      enemySwitchUsed: false,
     };
 
     const battle = await base44.entities.Battle.create({
