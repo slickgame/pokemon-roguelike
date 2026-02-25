@@ -36,7 +36,7 @@ function makeRng(seedStr) {
   return { next, getCallCount: () => callCount };
 }
 
-// ── Damage formula (Gen 9 simplified) ────────────────────────────────────────
+// ── Damage formula ────────────────────────────────────────────────────────────
 function calcDamage(attacker, move, defender, rng) {
   if (!move.power) return { dmg: 0, typeEff: 1 };
   const lvl = attacker.level;
@@ -52,64 +52,106 @@ function calcDamage(attacker, move, defender, rng) {
   return { dmg, typeEff };
 }
 
-// ── Enemy AI (deterministic) ──────────────────────────────────────────────────
-function enemyAI(enemyPoke, playerActiveSlots, state) {
-  const targets = playerActiveSlots.filter(i => !state.player.team[i]?.fainted);
-  if (targets.length === 0) return null;
-  const targetSlot = targets[0];
-  const target = state.player.team[targetSlot];
+// ── Auto-replace fainted active slot from bench ───────────────────────────────
+// sideState: { active: [...], bench: [...] }
+// activeIdx: index into active array that just fainted
+// Returns the bench pokemon that was sent in, or null
+function autoReplace(sideState, activeIdx, label, log) {
+  const benchIdx = sideState.bench.findIndex(p => !p.fainted);
+  if (benchIdx === -1) return null;
+  const incoming = sideState.bench[benchIdx];
+  // Swap: move bench mon into active, put fainted mon into bench
+  const fainted = sideState.active[activeIdx];
+  sideState.active[activeIdx] = incoming;
+  sideState.bench[benchIdx] = fainted;
+  log.push(`${label} sent out ${incoming.name}!`);
+  return incoming;
+}
 
-  let bestMove = enemyPoke.moves[0];
+// ── Enemy AI move selection ───────────────────────────────────────────────────
+function enemyPickMove(poke, playerActive) {
+  const targets = playerActive.filter(p => !p.fainted);
+  if (targets.length === 0) return null;
+  const target = targets[0];
+  let bestMove = poke.moves[0];
   let bestScore = -1;
-  for (const mv of enemyPoke.moves) {
+  for (const mv of poke.moves) {
     if (!mv.power) continue;
     const eff = effectiveness(mv.type, target.types);
-    const stab = enemyPoke.types.includes(mv.type) ? 1.5 : 1;
+    const stab = poke.types.includes(mv.type) ? 1.5 : 1;
     const score = mv.power * eff * stab;
     if (score > bestScore) { bestScore = score; bestMove = mv; }
   }
-  return { actorSlot: -1, type: "move", moveId: bestMove.id, target: { side: "player", slot: targetSlot } };
+  return { type: "move", moveId: bestMove.id, targetIdx: 0 };
 }
 
-// ── Auto-send first available bench Pokémon ───────────────────────────────────
-function autoReplace(sideState, faintedSlotIdx) {
-  const bench = sideState.team.findIndex((p, i) => !p.fainted && !sideState.active.includes(i));
-  if (bench === -1) return null;
-  const activeIdx = sideState.active.indexOf(faintedSlotIdx);
-  if (activeIdx === -1) return null;
-  sideState.active[activeIdx] = bench;
-  return bench;
+// ── Enemy AI switch decision ──────────────────────────────────────────────────
+// Returns benchIdx to switch to, or -1 if no switch
+function enemyPickSwitch(activeIdx, sideState, playerActive, rng) {
+  const poke = sideState.active[activeIdx];
+  if (!poke || poke.fainted) return -1;
+  // Only switch if HP < 25%
+  if (poke.currentHp / poke.maxHp >= 0.25) return -1;
+  // Find healthy bench options
+  const healthyBench = sideState.bench
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => !p.fainted);
+  if (healthyBench.length === 0) return -1;
+  // Pick best type matchup vs healthiest player active
+  const playerTarget = [...playerActive].filter(p => !p.fainted)
+    .sort((a, b) => b.currentHp - a.currentHp)[0];
+  if (!playerTarget) return -1;
+  let best = healthyBench[0];
+  let bestScore = -1;
+  for (const { p, i } of healthyBench) {
+    let score = 0;
+    for (const mv of p.moves) {
+      if (!mv.power) continue;
+      score = Math.max(score, effectiveness(mv.type, playerTarget.types) * mv.power);
+    }
+    if (score > bestScore) { bestScore = score; best = { p, i }; }
+  }
+  return best.i;
 }
 
-// ── Build ordered action list ─────────────────────────────────────────────────
-function buildActions(playerCommands, state, rng) {
+// ── Build action list for the turn ───────────────────────────────────────────
+function buildActions(playerCommands, state, rng, allowEnemySwitch) {
+  const SWITCH_PRIORITY = 7;
   const actions = [];
 
-  // Switches go first (priority +7 effectively)
-  const SWITCH_PRIORITY = 7;
-
+  // Player actions
   for (const cmd of playerCommands) {
-    const poke = state.player.team[cmd.actorSlot];
+    const poke = state.player.active[cmd.actorSlot];
     if (!poke || poke.fainted) continue;
-
     if (cmd.type === "switch") {
-      actions.push({ side: "player", slotIndex: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true });
+      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true });
     } else {
       const move = poke.moves.find(m => m.id === cmd.moveId);
       if (!move) continue;
-      actions.push({ side: "player", slotIndex: cmd.actorSlot, poke, move, cmd, priority: move.priority, speed: poke.baseStats.spe, isSwitch: false });
+      const enemyTargetIdx = cmd.target?.slot ?? 0;
+      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, move, cmd, priority: move.priority ?? 0, speed: poke.baseStats.spe, isSwitch: false, enemyTargetIdx });
     }
   }
 
-  // Enemy AI (moves only for now)
-  const enemyActiveSlots = state.enemy.active.filter(i => !state.enemy.team[i]?.fainted);
-  for (const ei of enemyActiveSlots) {
-    const poke = state.enemy.team[ei];
-    const cmd = enemyAI(poke, state.player.active, state);
-    if (!cmd) continue;
-    const move = poke.moves.find(m => m.id === cmd.moveId);
+  // Enemy actions
+  for (let ei = 0; ei < state.enemy.active.length; ei++) {
+    const poke = state.enemy.active[ei];
+    if (!poke || poke.fainted) continue;
+
+    // Consider AI switch (only if not used this battle)
+    if (allowEnemySwitch) {
+      const switchBenchIdx = enemyPickSwitch(ei, state.enemy, state.player.active, rng);
+      if (switchBenchIdx >= 0) {
+        actions.push({ side: "enemy", activeIdx: ei, poke, cmd: { type: "switch", benchIdx: switchBenchIdx }, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true, benchIdx: switchBenchIdx });
+        continue;
+      }
+    }
+
+    const movePick = enemyPickMove(poke, state.player.active);
+    if (!movePick) continue;
+    const move = poke.moves.find(m => m.id === movePick.moveId);
     if (!move) continue;
-    actions.push({ side: "enemy", slotIndex: ei, poke, move, cmd, priority: move.priority, speed: poke.baseStats.spe, isSwitch: false });
+    actions.push({ side: "enemy", activeIdx: ei, poke, move, priority: move.priority ?? 0, speed: poke.baseStats.spe, isSwitch: false, playerTargetIdx: movePick.targetIdx });
   }
 
   // Sort: priority desc, speed desc, rng tie-break
@@ -122,15 +164,20 @@ function buildActions(playerCommands, state, rng) {
   return actions;
 }
 
-// ── Validate switch command ───────────────────────────────────────────────────
+// ── Validate player switch command ────────────────────────────────────────────
 function validateSwitch(cmd, state) {
-  const { actorSlot, target } = cmd;
-  const benchSlot = target?.slot;
-  if (benchSlot === undefined || benchSlot === null) return "Switch missing target.slot (bench index).";
-  const bench = state.player.team[benchSlot];
-  if (!bench) return `No Pokémon at bench slot ${benchSlot}.`;
+  const { actorSlot } = cmd;
+  const benchIdx = cmd.target?.slot;
+  if (actorSlot === undefined || actorSlot === null) return "Switch missing actorSlot.";
+  if (benchIdx === undefined || benchIdx === null) return "Switch missing target.slot (bench index).";
+  const actor = state.player.active[actorSlot];
+  if (!actor) return `No active Pokémon at slot ${actorSlot}.`;
+  const bench = state.player.bench[benchIdx];
+  if (!bench) return `No bench Pokémon at index ${benchIdx}.`;
   if (bench.fainted) return `${bench.name} has fainted and cannot be switched in.`;
-  if (state.player.active.includes(benchSlot)) return `${bench.name} is already active.`;
+  // Cannot switch to a mon already active
+  const activeNames = state.player.active.map(p => p?.name);
+  if (activeNames.includes(bench.name) && state.player.active.some(p => p === bench)) return `${bench.name} is already active.`;
   return null;
 }
 
@@ -144,13 +191,12 @@ Deno.serve(async (req) => {
     if (!runId || !battleId || !playerCommands)
       return Response.json({ error: "runId, battleId, playerCommands required" }, { status: 400 });
 
-    // Load battle
     const battles = await base44.entities.Battle.filter({ id: battleId });
     const battle = battles[0];
     if (!battle) return Response.json({ error: "Battle not found" }, { status: 404 });
     if (battle.status !== "active") return Response.json({ error: "Battle already finished" }, { status: 400 });
 
-    // Validate commands
+    // Validate player commands
     for (const cmd of playerCommands) {
       if (cmd.type === "switch") {
         const err = validateSwitch(cmd, battle.state);
@@ -167,48 +213,62 @@ Deno.serve(async (req) => {
     const log = [];
     const actionOrder = [];
 
-    const actions = buildActions(playerCommands, state, rng);
+    const allowEnemySwitch = !state.enemySwitchUsed;
+    const actions = buildActions(playerCommands, state, rng, allowEnemySwitch);
 
-    // Record action order for debug
     for (const a of actions) {
-      actionOrder.push(`${a.side}:${a.isSwitch ? "switch" : a.move?.id ?? "?"} (slot ${a.slotIndex}, pri ${a.priority}, spd ${a.speed})`);
+      actionOrder.push(`${a.side}:${a.isSwitch ? "switch" : a.move?.id ?? "?"} (activeIdx ${a.activeIdx}, pri ${a.priority}, spd ${a.speed})`);
     }
 
-    // ── Resolve actions ───────────────────────────────────────────────────────
+    // ── Resolve actions ────────────────────────────────────────────────────────
     for (const action of actions) {
-      const { side, slotIndex, poke, isSwitch } = action;
-      if (poke.fainted) continue;
+      const { side, activeIdx, isSwitch } = action;
+      const sideState = side === "player" ? state.player : state.enemy;
+      const poke = sideState.active[activeIdx];
+      if (!poke || poke.fainted) continue;
 
       if (isSwitch) {
-        // Resolve switch
-        const sideState = state.player;
-        const benchSlot = action.cmd.target.slot;
-        const benchPoke = sideState.team[benchSlot];
-        const activeIdx = sideState.active.indexOf(slotIndex);
-        if (activeIdx !== -1 && benchPoke && !benchPoke.fainted && !sideState.active.includes(benchSlot)) {
-          sideState.active[activeIdx] = benchSlot;
-          log.push(`${poke.name} was recalled. ${benchPoke.name} was sent out!`);
+        if (side === "player") {
+          const benchIdx = action.cmd.target.slot;
+          const bench = state.player.bench[benchIdx];
+          if (bench && !bench.fainted) {
+            state.player.active[activeIdx] = bench;
+            state.player.bench[benchIdx] = poke;
+            log.push(`${poke.name} was recalled. Go, ${bench.name}!`);
+          }
+        } else {
+          // Enemy switch
+          const benchIdx = action.benchIdx;
+          const bench = state.enemy.bench[benchIdx];
+          if (bench && !bench.fainted) {
+            state.enemy.active[activeIdx] = bench;
+            state.enemy.bench[benchIdx] = poke;
+            log.push(`Enemy recalled ${poke.name}. Enemy sent out ${bench.name}!`);
+            state.enemySwitchUsed = true;
+          }
         }
         continue;
       }
 
-      // Resolve move
+      // ── Move ────────────────────────────────────────────────────────────────
       const { move } = action;
-      const targetSide = action.cmd.target.side === "enemy" ? state.enemy : state.player;
-      const targetSlot = action.cmd.target.slot;
-      let target = targetSide.team[targetSlot];
-
-      // Retarget if fainted
-      if (!target || target.fainted) {
-        target = targetSide.team.find(p => !p.fainted) ?? null;
+      let target;
+      if (side === "player") {
+        const tIdx = action.enemyTargetIdx ?? 0;
+        target = state.enemy.active[tIdx];
+        // Retarget if fainted
+        if (!target || target.fainted) target = state.enemy.active.find(p => p && !p.fainted) ?? null;
+      } else {
+        const tIdx = action.playerTargetIdx ?? 0;
+        target = state.player.active[tIdx];
+        if (!target || target.fainted) target = state.player.active.find(p => p && !p.fainted) ?? null;
       }
-      if (!target) continue;
+      if (!target || target.fainted) continue;
 
       if (move.power) {
         const { dmg, typeEff } = calcDamage(poke, move, target, rng);
         target.currentHp = Math.max(0, target.currentHp - dmg);
-
-        const effText = typeEff > 1 ? " It's super effective!" : typeEff < 1 ? " It's not very effective..." : "";
+        const effText = typeEff > 1 ? " Super effective!" : typeEff < 1 ? " Not very effective..." : "";
         log.push(`${poke.name} used ${move.name}! ${dmg} damage to ${target.name}.${effText}`);
 
         const mv = poke.moves.find(m => m.id === move.id);
@@ -218,12 +278,12 @@ Deno.serve(async (req) => {
           target.fainted = true;
           log.push(`${target.name} fainted!`);
 
-          // Auto-replace fainted Pokémon
-          const faintedSide = action.cmd.target.side === "enemy" ? state.enemy : state.player;
-          const faintedSlotIdx = faintedSide.team.indexOf(target);
-          const newSlot = autoReplace(faintedSide, faintedSlotIdx);
-          if (newSlot !== null) {
-            log.push(`${faintedSide.team[newSlot].name} was sent in!`);
+          // Find which side the target belongs to and auto-replace
+          const targetSide = side === "player" ? state.enemy : state.player;
+          const targetActiveIdx = targetSide.active.indexOf(target);
+          if (targetActiveIdx !== -1) {
+            const label = side === "player" ? "Enemy" : "Player";
+            autoReplace(targetSide, targetActiveIdx, label, log);
           }
         }
       } else {
@@ -233,32 +293,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── End-of-turn: burn/poison DOT ─────────────────────────────────────────
-    for (const sideState of [state.player, state.enemy]) {
-      for (const poke of sideState.team) {
-        if (poke.fainted) continue;
+    // ── End-of-turn: burn/poison DOT ──────────────────────────────────────────
+    for (const [sideState, label] of [[state.player, "Player"], [state.enemy, "Enemy"]]) {
+      for (let ai = 0; ai < sideState.active.length; ai++) {
+        const poke = sideState.active[ai];
+        if (!poke || poke.fainted) continue;
         if (poke.status === "burn" || poke.status === "poison") {
           const dot = Math.max(1, Math.floor(poke.maxHp / 8));
           poke.currentHp = Math.max(0, poke.currentHp - dot);
-          log.push(`${poke.name} took ${dot} damage from ${poke.status}!`);
+          log.push(`${poke.name} took ${dot} from ${poke.status}!`);
           if (poke.currentHp === 0) {
             poke.fainted = true;
             log.push(`${poke.name} fainted!`);
-            // Auto-replace after DOT faint
-            const sIdx = sideState.team.indexOf(poke);
-            const newSlot = autoReplace(sideState, sIdx);
-            if (newSlot !== null) log.push(`${sideState.team[newSlot].name} was sent in!`);
+            autoReplace(sideState, ai, label, log);
           }
         }
       }
     }
 
-    // ── Check victory ─────────────────────────────────────────────────────────
-    const playerAllFainted = state.player.team.every(p => p.fainted);
-    const enemyAllFainted  = state.enemy.team.every(p => p.fainted);
+    // ── Check victory ──────────────────────────────────────────────────────────
+    const playerAllFainted = state.player.active.every(p => !p || p.fainted) && state.player.bench.every(p => !p || p.fainted);
+    const enemyAllFainted  = state.enemy.active.every(p => !p || p.fainted) && state.enemy.bench.every(p => !p || p.fainted);
     let winner = null;
-    if (playerAllFainted) { winner = "enemy";  log.push("All your Pokémon have fainted! You lost the battle!"); }
-    if (enemyAllFainted)  { winner = "player"; log.push("All enemy Pokémon have fainted! You won the battle!"); }
+    if (playerAllFainted) { winner = "enemy";  log.push("All your Pokémon fainted! You lost!"); }
+    if (enemyAllFainted)  { winner = "player"; log.push("All enemy Pokémon fainted! You won!"); }
 
     const rngUsed = rng.getCallCount();
     state.winner = winner;
@@ -268,40 +326,36 @@ Deno.serve(async (req) => {
     state.lastRngUsed = rngUsed;
 
     const newStatus = winner ? "finished" : "active";
-    const updatePayload = {
-      state,
-      turnNumber,
-      status: newStatus,
-    };
+    const updatePayload = { state, turnNumber, status: newStatus };
     if (winner) updatePayload.endedAt = new Date().toISOString();
 
     await base44.entities.Battle.update(battleId, updatePayload);
 
-    // ── Log battle_turn_commit RunAction ──────────────────────────────────────
+    // ── Log battle_turn_commit RunAction ───────────────────────────────────────
     const runs = await base44.asServiceRole.entities.Run.filter({ id: runId });
     const run = runs[0];
     const nextIdx = (run?.nextActionIdx ?? 0) + 1;
     await Promise.all([
       base44.asServiceRole.entities.RunAction.create({
-        runId,
-        idx: nextIdx,
+        runId, idx: nextIdx,
         actionType: "battle_turn_commit",
-        payload: { battleId, turnNumber, log, rngUsed, actionOrder },
+        payload: { battleId, turnNumber, playerCommands, log, rngUsed, actionOrder },
       }),
       base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: nextIdx }),
     ]);
 
-    // ── If battle ended, write battle_end RunAction and summary ───────────────
+    // ── If battle ended, write battle_end summary ──────────────────────────────
     if (winner) {
-      const playerFaints = state.player.team.filter(p => p.fainted).length;
-      const enemyFaints  = state.enemy.team.filter(p => p.fainted).length;
+      const allPlayer = [...state.player.active, ...state.player.bench];
+      const allEnemy  = [...state.enemy.active,  ...state.enemy.bench];
+      const playerFaints = allPlayer.filter(p => p?.fainted).length;
+      const enemyFaints  = allEnemy.filter(p => p?.fainted).length;
       const summary = { winner, turns: turnNumber, playerFaints, enemyFaints };
 
       const endIdx = nextIdx + 1;
       await Promise.all([
         base44.asServiceRole.entities.RunAction.create({
-          runId,
-          idx: endIdx,
+          runId, idx: endIdx,
           actionType: "battle_end",
           payload: { battleId, summary },
         }),
