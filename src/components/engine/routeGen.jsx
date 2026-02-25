@@ -249,13 +249,8 @@ export function serializeGraph(graph) {
 
 // ── Simple hash of graph for anti-cheat ──────────────────────────────────────
 export function hashGraph(graph) {
-  const str = graph.nodes.map(n => `${n.id}:${n.type}:${n.tier}:${n.nextIds.join(",")}`).join("|");
-  return hashString(str).toString(16);
-}
-
-// Expose hashString for external use
-function hashString(str) {
   let h = 2166136261;
+  const str = graph.nodes.map(n => `${n.id}:${n.type}:${n.tier}:${n.nextIds.join(",")}`).join("|");
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
-  return h >>> 0;
+  return (h >>> 0).toString(16);
 }
