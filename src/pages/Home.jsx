@@ -115,7 +115,7 @@ export default function Home() {
   const [isRanked, setIsRanked] = useState(false);
   const [season, setSeason] = useState(null);
   const { toasts, toast, dismiss } = useToast();
-  const { selectedIds, totalPct, disabledMap, validationError, toggle } = useModifiers();
+  const { selectedIds, totalPct, disabledMap, validationError, toggle, modifierIds, selectedCount } = useModifiers();
 
   useEffect(() => {
     base44.functions.invoke("getCurrentSeason", {})
@@ -129,7 +129,7 @@ export default function Home() {
     try {
       const res = await base44.functions.invoke("startRun", {
         isRanked,
-        modifierIds: Array.from(selectedIds),
+        modifierIds,
       });
       const { runId, seed } = res.data;
       toast(`Run created! Seed: ${seed.slice(0, 8)}…`, "success");
@@ -154,7 +154,7 @@ export default function Home() {
   []);
 
   const runMeta = `${isRanked ? "Ranked" : "Unranked"} · ${
-    selectedIds.size === 0 ? "No modifiers" : `${selectedIds.size} modifier${selectedIds.size !== 1 ? "s" : ""}`
+    selectedCount === 0 ? "No modifiers" : `${selectedCount} modifier${selectedCount !== 1 ? "s" : ""}`
   }`;
 
   // ── Loading ──────────────────────────────────────────────────────────────
@@ -300,12 +300,12 @@ export default function Home() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-white font-semibold text-sm">Run Modifiers</h2>
-            <span className="text-white/30 text-xs">{selectedIds.size} / {MAX_MODIFIERS}</span>
+            <span className="text-white/30 text-xs">{selectedCount} / {MAX_MODIFIERS}</span>
           </div>
 
           {/* Summary bar */}
           <ModifierSummaryBar
-            selectedCount={selectedIds.size}
+            selectedCount={selectedCount}
             totalPct={totalPct}
             validationError={validationError}
           />
