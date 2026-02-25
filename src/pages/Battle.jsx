@@ -8,6 +8,7 @@ import PokemonBattleCard from "../components/battle/PokemonBattleCard";
 import CommandBuilder from "../components/battle/CommandBuilder";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import { Swords, Bug } from "lucide-react";
+import ReplacementPanel from "../components/battle/ReplacementPanel";
 
 export default function Battle() {
   const navigate = useNavigate();
