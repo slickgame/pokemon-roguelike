@@ -40,23 +40,23 @@ export default function Battle() {
       .finally(() => setLoading(false));
   }, [battleId]);
 
-  // Rebuild default commands after each turn (or on initial load)
+  // Rebuild default commands when state changes (new turn)
   useEffect(() => {
     if (!state) return;
     const defaults = {};
-    const aliveEnemySlots = (state.enemy.active ?? []).filter(i => !state.enemy.team[i]?.fainted);
-    for (const slot of (state.player.active ?? [])) {
-      const poke = state.player.team[slot];
+    const aliveEnemyTargets = (state.enemy.active ?? []).map((p, i) => ({ p, i })).filter(({ p }) => p && !p.fainted);
+    for (let i = 0; i < (state.player.active ?? []).length; i++) {
+      const poke = state.player.active[i];
       if (!poke || poke.fainted) continue;
-      defaults[slot] = {
-        actorSlot: slot,
+      defaults[i] = {
+        actorSlot: i,
         type: "move",
         moveId: poke.moves[0]?.id,
-        target: { side: "enemy", slot: aliveEnemySlots[0] ?? 0 },
+        target: { side: "enemy", slot: aliveEnemyTargets[0]?.i ?? 0 },
       };
     }
     setCommands(defaults);
-  }, [state?.turnNumber, !!state]);
+  }, [turnNumber, !!state]);
 
   const handleCommit = async () => {
     const cmds = Object.values(commands);
@@ -86,17 +86,16 @@ export default function Battle() {
 
   if (!state) return (
     <div className="max-w-lg mx-auto px-4 py-12 text-center">
-      <GameCard><p className="text-red-400">Battle not found. Check URL params (runId & battleId).</p></GameCard>
+      <GameCard><p className="text-red-400">Battle not found. Check URL params (runId &amp; battleId).</p></GameCard>
     </div>
   );
 
-  const playerTeam  = state.player.team;
-  const enemyTeam   = state.enemy.team;
-  const playerActive = state.player.active;
-  const enemyActive  = state.enemy.active;
+  const playerActive = state.player.active ?? [];
+  const playerBench  = state.player.bench  ?? [];
+  const enemyActive  = state.enemy.active  ?? [];
+  const enemyBench   = state.enemy.bench   ?? [];
 
-  // Summary from last turn result (stored in state)
-  const lastRngUsed   = state.lastRngUsed ?? 0;
+  const lastRngUsed = state.lastRngUsed ?? 0;
   const lastActionOrder = state.lastActionOrder ?? [];
 
   return (
@@ -112,7 +111,7 @@ export default function Battle() {
             <p className="text-white/40 text-xs">
               Turn {turnNumber} · {winner
                 ? `Battle finished — ${winner === "player" ? "Victory!" : "Defeat"}`
-                : "Active · RNG calls: " + (state.rngCallCount ?? 0)}
+                : `Active · RNG calls: ${state.rngCallCount ?? 0}`}
             </p>
           </div>
         </div>
@@ -130,7 +129,8 @@ export default function Battle() {
           <p className="text-white/25 uppercase tracking-widest text-[9px] mb-2">Dev — Last Turn Debug</p>
           <p>RNG rolls this turn: <span className="text-amber-400">{lastRngUsed}</span></p>
           <p>Total RNG cursor: <span className="text-amber-400">{state.rngCallCount ?? 0}</span></p>
-          <p className="mt-1 text-white/30">Action order:</p>
+          <p>Enemy switch used: <span className="text-amber-400">{state.enemySwitchUsed ? "yes" : "no"}</span></p>
+          <p className="mt-1 text-white/30">Last action order:</p>
           {lastActionOrder.length === 0
             ? <p className="text-white/20">— no turns committed yet —</p>
             : lastActionOrder.map((a, i) => <p key={i} className="pl-2">#{i + 1} {a}</p>)
@@ -138,39 +138,60 @@ export default function Battle() {
         </GameCard>
       )}
 
-      {/* 3v3 board */}
+      {/* 3v3 board with bench */}
       <div className="grid grid-cols-2 gap-4 mb-6">
+        {/* Enemy */}
         <GameCard>
-          <p className="text-[10px] uppercase tracking-widest text-red-400/70 font-semibold mb-2">Enemy</p>
-          <div className="space-y-2">
-            {enemyTeam.map((poke, i) => (
-              <PokemonBattleCard key={i} poke={poke} slot={i} side="enemy" isActive={enemyActive.includes(i)} />
+          <p className="text-[10px] uppercase tracking-widest text-red-400/70 font-semibold mb-2">Enemy Active</p>
+          <div className="space-y-1.5">
+            {enemyActive.map((poke, i) => (
+              <PokemonBattleCard key={i} poke={poke} slot={i} side="enemy" isActive={true} />
             ))}
           </div>
+          {enemyBench.length > 0 && (
+            <>
+              <p className="text-[9px] uppercase tracking-widest text-white/20 font-semibold mt-3 mb-1">Bench</p>
+              <div className="space-y-1.5">
+                {enemyBench.map((poke, i) => (
+                  <PokemonBattleCard key={i} poke={poke} slot={i} side="enemy" isActive={false} />
+                ))}
+              </div>
+            </>
+          )}
         </GameCard>
 
+        {/* Player */}
         <GameCard>
-          <p className="text-[10px] uppercase tracking-widest text-violet-400/70 font-semibold mb-2">Your Team</p>
-          <div className="space-y-2">
-            {playerTeam.map((poke, i) => (
-              <PokemonBattleCard key={i} poke={poke} slot={i} side="player" isActive={playerActive.includes(i)} />
+          <p className="text-[10px] uppercase tracking-widest text-violet-400/70 font-semibold mb-2">Your Active</p>
+          <div className="space-y-1.5">
+            {playerActive.map((poke, i) => (
+              <PokemonBattleCard key={i} poke={poke} slot={i} side="player" isActive={true} />
             ))}
           </div>
+          {playerBench.length > 0 && (
+            <>
+              <p className="text-[9px] uppercase tracking-widest text-white/20 font-semibold mt-3 mb-1">Bench</p>
+              <div className="space-y-1.5">
+                {playerBench.map((poke, i) => (
+                  <PokemonBattleCard key={i} poke={poke} slot={i} side="player" isActive={false} />
+                ))}
+              </div>
+            </>
+          )}
         </GameCard>
       </div>
 
-      {/* Command builder + battle log */}
+      {/* Command builder + log */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!winner && (
           <GameCard>
             <p className="text-white font-semibold text-sm mb-3">Select Actions</p>
             <CommandBuilder
-              playerTeam={playerTeam}
-              activeSlots={playerActive}
+              playerActive={playerActive}
+              playerBench={playerBench}
               commands={commands}
               onChange={(slot, cmd) => setCommands(prev => ({ ...prev, [slot]: cmd }))}
-              enemyActiveSlots={enemyActive}
-              enemyTeam={enemyTeam}
+              enemyActive={enemyActive}
             />
             <GameButton
               variant="primary"
@@ -203,8 +224,8 @@ export default function Battle() {
                 <p className="font-semibold text-white/80 mb-1">Battle Summary</p>
                 <p>Winner: <span className={winner === "player" ? "text-emerald-400" : "text-red-400"}>{winner}</span></p>
                 <p>Turns: {turnNumber}</p>
-                <p>Your fainted: {state.player.team.filter(p => p.fainted).length}</p>
-                <p>Enemy fainted: {state.enemy.team.filter(p => p.fainted).length}</p>
+                <p>Your fainted: {[...playerActive, ...playerBench].filter(p => p?.fainted).length}</p>
+                <p>Enemy fainted: {[...enemyActive, ...enemyBench].filter(p => p?.fainted).length}</p>
               </div>
               <GameButton
                 variant="primary"
