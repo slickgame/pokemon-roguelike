@@ -343,18 +343,17 @@ Deno.serve(async (req) => {
 
           if (side === "player") {
             // Player KO'd an enemy — auto-replace enemy from bench
-            const targetActiveIdx = state.enemy.active.indexOf(target);
-            if (targetActiveIdx !== -1) autoReplace(state.enemy, targetActiveIdx, "Rival", log);
+            autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
           } else {
             // Enemy KO'd a player mon — set pendingReplacement, do NOT auto-replace
-            const targetActiveIdx = state.player.active.indexOf(target);
-            if (targetActiveIdx !== -1) {
-              state.pendingReplacement = { side: "player", slot: targetActiveIdx, faintedName: target.name, reason: "fainted" };
+            if (!state.pendingReplacement) {
+              state.pendingReplacement = { side: "player", slot: effectiveTargetSlot, faintedName: target.name, reason: "fainted" };
             }
           }
         }
       } else {
-        log.push(`${poke.name} used ${move.name}!`);
+        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        log.push(`${attackerLabel} used ${move.name}!`);
         const mv = poke.moves.find(m => m.id === move.id);
         if (mv) mv.currentPp = Math.max(0, (mv.currentPp ?? move.pp) - 1);
       }
