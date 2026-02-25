@@ -53,6 +53,7 @@ import RunMap from './pages/RunMap';
 import Battle from './pages/Battle';
 import Results from './pages/Results';
 import Leaderboard from './pages/Leaderboard';
+import CarryoverRoster from './pages/CarryoverRoster';
 import __Layout from './Layout.jsx';
 
 
@@ -63,6 +64,7 @@ export const PAGES = {
     "Battle": Battle,
     "Results": Results,
     "Leaderboard": Leaderboard,
+    "CarryoverRoster": CarryoverRoster,
 }
 
 export const pagesConfig = {
