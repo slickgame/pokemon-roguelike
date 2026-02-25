@@ -345,9 +345,12 @@ Deno.serve(async (req) => {
             // Player KO'd an enemy — auto-replace enemy from bench
             autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
           } else {
-            // Enemy KO'd a player mon — set pendingReplacement, do NOT auto-replace
-            if (!state.pendingReplacement) {
+            // Enemy KO'd a player mon — only set pendingReplacement if bench has healthy mons
+            const validBench = state.player.bench.filter(p => p && !p.fainted && p.currentHp > 0);
+            if (validBench.length > 0 && !state.pendingReplacement) {
               state.pendingReplacement = { side: "player", slot: effectiveTargetSlot, faintedName: target.name, reason: "fainted" };
+            } else if (validBench.length === 0) {
+              log.push("No Pokémon left to send out!");
             }
           }
         }
