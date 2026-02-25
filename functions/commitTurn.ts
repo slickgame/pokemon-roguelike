@@ -281,13 +281,12 @@ Deno.serve(async (req) => {
           if (side === "player") {
             // Player KO'd an enemy — auto-replace enemy from bench
             const targetActiveIdx = state.enemy.active.indexOf(target);
-            if (targetActiveIdx !== -1) autoReplace(state.enemy, targetActiveIdx, "Enemy", log);
+            if (targetActiveIdx !== -1) autoReplace(state.enemy, targetActiveIdx, "Rival", log);
           } else {
             // Enemy KO'd a player mon — set pendingReplacement, do NOT auto-replace
             const targetActiveIdx = state.player.active.indexOf(target);
             if (targetActiveIdx !== -1) {
-              state.pendingReplacement = { side: "player", slot: targetActiveIdx, reason: "fainted" };
-              log.push(`Choose a replacement for slot ${targetActiveIdx}!`);
+              state.pendingReplacement = { side: "player", slot: targetActiveIdx, faintedName: target.name, reason: "fainted" };
             }
           }
         }
