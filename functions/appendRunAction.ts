@@ -28,18 +28,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Run is not active" }, { status: 400 });
     }
 
-    const existing = await base44.entities.RunAction.filter({ runId });
-    const maxIdx = existing.length > 0 ? Math.max(...existing.map(a => a.idx)) : -1;
-    const idx = maxIdx + 1;
+    // Atomic idx: read current counter, bump it on the Run first, then use old value as idx
+    const currentIdx = run.nextActionIdx ?? 0;
+    await base44.entities.Run.update(runId, { nextActionIdx: currentIdx + 1 });
 
     await base44.entities.RunAction.create({
       runId,
-      idx,
+      idx: currentIdx,
       actionType,
       payload,
     });
 
-    return Response.json({ ok: true, idx });
+    return Response.json({ ok: true, idx: currentIdx });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

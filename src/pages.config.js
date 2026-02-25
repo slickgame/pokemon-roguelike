@@ -49,26 +49,26 @@
  */
 import Battle from './pages/Battle';
 import CarryoverRoster from './pages/CarryoverRoster';
+import DevPanel from './pages/DevPanel';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import Results from './pages/Results';
 import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
 import StarterSelect from './pages/StarterSelect';
-import DevPanel from './pages/DevPanel';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Battle": Battle,
     "CarryoverRoster": CarryoverRoster,
+    "DevPanel": DevPanel,
     "Home": Home,
     "Leaderboard": Leaderboard,
     "Results": Results,
     "RunMap": RunMap,
     "Seasons": Seasons,
     "StarterSelect": StarterSelect,
-    "DevPanel": DevPanel,
 }
 
 export const pagesConfig = {

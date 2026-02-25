@@ -7,7 +7,9 @@ import { Beaker, PlayCircle, Plus, CheckCircle } from "lucide-react";
 export default function DevPanel() {
   const [runId, setRunId] = useState("");
   const [runData, setRunData] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingStart, setLoadingStart] = useState(false);
+  const [loadingAppend, setLoadingAppend] = useState(false);
+  const [loadingFinish, setLoadingFinish] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = "info") => {
