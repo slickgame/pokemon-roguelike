@@ -4,7 +4,9 @@ const DB_VERSION_SEMANTIC = "0.0.1";
 const DB_VERSION_HASH = "abc123def456";
 
 function generateSeed() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 Deno.serve(async (req) => {

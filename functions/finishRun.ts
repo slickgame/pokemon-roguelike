@@ -15,6 +15,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: "runId is required" }, { status: 400 });
     }
 
+    const run = await base44.entities.Run.get(runId);
+    if (!run) {
+      return Response.json({ error: "Run not found" }, { status: 404 });
+    }
+
+    if (run.playerId !== user.id) {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (run.status !== "active") {
+      return Response.json({ error: "Run is not active" }, { status: 400 });
+    }
+
     await base44.entities.Run.update(runId, {
       status: "finished",
       endedAt: new Date().toISOString(),
