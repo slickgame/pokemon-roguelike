@@ -52,6 +52,7 @@ import StarterSelect from './pages/StarterSelect';
 import RunMap from './pages/RunMap';
 import Battle from './pages/Battle';
 import Results from './pages/Results';
+import Leaderboard from './pages/Leaderboard';
 import __Layout from './Layout.jsx';
 
 
@@ -61,6 +62,7 @@ export const PAGES = {
     "RunMap": RunMap,
     "Battle": Battle,
     "Results": Results,
+    "Leaderboard": Leaderboard,
 }
 
 export const pagesConfig = {
