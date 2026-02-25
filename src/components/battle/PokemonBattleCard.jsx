@@ -44,7 +44,14 @@ export default function PokemonBattleCard({ poke, slot, side, selected, onClick,
       </div>
       <div className="text-[11px] text-white/50 mb-0.5">{fainted ? "Fainted" : `${poke.currentHp} / ${poke.maxHp} HP`}</div>
       <HpBar current={poke.currentHp} max={poke.maxHp} />
-      <div className="text-[10px] text-white/25 mt-1">Lv.{poke.level} · {poke.nature}</div>
+      <div className="text-[10px] text-white/25 mt-1">
+        Lv.{poke.level} · {poke.nature}
+        {isActive !== undefined && !fainted && (
+          <span className={`ml-1 ${isActive ? "text-emerald-400/60" : "text-white/20"}`}>
+            {isActive ? "● active" : "○ bench"}
+          </span>
+        )}
+      </div>
     </button>
   );
 }
