@@ -9,6 +9,7 @@ import { createPageUrl } from "@/utils";
 import { Beaker, PlayCircle, Plus, CheckCircle, Swords } from "lucide-react";
 
 export default function DevPanel() {
+  const navigate = useNavigate();
   const [runId, setRunId] = useState("");
   const [runData, setRunData] = useState(null);
   const [loadingStart, setLoadingStart] = useState(false);
