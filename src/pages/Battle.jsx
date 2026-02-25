@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
+import { runApi } from "../components/api/runApi";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import PokemonBattleCard from "../components/battle/PokemonBattleCard";
