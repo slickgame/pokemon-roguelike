@@ -268,8 +268,10 @@ Deno.serve(async (req) => {
       if (move.power) {
         const { dmg, typeEff } = calcDamage(poke, move, target, rng);
         target.currentHp = Math.max(0, target.currentHp - dmg);
-        const effText = typeEff > 1 ? " Super effective!" : typeEff < 1 ? " Not very effective..." : "";
-        log.push(`${poke.name} used ${move.name}! ${dmg} damage to ${target.name}.${effText}`);
+        const effText = typeEff >= 2 ? " It's super effective!" : typeEff <= 0.5 ? " It's not very effective..." : "";
+        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        const defenderLabel = side === "player" ? `Rival's ${target.name}` : `your ${target.name}`;
+        log.push(`${attackerLabel} used ${move.name}! Dealt ${dmg} damage to ${defenderLabel}.${effText}`);
 
         const mv = poke.moves.find(m => m.id === move.id);
         if (mv) mv.currentPp = Math.max(0, (mv.currentPp ?? move.pp) - 1);
