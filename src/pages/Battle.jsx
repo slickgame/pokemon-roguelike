@@ -259,6 +259,15 @@ export default function Battle() {
         </GameCard>
       </div>
 
+      {pendingReplacement && (
+        <ReplacementPanel
+          pendingReplacement={pendingReplacement}
+          playerBench={playerBench}
+          onChoose={handleChooseReplacement}
+          choosing={choosing}
+        />
+      )}
+
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
