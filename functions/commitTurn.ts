@@ -299,18 +299,33 @@ Deno.serve(async (req) => {
     }
 
     // ── End-of-turn: burn/poison DOT ──────────────────────────────────────────
-    for (const [sideState, label] of [[state.player, "Player"], [state.enemy, "Enemy"]]) {
-      for (let ai = 0; ai < sideState.active.length; ai++) {
-        const poke = sideState.active[ai];
-        if (!poke || poke.fainted) continue;
-        if (poke.status === "burn" || poke.status === "poison") {
-          const dot = Math.max(1, Math.floor(poke.maxHp / 8));
-          poke.currentHp = Math.max(0, poke.currentHp - dot);
-          log.push(`${poke.name} took ${dot} from ${poke.status}!`);
-          if (poke.currentHp === 0) {
-            poke.fainted = true;
-            log.push(`${poke.name} fainted!`);
-            autoReplace(sideState, ai, label, log);
+    for (let ai = 0; ai < state.enemy.active.length; ai++) {
+      const poke = state.enemy.active[ai];
+      if (!poke || poke.fainted) continue;
+      if (poke.status === "burn" || poke.status === "poison") {
+        const dot = Math.max(1, Math.floor(poke.maxHp / 8));
+        poke.currentHp = Math.max(0, poke.currentHp - dot);
+        log.push(`${poke.name} took ${dot} from ${poke.status}!`);
+        if (poke.currentHp === 0) {
+          poke.fainted = true;
+          log.push(`${poke.name} fainted!`);
+          autoReplace(state.enemy, ai, "Enemy", log);
+        }
+      }
+    }
+    for (let ai = 0; ai < state.player.active.length; ai++) {
+      const poke = state.player.active[ai];
+      if (!poke || poke.fainted) continue;
+      if (poke.status === "burn" || poke.status === "poison") {
+        const dot = Math.max(1, Math.floor(poke.maxHp / 8));
+        poke.currentHp = Math.max(0, poke.currentHp - dot);
+        log.push(`${poke.name} took ${dot} from ${poke.status}!`);
+        if (poke.currentHp === 0) {
+          poke.fainted = true;
+          log.push(`${poke.name} fainted!`);
+          if (!state.pendingReplacement) {
+            state.pendingReplacement = { side: "player", slot: ai, reason: "fainted" };
+            log.push(`Choose a replacement for slot ${ai}!`);
           }
         }
       }
