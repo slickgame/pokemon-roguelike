@@ -194,6 +194,23 @@ export default function DevPanel() {
           </GameButton>
         </GameCard>
 
+        {/* Start Battle */}
+        <GameCard>
+          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+            <Swords className="w-4 h-4 text-violet-400" />
+            5. Start Test Battle
+          </h3>
+          <p className="text-white/40 text-xs mb-3">Requires a run with 3 starter_pick actions (complete StarterSelect first).</p>
+          <GameButton
+            onClick={handleStartBattle}
+            disabled={loadingBattle || !runId}
+            loading={loadingBattle}
+            variant="primary"
+          >
+            Start Test Battle
+          </GameButton>
+        </GameCard>
+
         {/* Run Debug */}
         <RunDebugPanel runId={runId} onToast={showToast} />
       </div>
