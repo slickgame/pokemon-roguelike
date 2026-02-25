@@ -2,21 +2,25 @@ export const MODIFIERS = [
   // ── Progression ──────────────────────────────────────────────────────────
   {
     id: "xp_share_on",
-    name: "XP Share ON",
+    name: "XP Share: ON",
     category: "Progression",
     aetherPct: 0,
-    description: "All party members gain XP from every battle (default).",
-    incompatibleWith: [],
+    description: "All party members gain XP from every battle (default baseline).",
+    incompatibleWith: ["xp_share_off"],
     flags: { xpShare: true },
+    isDefault: true,   // default selected; does NOT count toward cap
+    noCapCount: true,
+    radioGroup: "xp_share",
   },
   {
     id: "xp_share_off",
-    name: "XP Share OFF",
+    name: "XP Share: OFF",
     category: "Progression",
     aetherPct: 10,
     description: "Only the active battler gains XP. Harder but more Aether.",
     incompatibleWith: ["xp_share_on"],
     flags: { xpShare: false },
+    radioGroup: "xp_share",
   },
 
   // ── Team ─────────────────────────────────────────────────────────────────
