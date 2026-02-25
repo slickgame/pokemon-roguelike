@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Swords, Map, Trophy, Star, Home, Menu, X, Users, ChevronRight } from "lucide-react";
+import { Swords, Map, Trophy, Star, Home, Menu, X, Users, ChevronRight, Beaker } from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Home", page: "Home", icon: Home },
