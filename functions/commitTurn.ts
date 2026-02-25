@@ -64,7 +64,7 @@ function autoReplace(sideState, activeIdx, label, log) {
   const fainted = sideState.active[activeIdx];
   sideState.active[activeIdx] = incoming;
   sideState.bench[benchIdx] = fainted;
-  log.push(`${label} sent out ${incoming.name}!`);
+  log.push(`${label} sent out ${incoming.name}.`);
   return incoming;
 }
 
@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
           if (bench && !bench.fainted) {
             state.enemy.active[activeIdx] = bench;
             state.enemy.bench[benchIdx] = poke;
-            log.push(`Enemy recalled ${poke.name}. Enemy sent out ${bench.name}!`);
+            log.push(`Rival recalled ${poke.name} and sent out ${bench.name}!`);
             state.enemySwitchUsed = true;
           }
         }
