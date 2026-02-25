@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
+import { useCurrentPlayer } from "../components/hooks/useCurrentPlayer";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import { ToastContainer, useToast } from "../components/ui/Toast";
-import { Swords, Zap, Shield, Star, ArrowRight, AlertCircle } from "lucide-react";
+import { Swords, Zap, Shield, Star, ArrowRight, LogIn } from "lucide-react";
 
 export default function Home() {
   const navigate = useNavigate();
+  const { player, user, loading: playerLoading, error: playerError } = useCurrentPlayer();
   const [loading, setLoading] = useState(false);
   const [season, setSeason] = useState(null);
   const { toasts, toast, dismiss } = useToast();
@@ -20,6 +22,7 @@ export default function Home() {
   }, []);
 
   const handleStartRun = async () => {
+    if (!player) return;
     setLoading(true);
     try {
       const res = await base44.functions.invoke("startRun", {
@@ -37,20 +40,93 @@ export default function Home() {
     }
   };
 
+  const handleLogin = () => {
+    base44.auth.redirectToLogin(window.location.href);
+  };
+
+  // Show loading state
+  if (playerLoading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        <div className="text-center py-20">
+          <div className="animate-spin w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full mx-auto mb-4"></div>
+          <p className="text-white/40">Loading...</p>
+        </div>
+        <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (playerError) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        <GameCard className="text-center py-10">
+          <p className="text-red-400 mb-4">Error: {playerError}</p>
+          <GameButton onClick={() => window.location.reload()} variant="primary">
+            Retry
+          </GameButton>
+        </GameCard>
+        <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!user || !player) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        <div className="text-center mb-14">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium mb-6">
+            <Zap className="w-3 h-3" />
+            v0.0.1 · M1 Authentication
+          </div>
+          <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight mb-4">
+            Poké<span className="text-violet-400">Rogue</span>
+          </h1>
+          <p className="text-white/40 text-lg max-w-md mx-auto leading-relaxed mb-12">
+            A browser-based Pokémon roguelike. Build your team. Conquer the run. Claim the Aether.
+          </p>
+
+          <GameCard className="max-w-md mx-auto text-center py-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-6">
+              <LogIn className="w-8 h-8 text-violet-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">Welcome, Trainer!</h2>
+            <p className="text-white/50 mb-8">
+              Sign in to start your adventure and compete on the leaderboard.
+            </p>
+            <GameButton onClick={handleLogin} variant="primary" size="lg" className="w-full">
+              <LogIn className="w-4 h-4" />
+              Sign In to Play
+            </GameButton>
+          </GameCard>
+        </div>
+        <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
       {/* Hero */}
       <div className="text-center mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium mb-6">
           <Zap className="w-3 h-3" />
-          v0.0.1 · M0 Skeleton
+          v0.0.1 · M1 Authentication
         </div>
         <h1 className="text-5xl md:text-6xl font-black text-white tracking-tight mb-4">
           Poké<span className="text-violet-400">Rogue</span>
         </h1>
         <p className="text-white/40 text-lg max-w-md mx-auto leading-relaxed">
-          A browser-based Pokémon roguelike. Build your team. Conquer the run. Claim the Aether.
+          Welcome back, <span className="text-white font-medium">{player.displayName}</span>!
         </p>
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <div className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <span className="text-amber-300 font-bold text-lg">{player.aether}</span>
+            <span className="text-amber-300/60 text-sm ml-2">Aether</span>
+          </div>
+        </div>
       </div>
 
       {/* CTA */}
