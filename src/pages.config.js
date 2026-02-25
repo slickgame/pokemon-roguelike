@@ -49,12 +49,14 @@
  */
 import Home from './pages/Home';
 import StarterSelect from './pages/StarterSelect';
+import RunMap from './pages/RunMap';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Home": Home,
     "StarterSelect": StarterSelect,
+    "RunMap": RunMap,
 }
 
 export const pagesConfig = {
