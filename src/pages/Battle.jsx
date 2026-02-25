@@ -96,6 +96,23 @@ export default function Battle() {
   const playerBench  = state.player.bench  ?? [];
   const enemyActive  = state.enemy.active  ?? [];
   const enemyBench   = state.enemy.bench   ?? [];
+  const pendingReplacement = state.pendingReplacement ?? null;
+
+  const handleChooseReplacement = async (benchIndex) => {
+    setChoosing(true);
+    try {
+      const res = await base44.functions.invoke("chooseReplacement", {
+        runId, battleId, slot: pendingReplacement.slot, benchIndex,
+      });
+      const data = res.data;
+      setState(data.state);
+      setTurnNumber(data.turnNumber ?? turnNumber);
+    } catch (e) {
+      toast(e.response?.data?.error || e.message || "Failed to choose replacement", "error");
+    } finally {
+      setChoosing(false);
+    }
+  };
 
   const lastRngUsed = state.lastRngUsed ?? 0;
   const lastActionOrder = state.lastActionOrder ?? [];
