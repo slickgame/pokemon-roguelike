@@ -307,7 +307,7 @@ Deno.serve(async (req) => {
       if (poke.status === "burn" || poke.status === "poison") {
         const dot = Math.max(1, Math.floor(poke.maxHp / 8));
         poke.currentHp = Math.max(0, poke.currentHp - dot);
-        log.push(`${poke.name} took ${dot} from ${poke.status}!`);
+        log.push(`Rival's ${poke.name} took ${dot} damage from ${poke.status}!`);
         if (poke.currentHp === 0) {
           poke.fainted = true;
           log.push(`Rival's ${poke.name} fainted!`);
