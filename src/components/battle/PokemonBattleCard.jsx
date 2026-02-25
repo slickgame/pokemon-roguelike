@@ -17,7 +17,7 @@ function HpBar({ current, max }) {
   );
 }
 
-export default function PokemonBattleCard({ poke, slot, side, selected, onClick }) {
+export default function PokemonBattleCard({ poke, slot, side, selected, onClick, isActive }) {
   if (!poke) return null;
   const fainted = poke.fainted;
   return (
@@ -27,8 +27,9 @@ export default function PokemonBattleCard({ poke, slot, side, selected, onClick 
       className={`w-full text-left p-3 rounded-xl border transition-all ${
         fainted ? "opacity-30 bg-white/2 border-white/5 cursor-default" :
         selected ? "bg-violet-500/20 border-violet-400/50 shadow shadow-violet-500/10" :
+        isActive ? "bg-white/6 border-white/15" :
         onClick ? "bg-white/4 border-white/8 hover:bg-white/8 hover:border-white/15 cursor-pointer" :
-        "bg-white/4 border-white/8"
+        "bg-white/4 border-white/8 opacity-60"
       }`}
     >
       <div className="flex items-center justify-between mb-1">
