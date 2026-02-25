@@ -218,7 +218,7 @@ export default function Battle() {
               className="w-full mt-4"
               onClick={handleCommit}
               loading={committing}
-              disabled={committing || !!winner}
+              disabled={committing || !!winner || !!pendingReplacement}
             >
               <Swords className="w-4 h-4" />
               Commit Turn
