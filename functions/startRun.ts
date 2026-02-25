@@ -1,10 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// DB version manifest — update these when game data changes
+// ── DB manifest (single source of truth) ─────────────────────────────────────
+// This must match components/db/manifest.json exactly.
 const MANIFEST = {
-  dbVersionSemantic: "0.1.0",
-  dbVersionHash: "m1a2b3c4d5e6f7a8b9c0",
+  dbVersionSemantic: "0.0.1",
+  dbVersionHash: "4a2b7f3e8c1d9a5b6f0e2c4d7a1b3e5f",
 };
+// ─────────────────────────────────────────────────────────────────────────────
 
 function generateSeed() {
   const bytes = new Uint8Array(16);
