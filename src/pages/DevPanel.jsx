@@ -15,6 +15,7 @@ export default function DevPanel() {
   const [loadingStart, setLoadingStart] = useState(false);
   const [loadingAppend, setLoadingAppend] = useState(false);
   const [loadingFinish, setLoadingFinish] = useState(false);
+  const [loadingBattle, setLoadingBattle] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = "info") => {
