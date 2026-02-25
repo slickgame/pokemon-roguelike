@@ -4,7 +4,9 @@ import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import RunDebugPanel from "../components/dev/RunDebugPanel";
 import DbVersionCard from "../components/dev/DbVersionCard";
-import { Beaker, PlayCircle, Plus, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Beaker, PlayCircle, Plus, CheckCircle, Swords } from "lucide-react";
 
 export default function DevPanel() {
   const [runId, setRunId] = useState("");
