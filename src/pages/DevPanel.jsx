@@ -100,6 +100,9 @@ export default function DevPanel() {
       )}
 
       <div className="space-y-4">
+        {/* DB Version */}
+        <DbVersionCard />
+
         {/* Start Run */}
         <GameCard>
           <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
