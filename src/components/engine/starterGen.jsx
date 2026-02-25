@@ -2,7 +2,7 @@
  * starterGen.js — Deterministic starter pool generation.
  * No Math.random(). All randomness via createRng().
  */
-import { createRng } from "./rng.js";
+import { createRng } from "./rng";
 
 const NATURES = [
   "Hardy","Lonely","Brave","Adamant","Naughty",
