@@ -74,7 +74,6 @@ export default function ReplacementPanel({ pendingReplacement, playerBench, onCh
               );
             })}
           </div>
-        )}
       </GameCard>
     </div>
   );
