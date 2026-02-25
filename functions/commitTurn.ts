@@ -310,8 +310,8 @@ Deno.serve(async (req) => {
         log.push(`${poke.name} took ${dot} from ${poke.status}!`);
         if (poke.currentHp === 0) {
           poke.fainted = true;
-          log.push(`${poke.name} fainted!`);
-          autoReplace(state.enemy, ai, "Enemy", log);
+          log.push(`Rival's ${poke.name} fainted!`);
+          autoReplace(state.enemy, ai, "Rival", log);
         }
       }
     }
@@ -321,13 +321,12 @@ Deno.serve(async (req) => {
       if (poke.status === "burn" || poke.status === "poison") {
         const dot = Math.max(1, Math.floor(poke.maxHp / 8));
         poke.currentHp = Math.max(0, poke.currentHp - dot);
-        log.push(`${poke.name} took ${dot} from ${poke.status}!`);
+        log.push(`Your ${poke.name} took ${dot} damage from ${poke.status}!`);
         if (poke.currentHp === 0) {
           poke.fainted = true;
-          log.push(`${poke.name} fainted!`);
+          log.push(`Your ${poke.name} fainted!`);
           if (!state.pendingReplacement) {
-            state.pendingReplacement = { side: "player", slot: ai, reason: "fainted" };
-            log.push(`Choose a replacement for slot ${ai}!`);
+            state.pendingReplacement = { side: "player", slot: ai, faintedName: poke.name, reason: "status" };
           }
         }
       }
