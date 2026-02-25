@@ -63,6 +63,17 @@ export default function AppShell({ children, currentPageName }) {
               <Trophy className="w-3.5 h-3.5" />
               Leaderboard
             </Link>
+            <Link
+              to={createPageUrl("DevPanel")}
+              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+                ${currentPageName === "DevPanel"
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : "text-white/50 hover:text-emerald-300/70 hover:bg-white/5"
+                }`}
+            >
+              <Beaker className="w-3.5 h-3.5" />
+              Dev
+            </Link>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="md:hidden p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-all"
