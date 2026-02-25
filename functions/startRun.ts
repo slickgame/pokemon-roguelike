@@ -1,7 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const DB_VERSION_SEMANTIC = "0.0.1";
-const DB_VERSION_HASH = "abc123def456";
+// DB version manifest — update these when game data changes
+const MANIFEST = {
+  dbVersionSemantic: "0.1.0",
+  dbVersionHash: "m1a2b3c4d5e6f7a8b9c0",
+};
 
 function generateSeed() {
   const bytes = new Uint8Array(16);
@@ -26,11 +29,12 @@ Deno.serve(async (req) => {
     const run = await base44.entities.Run.create({
       playerId: user.id,
       seed,
-      dbVersionSemantic: DB_VERSION_SEMANTIC,
-      dbVersionHash: DB_VERSION_HASH,
+      dbVersionSemantic: MANIFEST.dbVersionSemantic,
+      dbVersionHash: MANIFEST.dbVersionHash,
       isRanked,
       status: "active",
       modifiers,
+      nextActionIdx: 0,
       startedAt: new Date().toISOString(),
     });
 
