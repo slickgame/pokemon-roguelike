@@ -11,43 +11,56 @@ import ModifierSummaryBar from "../components/modifiers/ModifierSummaryBar";
 import { MODIFIERS, MODIFIER_CATEGORIES, MAX_MODIFIERS } from "../components/modifiers/modifiersConfig";
 import { Swords, Zap, Shield, Star, ArrowRight, LogIn } from "lucide-react";
 
-// IDs that don't count toward the cap (default baseline modifiers)
-const NO_CAP_IDS = new Set(MODIFIERS.filter(m => m.noCapCount).map(m => m.id));
-// Default selected on mount
-const DEFAULT_SELECTED = new Set(MODIFIERS.filter(m => m.isDefault).map(m => m.id));
-
-function capCount(ids) {
-  return [...ids].filter(id => !NO_CAP_IDS.has(id)).length;
-}
+// XP Share IDs — handled separately as a radio, not stored in selectedModifiers
+const XP_SHARE_IDS = new Set(["xp_share_on", "xp_share_off"]);
+// Non-XP-Share modifiers (normal toggles)
+const NORMAL_MODIFIERS = MODIFIERS.filter(m => !XP_SHARE_IDS.has(m.id));
 
 function useModifiers() {
-  const [selectedIds, setSelectedIds] = useState(new Set(DEFAULT_SELECTED));
+  // "on" | "off"
+  const [xpShareMode, setXpShareMode] = useState("on");
+  // { [id]: true } — only normal modifiers (no xp_share_*)
+  const [selectedModifiers, setSelectedModifiers] = useState({});
   const [validationError, setValidationError] = useState("");
+
+  // Effective selected map: includes xp_share_off only when mode is "off"
+  const effectiveSelected = useMemo(() => {
+    const base = { ...selectedModifiers };
+    if (xpShareMode === "off") base["xp_share_off"] = true;
+    return base;
+  }, [selectedModifiers, xpShareMode]);
+
+  const selectedCount = Object.keys(effectiveSelected).length;
 
   const totalPct = useMemo(() => {
     let sum = 0;
-    for (const id of selectedIds) {
+    for (const id of Object.keys(effectiveSelected)) {
       const mod = MODIFIERS.find(m => m.id === id);
-      // Only count non-default (noCapCount) modifiers toward Aether
-      if (mod && !mod.noCapCount) sum += mod.aetherPct;
+      if (mod) sum += mod.aetherPct;
     }
     return Math.max(-90, Math.min(200, sum));
-  }, [selectedIds]);
+  }, [effectiveSelected]);
+
+  // selectedIds set for ModifierCategorySection compatibility
+  const selectedIds = useMemo(() => new Set(Object.keys(effectiveSelected)), [effectiveSelected]);
 
   const disabledMap = useMemo(() => {
     const map = {};
     for (const mod of MODIFIERS) {
-      if (selectedIds.has(mod.id)) {
+      if (XP_SHARE_IDS.has(mod.id)) {
+        // XP share cards are handled by the radio — never disabled via normal map
         map[mod.id] = { disabled: false };
         continue;
       }
-      // Cap check (only non-default mods count)
-      if (!mod.noCapCount && capCount(selectedIds) >= MAX_MODIFIERS) {
+      if (effectiveSelected[mod.id]) {
+        map[mod.id] = { disabled: false };
+        continue;
+      }
+      if (selectedCount >= MAX_MODIFIERS) {
         map[mod.id] = { disabled: true, reason: `Maximum ${MAX_MODIFIERS} modifiers reached` };
         continue;
       }
-      // Incompatibility check
-      const clash = mod.incompatibleWith.find(otherId => selectedIds.has(otherId));
+      const clash = mod.incompatibleWith.find(id => effectiveSelected[id]);
       if (clash) {
         const clashName = MODIFIERS.find(m => m.id === clash)?.name || clash;
         map[mod.id] = { disabled: true, reason: `Incompatible with "${clashName}"` };
@@ -56,56 +69,51 @@ function useModifiers() {
       map[mod.id] = { disabled: false };
     }
     return map;
-  }, [selectedIds]);
+  }, [effectiveSelected, selectedCount]);
+
+  const setXpShare = (mode) => {
+    setValidationError("");
+    if (mode === xpShareMode) return;
+    if (mode === "off" && selectedCount >= MAX_MODIFIERS) {
+      setValidationError(`You're at the modifier cap (${MAX_MODIFIERS}). Cannot enable XP Share OFF.`);
+      return;
+    }
+    setXpShareMode(mode);
+  };
 
   const toggle = (id) => {
     setValidationError("");
+    // XP Share handled by setXpShare
+    if (XP_SHARE_IDS.has(id)) {
+      setXpShare(id === "xp_share_off" ? "off" : "on");
+      return;
+    }
     const mod = MODIFIERS.find(m => m.id === id);
     if (!mod) return;
 
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-
-      // Radio-group: selecting one deselects the other in the same group
-      if (mod.radioGroup) {
-        const siblings = MODIFIERS.filter(m => m.radioGroup === mod.radioGroup && m.id !== id);
-        if (next.has(id)) {
-          // Can't deselect a radio item directly; switch to the default sibling instead
-          const defaultSibling = siblings.find(m => m.isDefault);
-          if (defaultSibling) {
-            next.delete(id);
-            next.add(defaultSibling.id);
-          }
-          return next;
-        }
-        // Deselect all siblings, add this one
-        siblings.forEach(s => next.delete(s.id));
-        next.add(id);
+    setSelectedModifiers(prev => {
+      if (prev[id]) {
+        const next = { ...prev };
+        delete next[id];
         return next;
       }
-
-      // Normal toggle
-      if (next.has(id)) {
-        next.delete(id);
-        return next;
-      }
-      if (!mod.noCapCount && capCount(next) >= MAX_MODIFIERS) {
+      if (selectedCount >= MAX_MODIFIERS) {
         setValidationError(`You can only select up to ${MAX_MODIFIERS} modifiers.`);
         return prev;
       }
-      next.add(id);
-      return next;
+      const clash = mod.incompatibleWith.find(otherId => effectiveSelected[otherId]);
+      if (clash) {
+        const clashName = MODIFIERS.find(m => m.id === clash)?.name || clash;
+        setValidationError(`"${mod.name}" is incompatible with "${clashName}".`);
+        return prev;
+      }
+      return { ...prev, [id]: true };
     });
   };
 
-  // modifierIds for startRun: omit default/noCapCount mods (xp_share_on baseline)
-  const modifierIds = useMemo(() =>
-    [...selectedIds].filter(id => !NO_CAP_IDS.has(id)),
-  [selectedIds]);
+  const modifierIds = Object.keys(effectiveSelected);
 
-  const selectedCount = capCount(selectedIds);
-
-  return { selectedIds, totalPct, disabledMap, validationError, toggle, modifierIds, selectedCount };
+  return { selectedIds, xpShareMode, setXpShare, totalPct, disabledMap, validationError, toggle, modifierIds, selectedCount };
 }
 
 export default function Home() {
