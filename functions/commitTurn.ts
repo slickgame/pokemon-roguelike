@@ -300,18 +300,30 @@ Deno.serve(async (req) => {
 
       // ── Move ────────────────────────────────────────────────────────────────
       const { move } = action;
-      let target;
-      if (side === "player") {
-        const tIdx = action.enemyTargetIdx ?? 0;
-        target = state.enemy.active[tIdx];
-        // Retarget if fainted
-        if (!target || target.fainted) target = state.enemy.active.find(p => p && !p.fainted) ?? null;
-      } else {
-        const tIdx = action.playerTargetIdx ?? 0;
-        target = state.player.active[tIdx];
-        if (!target || target.fainted) target = state.player.active.find(p => p && !p.fainted) ?? null;
+      const targetSide = side === "player" ? "enemy" : "player";
+      const originalTargetSlot = side === "player" ? (action.enemyTargetIdx ?? 0) : (action.playerTargetIdx ?? 0);
+      let effectiveTargetSlot = originalTargetSlot;
+      let retargeted = false;
+
+      if (!isValidTarget(state, targetSide, originalTargetSlot)) {
+        const smart = chooseSmartTarget(state, poke, move, targetSide);
+        if (!smart) continue; // no valid targets at all
+        effectiveTargetSlot = smart.slot;
+        retargeted = true;
+        const targetSideState = targetSide === "enemy" ? state.enemy : state.player;
+        const newTargetName = targetSideState.active[effectiveTargetSlot]?.name ?? "???";
+        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        log.push(`Target fainted — ${attackerLabel} retargeted to ${newTargetName}!`);
       }
+
+      const targetSideState = targetSide === "enemy" ? state.enemy : state.player;
+      const target = targetSideState.active[effectiveTargetSlot];
       if (!target || target.fainted) continue;
+
+      // Store retarget info for replay/debug
+      action.originalTargetSlot = originalTargetSlot;
+      action.finalTargetSlot = effectiveTargetSlot;
+      action.wasRetargeted = retargeted;
 
       if (move.power) {
         const { dmg, typeEff } = calcDamage(poke, move, target, rng);
