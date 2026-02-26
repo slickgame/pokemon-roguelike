@@ -205,10 +205,30 @@ export default function RunMap() {
       return;
     }
 
+    // Helper: update Run.results.progress after instant-complete nodes
+    const completeNodeInProgress = async (nid) => {
+      const existingProgress = run?.results?.progress ?? {};
+      const existing = existingProgress.completedNodeIds ?? [];
+      const updatedIds = existing.includes(nid) ? existing : [...existing, nid];
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(run?.results ?? {}),
+          progress: {
+            ...existingProgress,
+            routeId: ROUTE_ID,
+            currentNodeId: nid,
+            completedNodeIds: updatedIds,
+            pendingEncounter: null,
+          },
+        },
+      });
+    };
+
     if (type === "center") {
       await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
       await runApi.appendAction(runId, "center_used", { routeId: ROUTE_ID, nodeId });
       await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
+      await completeNodeInProgress(nodeId);
       toast("Your party was fully healed! 💊", "success");
       await reload();
       return;
@@ -218,6 +238,7 @@ export default function RunMap() {
       await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
       await runApi.appendAction(runId, "shop_visited", { routeId: ROUTE_ID, nodeId, reward: "potion" });
       await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
+      await completeNodeInProgress(nodeId);
       toast("You got a Potion from the Poké Mart! 🛍", "success");
       await reload();
       return;
@@ -227,6 +248,7 @@ export default function RunMap() {
       await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
       await runApi.appendAction(runId, "event_resolved", { routeId: ROUTE_ID, nodeId, reward: "potion" });
       await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
+      await completeNodeInProgress(nodeId);
       toast(node.meta?.label === "Route Start" ? "Your journey begins!" : "Found a Potion! ✨", "success");
       await reload();
       return;
