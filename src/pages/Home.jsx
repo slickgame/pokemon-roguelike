@@ -261,6 +261,47 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Resume Run — shown if there's an active run */}
+          {activeRunLoading && (
+            <div className="h-16 flex items-center gap-2 text-white/30 text-sm">
+              <div className="animate-spin w-4 h-4 border-2 border-white/10 border-t-white/40 rounded-full" />
+              Checking for active run…
+            </div>
+          )}
+          {activeRun && !activeRunLoading && (() => {
+            const prog = activeRun.results?.progress ?? {};
+            const pe = prog.pendingEncounter ?? null;
+            const nodesCompleted = (prog.completedNodeIds ?? []).length;
+            const money = prog.money ?? 0;
+            const inv = prog.inventory ?? {};
+            const resumeUrl = pe?.battleId
+              ? `Battle?runId=${activeRun.id}&battleId=${pe.battleId}&nodeId=${pe.nodeId}&routeId=route1`
+              : `RunMap?runId=${activeRun.id}`;
+            return (
+              <div className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                  <p className="text-violet-300 font-semibold text-sm">Active Run in Progress</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-white/50">
+                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {nodesCompleted} nodes completed</span>
+                  <span className="flex items-center gap-1"><Coins className="w-3 h-3 text-amber-400" /> <span className="text-amber-300">${money}</span></span>
+                  <span className="flex items-center gap-1"><Package className="w-3 h-3" /> 💊{inv.potion ?? 0} · 💫{inv.revive ?? 0}</span>
+                  {pe && <span className="text-orange-300 flex items-center gap-1"><Swords className="w-3 h-3" /> Battle pending</span>}
+                </div>
+                <GameButton
+                  size="md"
+                  variant="primary"
+                  className="w-full"
+                  onClick={() => navigate(createPageUrl(resumeUrl))}
+                >
+                  <Play className="w-4 h-4" />
+                  Resume Run
+                </GameButton>
+              </div>
+            );
+          })()}
+
           {/* CTA */}
           <div className="flex flex-col gap-3">
             {/* Ranked toggle */}
@@ -277,7 +318,7 @@ export default function Home() {
 
             <GameButton size="xl" onClick={handleStartRun} loading={loading} className="w-full max-w-xs">
               <Swords className="w-5 h-5" />
-              Start Run
+              {activeRun ? "Start New Run" : "Start Run"}
               <ArrowRight className="w-4 h-4 ml-1" />
             </GameButton>
             <p className="text-white/25 text-xs">{runMeta}</p>
