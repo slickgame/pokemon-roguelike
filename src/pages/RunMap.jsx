@@ -10,7 +10,8 @@ import { ToastContainer, useToast } from "../components/ui/Toast";
 import RouteMapView from "../components/runmap/RouteMapView";
 import NextNodeCard from "../components/runmap/NextNodeCard";
 import NodeIcon from "../components/runmap/NodeIcon";
-import { MapPin, Heart, ShoppingBag, Sparkles, RefreshCw } from "lucide-react";
+import { MapPin, ShoppingBag, RefreshCw, Package, Coins } from "lucide-react";
+import BagModal from "../components/battle/BagModal";
 
 const ROUTE_ID = "route1";
 
@@ -85,6 +86,7 @@ export default function RunMap() {
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState(false);
   const [graph, setGraph] = useState(null);
+  const [showBag, setShowBag] = useState(false);
 
   // Reload run + actions
   const reload = useCallback(async () => {
@@ -228,7 +230,23 @@ export default function RunMap() {
       await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
       await runApi.appendAction(runId, "center_used", { routeId: ROUTE_ID, nodeId });
       await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
-      await completeNodeInProgress(nodeId);
+      // Full heal partyState
+      const existingProgress = run?.results?.progress ?? {};
+      const partyState = (existingProgress.partyState ?? []).map(p => ({
+        ...p,
+        currentHP: p.maxHP,
+        fainted: false,
+        status: null,
+        moves: p.moves.map(m => ({ ...m, pp: m.ppMax ?? m.pp })),
+      }));
+      const updatedIds = [...(existingProgress.completedNodeIds ?? [])];
+      if (!updatedIds.includes(nodeId)) updatedIds.push(nodeId);
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(run?.results ?? {}),
+          progress: { ...existingProgress, routeId: ROUTE_ID, currentNodeId: nodeId, completedNodeIds: updatedIds, pendingEncounter: null, partyState },
+        },
+      });
       toast("Your party was fully healed! 💊", "success");
       await reload();
       return;
@@ -236,11 +254,7 @@ export default function RunMap() {
 
     if (type === "shop") {
       await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
-      await runApi.appendAction(runId, "shop_visited", { routeId: ROUTE_ID, nodeId, reward: "potion" });
-      await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
-      await completeNodeInProgress(nodeId);
-      toast("You got a Potion from the Poké Mart! 🛍", "success");
-      await reload();
+      navigate(createPageUrl(`Shop?runId=${runId}&nodeId=${nodeId}`));
       return;
     }
 
