@@ -8,8 +8,9 @@ import GameButton from "../components/ui/GameButton";
 import PokemonBattleCard from "../components/battle/PokemonBattleCard";
 import CommandBuilder from "../components/battle/CommandBuilder";
 import { ToastContainer, useToast } from "../components/ui/Toast";
-import { Swords, Bug } from "lucide-react";
+import { Swords, Bug, Package, Coins } from "lucide-react";
 import ReplacementPanel from "../components/battle/ReplacementPanel";
+import BagModal from "../components/battle/BagModal";
 
 export default function Battle() {
   const navigate = useNavigate();
@@ -28,6 +29,14 @@ export default function Battle() {
   const [commands, setCommands] = useState({});
   const [showDebug, setShowDebug] = useState(false);
   const [choosing, setChoosing] = useState(false);
+  const [showBag, setShowBag] = useState(false);
+  const [run, setRun] = useState(null);
+
+  // Load run for inventory/economy display
+  useEffect(() => {
+    if (!runId) return;
+    base44.entities.Run.filter({ id: runId }).then(rows => { if (rows[0]) setRun(rows[0]); });
+  }, [runId]);
 
   // Load / reload battle state from Battle entity (persistence on refresh)
   useEffect(() => {
