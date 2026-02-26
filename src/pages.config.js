@@ -53,9 +53,9 @@ import DevPanel from './pages/DevPanel';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import Results from './pages/Results';
-import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
 import Shop from './pages/Shop';
+import RunMap from './pages/RunMap';
 import StarterSelect from './pages/StarterSelect';
 import __Layout from './Layout.jsx';
 
@@ -67,9 +67,9 @@ export const PAGES = {
     "Home": Home,
     "Leaderboard": Leaderboard,
     "Results": Results,
-    "RunMap": RunMap,
     "Seasons": Seasons,
     "Shop": Shop,
+    "RunMap": RunMap,
     "StarterSelect": StarterSelect,
 }
 
