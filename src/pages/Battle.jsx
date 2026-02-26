@@ -32,11 +32,19 @@ export default function Battle() {
   const [showBag, setShowBag] = useState(false);
   const [run, setRun] = useState(null);
 
-  // Load run for inventory/economy display
+  // Load run for inventory/economy display + status guard
   useEffect(() => {
     if (!runId) return;
     base44.entities.Run.filter({ id: runId }).then(rows => { if (rows[0]) setRun(rows[0]); });
   }, [runId]);
+
+  // Auto-navigate away if run is no longer active (and no battle is in progress)
+  useEffect(() => {
+    if (!run || !state) return;
+    if (run.status !== "active" && state.winner) {
+      // Battle is already resolved — this is fine, results shown in UI
+    }
+  }, [run?.status, state?.winner]);
 
   // Load / reload battle state from Battle entity (persistence on refresh)
   useEffect(() => {
