@@ -155,8 +155,10 @@ export default function StarterSelect() {
   const handleConfirm = async () => {
     setConfirming(true);
     try {
-      await runApi.appendAction(runId, "starter_confirm", {
-        team: picks.map(p => ({ speciesId: p.speciesId, name: p.name })),
+      // Call confirmStarters — writes starter_confirm action + initializes partyState/economy
+      await base44.functions.invoke("confirmStarters", {
+        runId,
+        pickedSpeciesIds: picks.map(p => p.speciesId),
       });
       navigate(createPageUrl(`RunMap?runId=${runId}`));
     } catch (e) {
