@@ -91,6 +91,7 @@ export default function Battle() {
       }
 
       if (newWinner) {
+        setShowBag(false); // auto-close bag/replacement modals on battle end
         toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
         // Resolve the encounter — clears pendingEncounter on Run, marks node complete
         const outcome = newWinner === "player" ? "win" : "loss";
