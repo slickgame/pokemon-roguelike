@@ -86,8 +86,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: "runId and pickedSpeciesIds (3 ids) required" }, { status: 400 });
     }
 
-    const runs = await base44.entities.Run.filter({ id: runId });
-    const run = runs[0];
+    let run;
+    try {
+      run = await base44.entities.Run.get(runId);
+    } catch (_) {
+      run = null;
+    }
     if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
     if (run.playerId !== user.id && user.role !== "admin") {
       return Response.json({ error: "Forbidden" }, { status: 403 });
