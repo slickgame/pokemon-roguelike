@@ -14,12 +14,11 @@ import { MapPin, Heart, ShoppingBag, Sparkles, RefreshCw } from "lucide-react";
 
 const ROUTE_ID = "route1";
 
-// ── Derive progression state from RunActions ──────────────────────────────────
-function deriveProgress(actions) {
-  let currentNodeId = null;
-  const completedNodeIds = [];
+// ── Derive progression state from RunActions + Run.results.progress ──────────
+function deriveProgress(actions, runProgress) {
+  let currentNodeId = runProgress?.currentNodeId ?? null;
+  const completedNodeIds = runProgress?.completedNodeIds ? [...runProgress.completedNodeIds] : [];
   let graphPayload = null;
-  let pendingBattleId = null;
   let gymDefeated = false;
   let potions = 0;
 
@@ -27,19 +26,23 @@ function deriveProgress(actions) {
     if (a.actionType === "route_generated" && a.payload?.routeId === ROUTE_ID) {
       graphPayload = a.payload.graph;
     }
-    if (a.actionType === "node_enter") {
-      currentNodeId = a.payload?.nodeId ?? currentNodeId;
-    }
-    if (a.actionType === "node_chosen") {
-      // Move to destination
-      currentNodeId = a.payload?.toNodeId ?? currentNodeId;
-    }
-    if (a.actionType === "node_completed") {
-      const nid = a.payload?.nodeId;
-      if (nid && !completedNodeIds.includes(nid)) completedNodeIds.push(nid);
-    }
-    if (a.actionType === "center_used") {
-      // healing tracked
+    // Only fall back to action-derived node tracking if no run progress stored yet
+    if (!runProgress) {
+      if (a.actionType === "node_enter") {
+        currentNodeId = a.payload?.nodeId ?? currentNodeId;
+      }
+      if (a.actionType === "node_chosen") {
+        currentNodeId = a.payload?.toNodeId ?? currentNodeId;
+      }
+      if (a.actionType === "node_completed") {
+        const nid = a.payload?.nodeId;
+        if (nid && !completedNodeIds.includes(nid)) completedNodeIds.push(nid);
+      }
+      if (a.actionType === "node_resolved" && a.payload?.outcome === "win") {
+        const nid = a.payload?.nodeId;
+        if (nid && !completedNodeIds.includes(nid)) completedNodeIds.push(nid);
+        currentNodeId = nid ?? currentNodeId;
+      }
     }
     if (a.actionType === "shop_visited" || a.actionType === "event_resolved") {
       potions += 1;
