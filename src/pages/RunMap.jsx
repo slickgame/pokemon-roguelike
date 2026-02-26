@@ -177,7 +177,7 @@ export default function RunMap() {
     const { type, tier, id: nodeId } = node;
 
     if (type === "trainer" || type === "gym") {
-      // Start a battle
+      // Start a battle and record pendingEncounter on Run
       const res = await base44.functions.invoke("startNodeBattle", {
         runId,
         nodeId,
@@ -186,6 +186,21 @@ export default function RunMap() {
         routeId: ROUTE_ID,
       });
       const { battleId } = res.data;
+
+      // Persist pendingEncounter so RunMap knows an encounter is in-flight
+      const existingProgress = run?.results?.progress ?? {};
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(run?.results ?? {}),
+          progress: {
+            ...existingProgress,
+            routeId: ROUTE_ID,
+            currentNodeId: nodeId,
+            pendingEncounter: { nodeId, nodeType: type, battleId },
+          },
+        },
+      });
+
       navigate(createPageUrl(`Battle?runId=${runId}&battleId=${battleId}&nodeId=${nodeId}&routeId=${ROUTE_ID}`));
       return;
     }
