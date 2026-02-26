@@ -227,12 +227,12 @@ Deno.serve(async (req) => {
 
     if (storedParty && storedParty.length >= 3) {
       // Hydrate from persisted state (respects HP/PP/fainted)
-      const allHydrated = storedParty.map(snap => hydrateFromPartyState(snap, _speciesMap));
+      const allHydrated = storedParty.map(snap => snap ? hydrateFromPartyState(snap, _speciesMap) : null);
 
       // Build raw active/bench from stored indices
-      const rawActive = activeIdxs.map(i => (i != null ? allHydrated[i] : null)).filter(Boolean);
+      const rawActive = activeIdxs.map(i => (i != null && allHydrated[i] ? allHydrated[i] : null)).filter(Boolean);
       const allIdxSet = new Set(activeIdxs.filter(i => i != null));
-      const rawBench  = allHydrated.filter((_, i) => !allIdxSet.has(i) && allHydrated[i]).filter(Boolean);
+      const rawBench  = allHydrated.filter((p, i) => p && !allIdxSet.has(i)).filter(Boolean);
 
       // Auto-fill fainted active slots with healthy bench mons
       const sanitized = sanitizeActives(rawActive, rawBench);
