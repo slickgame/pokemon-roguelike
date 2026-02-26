@@ -140,7 +140,9 @@ export default function RunMap() {
   );
 
   const currentNode = graph?.nodes.find(n => n.id === currentNodeId) ?? null;
-  const availableNodes = graph?.nodes.filter(n => availableNodeIds.includes(n.id)) ?? [];
+  const availableNodes = pendingEncounter
+    ? [] // block navigation while encounter is pending
+    : (graph?.nodes.filter(n => availableNodeIds.includes(n.id)) ?? []);
 
   // Navigate to results when run is finished
   useEffect(() => {
