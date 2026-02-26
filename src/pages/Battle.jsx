@@ -193,12 +193,31 @@ export default function Battle() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setShowDebug(v => !v)}
-          className="flex items-center gap-1 text-xs text-white/25 hover:text-white/50 transition-colors"
-        >
-          <Bug className="w-3 h-3" /> Debug
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-xl">
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-amber-300 font-bold text-xs">${money}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-xl text-xs text-white/60">
+            💊{inventory.potion ?? 0} · 💫{inventory.revive ?? 0}
+          </div>
+          {!winner && (
+            <button
+              onClick={() => setShowBag(true)}
+              disabled={committing}
+              className="flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1.5 rounded-xl text-violet-300 text-xs hover:bg-violet-500/20 transition-colors disabled:opacity-40"
+            >
+              <Package className="w-3.5 h-3.5" />
+              Bag
+            </button>
+          )}
+          <button
+            onClick={() => setShowDebug(v => !v)}
+            className="flex items-center gap-1 text-xs text-white/25 hover:text-white/50 transition-colors"
+          >
+            <Bug className="w-3 h-3" /> Debug
+          </button>
+        </div>
       </div>
 
       {/* Debug panel */}
