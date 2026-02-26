@@ -464,6 +464,16 @@ export default function RunMap() {
         </button>
       </div>
 
+      {showBag && (
+        <BagModal
+          inventory={inventory}
+          party={partyForBag}
+          onUse={handleBagUse}
+          onClose={() => setShowBag(false)}
+          context="map"
+        />
+      )}
+
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
