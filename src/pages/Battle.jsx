@@ -356,6 +356,16 @@ export default function Battle() {
         />
       )}
 
+      {showBag && (
+        <BagModal
+          inventory={inventory}
+          party={allPartyForBag}
+          onUse={handleBagUseInBattle}
+          onClose={() => setShowBag(false)}
+          context="battle"
+        />
+      )}
+
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
