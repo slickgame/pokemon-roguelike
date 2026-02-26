@@ -86,6 +86,33 @@ function buildMoveset(species) {
   return moves;
 }
 
+// ── Sanitize player actives: replace fainted active slots with healthy bench ──
+// Works on the battle-ready active/bench arrays (not partyState snapshots).
+// Returns { active, bench } with fainted slots filled from bench if possible.
+function sanitizeActives(active, bench) {
+  const newActive = [...active];
+  const newBench  = [...bench];
+
+  for (let i = 0; i < newActive.length; i++) {
+    const p = newActive[i];
+    const needsSwap = !p || p.fainted || (p.currentHp ?? 0) <= 0;
+    if (!needsSwap) continue;
+
+    // Find first healthy bench candidate
+    const benchIdx = newBench.findIndex(b => b && !b.fainted && (b.currentHp ?? 0) > 0);
+    if (benchIdx !== -1) {
+      // Swap: put bench mon into active slot, put fainted (or null) into bench
+      const incoming = newBench[benchIdx];
+      newBench[benchIdx] = newActive[i]; // fainted goes to bench
+      newActive[i] = incoming;
+    } else {
+      newActive[i] = null; // no healthy bench mon — empty slot
+    }
+  }
+
+  return { active: newActive, bench: newBench };
+}
+
 // ── Build Pokémon from species + level (fresh, used for enemies) ──────────────
 function buildFreshPokemon(species, level, subSeed) {
   const rng = makeRng(subSeed);
