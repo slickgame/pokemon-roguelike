@@ -211,11 +211,9 @@ Deno.serve(async (req) => {
     const benchCount = Math.min(activeCount, 2);
     const trainerName = TIER_TRAINER_NAME[resolvedTier] ?? "Trainer";
 
-    // ── Player team: hydrate from partyState (set by confirmStarters) ───────
+    // ── Player team: hydrate from partyState or init fresh ──────────────────
     const existingProgress = run.results?.progress ?? {};
-    // Support both new layout (party + activeIdxs) and legacy (flat array idx 0-2=active)
-    const storedParty   = existingProgress.party ?? existingProgress.partyState ?? null;
-    const activeIdxs    = existingProgress.activeIdxs ?? [0, 1, 2];
+    const existingPartyState = existingProgress.partyState ?? null;
 
     const playerBenchPool = deterministicShuffle(
       allowedSpecies.filter(s => !pickedIds.includes(s.id)),
@@ -224,22 +222,25 @@ Deno.serve(async (req) => {
 
     let playerActive;
     let playerBench;
+    let newPartyState = null;
 
-    if (storedParty && storedParty.length >= 3) {
+    if (existingPartyState && existingPartyState.length >= 3) {
       // Hydrate from persisted state (respects HP/PP/fainted)
-      const allHydrated = storedParty.map(snap => snap ? hydrateFromPartyState(snap, _speciesMap) : null);
-
-      // Build raw active/bench from stored indices
-      const rawActive = activeIdxs.map(i => (i != null && allHydrated[i] ? allHydrated[i] : null)).filter(Boolean);
-      const allIdxSet = new Set(activeIdxs.filter(i => i != null));
-      const rawBench  = allHydrated.filter((p, i) => p && !allIdxSet.has(i)).filter(Boolean);
-
+      const allHydrated = existingPartyState.map(snap => hydrateFromPartyState(snap, _speciesMap)).filter(Boolean);
+      const rawActive = allHydrated.slice(0, 3);
+      const rawBench  = allHydrated.slice(3, 6);
       // Auto-fill fainted active slots with healthy bench mons
       const sanitized = sanitizeActives(rawActive, rawBench);
       playerActive = sanitized.active;
       playerBench  = sanitized.bench;
+      // Pad if needed
+      while (playerActive.filter(Boolean).length < 3) {
+        const extra = playerBenchPool[playerActive.length];
+        if (!extra) break;
+        playerActive.push(buildFreshPokemon(extra, 5, `${run.seed}:player:extra:${playerActive.length}`));
+      }
     } else {
-      // Fallback: init fresh (should not happen if confirmStarters ran)
+      // Init fresh
       playerActive = pickedIds.slice(0, 3).map((sid, i) => {
         const sp = getSpeciesById(sid);
         if (!sp) return null;
@@ -248,6 +249,8 @@ Deno.serve(async (req) => {
       playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
         buildFreshPokemon(sp, 5, `${run.seed}:player:bench:${i}:${sp.id}`)
       );
+      // Save initialized party state so future battles can persist it
+      newPartyState = initPartyState(pickedIds, playerBenchPool.slice(0, 3), run.seed);
     }
 
     // ── Enemy team ───────────────────────────────────────────────────────────
@@ -280,10 +283,13 @@ Deno.serve(async (req) => {
       state: battleState, startedAt: new Date().toISOString(),
     });
 
-    // Persist updated party layout (sanitized activeIdxs → flat party array, indices 0-2 active)
-    {
-      const allForPersist = [...playerActive, ...playerBench].filter(Boolean);
-      const updatedParty = allForPersist.map(poke => ({
+    // Persist partyState: either the freshly-initialized one, or the
+    // re-ordered one (active slots swapped due to sanitization).
+    if (newPartyState || (existingPartyState && existingPartyState.length >= 3)) {
+      // Rebuild partyState snapshots from the (possibly sanitized) hydrated mons
+      // so that activeIdxs order is reflected in the stored array (indices 0-2 = active)
+      const allHydratedForPersist = [...playerActive, ...playerBench].filter(Boolean);
+      const updatedPartyState = newPartyState ?? allHydratedForPersist.map(poke => ({
         speciesId: poke.speciesId,
         name: poke.name,
         level: poke.level ?? 5,
@@ -293,19 +299,13 @@ Deno.serve(async (req) => {
         status: poke.status ?? null,
         moves: (poke.moves ?? []).map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
       }));
-      const newActiveIdxs = [0, 1, 2].slice(0, playerActive.filter(Boolean).length);
-      while (newActiveIdxs.length < 3) newActiveIdxs.push(null);
-      const newBenchIdxs = allForPersist.slice(3).map((_, i) => i + 3);
 
       await base44.asServiceRole.entities.Run.update(runId, {
         results: {
           ...(run.results ?? {}),
           progress: {
             ...existingProgress,
-            party: updatedParty,
-            partyState: updatedParty, // keep legacy alias in sync
-            activeIdxs: newActiveIdxs,
-            benchIdxs: newBenchIdxs,
+            partyState: updatedPartyState,
             money: existingProgress.money ?? 0,
             inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
           },

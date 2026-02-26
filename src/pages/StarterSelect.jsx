@@ -104,7 +104,6 @@ export default function StarterSelect() {
     setActionLoading(true);
 
     try {
-      // Log the pick action (individual picks logged separately; confirm done via confirmStarters)
       await runApi.appendAction(runId, "starter_pick", {
         step: STEP_LABELS[currentStep],
         speciesId: selectedCandidate.speciesId,
@@ -156,10 +155,8 @@ export default function StarterSelect() {
   const handleConfirm = async () => {
     setConfirming(true);
     try {
-      // Call confirmStarters — writes starter_confirm action + initializes partyState/economy
-      await base44.functions.invoke("confirmStarters", {
-        runId,
-        pickedSpeciesIds: picks.map(p => p.speciesId),
+      await runApi.appendAction(runId, "starter_confirm", {
+        team: picks.map(p => ({ speciesId: p.speciesId, name: p.name })),
       });
       navigate(createPageUrl(`RunMap?runId=${runId}`));
     } catch (e) {
