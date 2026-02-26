@@ -321,9 +321,16 @@ export default function RunMap() {
             : availableNodes.length === 1 ? "Next Node" : `Choose a Path (${availableNodes.length} options)`}
         </p>
 
-        {isInUncompletedNode && !completedNodeIds.includes(currentNodeId) && (
-          <div className="text-center py-6 text-white/30 text-sm">
+        {pendingEncounter && (
+          <div className="text-center py-6 text-white/30 text-sm space-y-2">
             <p>Complete your current encounter to continue.</p>
+            <GameButton
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${pendingEncounter.battleId}&nodeId=${pendingEncounter.nodeId}&routeId=${ROUTE_ID}`))}
+            >
+              Return to Battle
+            </GameButton>
           </div>
         )}
 
