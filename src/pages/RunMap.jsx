@@ -146,6 +146,9 @@ export default function RunMap() {
     ? [] // block navigation while encounter is pending
     : (graph?.nodes.filter(n => availableNodeIds.includes(n.id)) ?? []);
 
+  // Guard: if run is not active, show friendly message
+  const runInactive = run && run.status !== "active";
+
   // Navigate to results when run is finished
   useEffect(() => {
     if (!run) return;

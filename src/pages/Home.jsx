@@ -9,7 +9,7 @@ import { ToastContainer, useToast } from "../components/ui/Toast";
 import ModifierCategorySection from "../components/modifiers/ModifierCategorySection";
 import ModifierSummaryBar from "../components/modifiers/ModifierSummaryBar";
 import { MODIFIERS, MODIFIER_CATEGORIES, MAX_MODIFIERS } from "../components/modifiers/modifiersConfig";
-import { Swords, Zap, Shield, Star, ArrowRight, LogIn } from "lucide-react";
+import { Swords, Zap, Shield, Star, ArrowRight, LogIn, Play, MapPin, Coins, Package } from "lucide-react";
 
 // XP Share IDs — handled separately as a radio, not stored in selectedModifiers
 const XP_SHARE_IDS = new Set(["xp_share_on", "xp_share_off"]);
