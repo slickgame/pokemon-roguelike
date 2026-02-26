@@ -1,40 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { loadDbBundle, getSpeciesById, getMoveById } from './db.js';
 
-// ── DB Bundle (mirrors components/db/dbLoader — single source of truth shape) ─
-const SPECIES = [
-  { id: 1,  name: "Bulbasaur",  types: ["grass","poison"],  baseStats: { hp:45, atk:49, def:49, spa:65, spd:65, spe:45 }, abilities: ["overgrow"],    learnset: ["tackle","growl","vine_whip"] },
-  { id: 4,  name: "Charmander", types: ["fire"],            baseStats: { hp:39, atk:52, def:43, spa:60, spd:50, spe:65 }, abilities: ["blaze"],       learnset: ["scratch","growl","ember"] },
-  { id: 7,  name: "Squirtle",   types: ["water"],           baseStats: { hp:44, atk:48, def:65, spa:50, spd:64, spe:43 }, abilities: ["torrent"],     learnset: ["tackle","tail_whip","water_gun"] },
-  { id: 10, name: "Caterpie",   types: ["bug"],             baseStats: { hp:45, atk:30, def:35, spa:20, spd:20, spe:45 }, abilities: ["shield_dust"], learnset: ["tackle","string_shot"] },
-  { id: 25, name: "Pikachu",    types: ["electric"],        baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"],     learnset: ["thunder_shock","growl","quick_attack"] },
-];
-
-const MOVES = [
-  { id: "tackle",        name: "Tackle",       type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
-  { id: "scratch",       name: "Scratch",      type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
-  { id: "ember",         name: "Ember",        type: "fire",     category: "special",  power: 40,   accuracy: 100, pp: 25, priority: 0, target: "single" },
-  { id: "growl",         name: "Growl",        type: "normal",   category: "status",   power: null, accuracy: 100, pp: 40, priority: 0, target: "all_opponents" },
-  { id: "vine_whip",     name: "Vine Whip",    type: "grass",    category: "physical", power: 45,   accuracy: 100, pp: 25, priority: 0, target: "single" },
-  { id: "water_gun",     name: "Water Gun",    type: "water",    category: "special",  power: 40,   accuracy: 100, pp: 25, priority: 0, target: "single" },
-  { id: "thunder_shock", name: "ThunderShock", type: "electric", category: "special",  power: 40,   accuracy: 100, pp: 30, priority: 0, target: "single" },
-  { id: "quick_attack",  name: "Quick Attack", type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 30, priority: 1, target: "single" },
-  { id: "string_shot",   name: "String Shot",  type: "bug",      category: "status",   power: null, accuracy: 95,  pp: 40, priority: 0, target: "all_opponents" },
-  { id: "tail_whip",     name: "Tail Whip",    type: "normal",   category: "status",   power: null, accuracy: 100, pp: 30, priority: 0, target: "all_opponents" },
-];
-
-const MVP_CONFIG = {
-  allowedSpeciesIds: [1, 4, 7, 10, 25],
-};
+const { species: SPECIES, mvpConfig: MVP_CONFIG } = loadDbBundle();
 
 const NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const MOVES_MAP = {};
-for (const m of MOVES) MOVES_MAP[m.id] = m;
-
-const SPECIES_MAP = {};
-for (const s of SPECIES) SPECIES_MAP[s.id] = s;
-
+// ── RNG helpers ───────────────────────────────────────────────────────────────
 function hashString(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
@@ -59,32 +30,40 @@ function deterministicShuffle(arr, rng) {
   return out;
 }
 
-/** Build move list from species learnset: tackle + first STAB move, else growl */
+// ── Move list builder (from db learnset) ──────────────────────────────────────
 function buildMovesForSpecies(species) {
   const learnset = species.learnset ?? [];
   const result = [];
 
-  // Always include tackle (or scratch as fallback normal move)
+  // 1. Normal attacking move (tackle or scratch)
   const normal = learnset.find(id => id === "tackle" || id === "scratch");
-  if (normal && MOVES_MAP[normal]) result.push({ ...MOVES_MAP[normal], currentPp: MOVES_MAP[normal].pp });
+  if (normal) {
+    const m = getMoveById(normal);
+    if (m) result.push({ ...m, currentPp: m.pp });
+  }
 
-  // Find first STAB move (type matches species primary type, has power, not already added)
+  // 2. STAB move (matches primary type, has power, not already added)
   const primaryType = species.types[0];
-  const stab = learnset.find(id => {
-    const m = MOVES_MAP[id];
+  const stabId = learnset.find(id => {
+    const m = getMoveById(id);
     return m && m.type === primaryType && m.power && !result.some(r => r.id === id);
   });
-  if (stab) {
-    result.push({ ...MOVES_MAP[stab], currentPp: MOVES_MAP[stab].pp });
+  if (stabId) {
+    const m = getMoveById(stabId);
+    if (m) result.push({ ...m, currentPp: m.pp });
   } else {
-    // fallback: growl if in learnset
-    const growl = learnset.find(id => id === "growl" && MOVES_MAP[id] && !result.some(r => r.id === id));
-    if (growl) result.push({ ...MOVES_MAP[growl], currentPp: MOVES_MAP[growl].pp });
+    // fallback: growl
+    const growlId = learnset.find(id => id === "growl" && !result.some(r => r.id === id));
+    if (growlId) {
+      const m = getMoveById(growlId);
+      if (m) result.push({ ...m, currentPp: m.pp });
+    }
   }
 
   return result;
 }
 
+// ── Pokémon builder ───────────────────────────────────────────────────────────
 function buildPokemon(species, level, subSeed) {
   const rng = makeRng(subSeed);
   const nature = NATURES[rngInt(rng, NATURES.length)];
@@ -111,7 +90,7 @@ function buildPokemon(species, level, subSeed) {
   };
 }
 
-// Tier config
+// ── Tier config ───────────────────────────────────────────────────────────────
 const TIER_LEVEL        = { weak: 5, avg: 6, skilled: 7, boss: 9 };
 const TIER_ACTIVE_COUNT = { weak: 1, avg: 2, skilled: 3, boss: 3 };
 const TIER_TRAINER_NAME = { weak: "Youngster", avg: "Lass", skilled: "Ace Trainer", boss: "Gym Leader Brock" };
@@ -131,16 +110,13 @@ Deno.serve(async (req) => {
     if (run.playerId !== user.id && user.role !== "admin")
       return Response.json({ error: "Forbidden" }, { status: 403 });
 
-    // Get confirmed starters from RunActions
+    // Confirmed starters
     const actions = await base44.asServiceRole.entities.RunAction.filter({ runId });
     actions.sort((a, b) => a.idx - b.idx);
 
-    const pickedIds = [];
-    for (const a of actions) {
-      if (a.actionType === "starter_pick" && a.payload?.speciesId) {
-        pickedIds.push(Number(a.payload.speciesId));
-      }
-    }
+    const pickedIds = actions
+      .filter(a => a.actionType === "starter_pick" && a.payload?.speciesId)
+      .map(a => Number(a.payload.speciesId));
     const hasConfirm = actions.some(a => a.actionType === "starter_confirm");
     if (!hasConfirm || pickedIds.length < 3) {
       return Response.json({ error: "Starters not confirmed" }, { status: 400 });
@@ -152,11 +128,10 @@ Deno.serve(async (req) => {
     const benchCount = Math.min(activeCount, 2);
     const trainerName = TIER_TRAINER_NAME[tier] ?? "Trainer";
 
-    // ── Player team (full HP rebuild from confirmed starters) ──────────────────
+    // ── Player team ──────────────────────────────────────────────────────────
     const playerActive = pickedIds.slice(0, 3).map((sid, i) => {
-      const sp = SPECIES_MAP[sid];
-      if (!sp) return null;
-      return buildPokemon(sp, 5, `${run.seed}:player:active:${i}:${sid}`);
+      const sp = getSpeciesById(sid);
+      return sp ? buildPokemon(sp, 5, `${run.seed}:player:active:${i}:${sid}`) : null;
     }).filter(Boolean);
 
     const playerBenchPool = deterministicShuffle(
@@ -166,31 +141,31 @@ Deno.serve(async (req) => {
     const playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
       buildPokemon(sp, 5, `${run.seed}:player:bench:${i}:${sp.id}`)
     );
-
     while (playerActive.length < 3) {
       const extra = playerBenchPool[playerActive.length];
       if (!extra) break;
       playerActive.push(buildPokemon(extra, 5, `${run.seed}:player:extra:${playerActive.length}`));
     }
 
-    // ── Enemy team: select from allowedSpeciesIds, excluding player picks ──────
+    // ── Enemy team: from allowedSpeciesIds ───────────────────────────────────
     const enemySeed = `${run.seed}:${routeId ?? "route1"}:${nodeId}:enemy`;
     const enemyRng = makeRng(enemySeed);
 
-    const allowed = MVP_CONFIG.allowedSpeciesIds.map(id => SPECIES_MAP[id]).filter(Boolean);
-    const enemyPool = deterministicShuffle(
-      isGym ? allowed : allowed.filter(s => !pickedIds.includes(s.id)),
-      enemyRng
-    );
-    // Pad if needed
-    const fullPool = enemyPool.length >= activeCount + benchCount
-      ? enemyPool
-      : deterministicShuffle(allowed, makeRng(enemySeed + ":pad"));
+    const allowedSpecies = MVP_CONFIG.allowedSpeciesIds.map(id => getSpeciesById(id)).filter(Boolean);
+    const candidatePool = isGym
+      ? allowedSpecies
+      : allowedSpecies.filter(s => !pickedIds.includes(s.id));
 
-    const enemyActive = fullPool.slice(0, activeCount).map((sp, i) =>
+    let enemyPool = deterministicShuffle(candidatePool, enemyRng);
+    if (enemyPool.length < activeCount + benchCount) {
+      // pad with full allowed pool if needed
+      enemyPool = deterministicShuffle(allowedSpecies, makeRng(enemySeed + ":pad"));
+    }
+
+    const enemyActive = enemyPool.slice(0, activeCount).map((sp, i) =>
       buildPokemon(sp, level, `${enemySeed}:active:${i}:${sp.id}`)
     );
-    const enemyBench = fullPool.slice(activeCount, activeCount + benchCount).map((sp, i) =>
+    const enemyBench = enemyPool.slice(activeCount, activeCount + benchCount).map((sp, i) =>
       buildPokemon(sp, level, `${enemySeed}:bench:${i}:${sp.id}`)
     );
 
@@ -214,7 +189,7 @@ Deno.serve(async (req) => {
       startedAt: new Date().toISOString(),
     });
 
-    // Log node_enter action
+    // Log node_enter
     const currentRun = (await base44.asServiceRole.entities.Run.filter({ id: runId }))[0];
     const nextIdx = (currentRun?.nextActionIdx ?? 0) + 1;
     await Promise.all([
