@@ -104,6 +104,7 @@ export default function StarterSelect() {
     setActionLoading(true);
 
     try {
+      // Log the pick action (individual picks logged separately; confirm done via confirmStarters)
       await runApi.appendAction(runId, "starter_pick", {
         step: STEP_LABELS[currentStep],
         speciesId: selectedCandidate.speciesId,
