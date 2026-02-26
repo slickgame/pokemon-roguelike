@@ -233,9 +233,9 @@ function validateItem(cmd, state, inventory) {
   return null;
 }
 
-// ── Convert battle state → partyState snapshot ───────────────────────────────
+// ── Convert battle state → party snapshot (flat, 0-2=active, 3-5=bench) ─────
 function extractPartyState(playerSide) {
-  const allPokes = [...playerSide.active, ...playerSide.bench];
+  const allPokes = [...playerSide.active, ...playerSide.bench].filter(Boolean);
   return allPokes.map(p => ({
     speciesId: p.speciesId,
     name: p.name,
