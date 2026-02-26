@@ -122,6 +122,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [isRanked, setIsRanked] = useState(false);
   const [season, setSeason] = useState(null);
+  const [activeRun, setActiveRun] = useState(null);
+  const [activeRunLoading, setActiveRunLoading] = useState(false);
   const { toasts, toast, dismiss } = useToast();
   const { selectedIds, xpShareMode, setXpShare, totalPct, disabledMap, validationError, toggle, modifierIds, selectedCount } = useModifiers();
 
@@ -130,6 +132,16 @@ export default function Home() {
       .then(res => setSeason(res.data))
       .catch(() => {});
   }, []);
+
+  // Load most recent active run for this player
+  useEffect(() => {
+    if (!player) return;
+    setActiveRunLoading(true);
+    base44.entities.Run.filter({ status: "active" }, "-created_date", 1)
+      .then(rows => setActiveRun(rows[0] ?? null))
+      .catch(() => setActiveRun(null))
+      .finally(() => setActiveRunLoading(false));
+  }, [player?.id]);
 
   const handleStartRun = async () => {
     if (!player) return;
