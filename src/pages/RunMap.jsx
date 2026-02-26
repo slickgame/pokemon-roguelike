@@ -233,21 +233,29 @@ export default function RunMap() {
       await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
       await runApi.appendAction(runId, "center_used", { routeId: ROUTE_ID, nodeId });
       await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
-      // Full heal partyState
+      // Full heal partyState — restore HP, PP, status, fainted
       const existingProgress = run?.results?.progress ?? {};
-      const partyState = (existingProgress.partyState ?? []).map(p => ({
+      const healed = (existingProgress.partyState ?? existingProgress.party ?? []).map(p => ({
         ...p,
         currentHP: p.maxHP,
         fainted: false,
         status: null,
-        moves: p.moves.map(m => ({ ...m, pp: m.ppMax ?? m.pp })),
+        moves: (p.moves ?? []).map(m => ({ ...m, pp: m.ppMax ?? m.pp })),
       }));
       const updatedIds = [...(existingProgress.completedNodeIds ?? [])];
       if (!updatedIds.includes(nodeId)) updatedIds.push(nodeId);
       await base44.entities.Run.update(runId, {
         results: {
           ...(run?.results ?? {}),
-          progress: { ...existingProgress, routeId: ROUTE_ID, currentNodeId: nodeId, completedNodeIds: updatedIds, pendingEncounter: null, partyState },
+          progress: {
+            ...existingProgress,
+            routeId: ROUTE_ID,
+            currentNodeId: nodeId,
+            completedNodeIds: updatedIds,
+            pendingEncounter: null,
+            partyState: healed,
+            party: healed,
+          },
         },
       });
       toast("Your party was fully healed! 💊", "success");
