@@ -211,9 +211,11 @@ Deno.serve(async (req) => {
     const benchCount = Math.min(activeCount, 2);
     const trainerName = TIER_TRAINER_NAME[resolvedTier] ?? "Trainer";
 
-    // ── Player team: hydrate from partyState or init fresh ──────────────────
+    // ── Player team: hydrate from partyState (set by confirmStarters) ───────
     const existingProgress = run.results?.progress ?? {};
-    const existingPartyState = existingProgress.partyState ?? null;
+    // Support both new layout (party + activeIdxs) and legacy (flat array idx 0-2=active)
+    const storedParty   = existingProgress.party ?? existingProgress.partyState ?? null;
+    const activeIdxs    = existingProgress.activeIdxs ?? [0, 1, 2];
 
     const playerBenchPool = deterministicShuffle(
       allowedSpecies.filter(s => !pickedIds.includes(s.id)),
@@ -222,25 +224,22 @@ Deno.serve(async (req) => {
 
     let playerActive;
     let playerBench;
-    let newPartyState = null;
 
-    if (existingPartyState && existingPartyState.length >= 3) {
+    if (storedParty && storedParty.length >= 3) {
       // Hydrate from persisted state (respects HP/PP/fainted)
-      const allHydrated = existingPartyState.map(snap => hydrateFromPartyState(snap, _speciesMap)).filter(Boolean);
-      const rawActive = allHydrated.slice(0, 3);
-      const rawBench  = allHydrated.slice(3, 6);
+      const allHydrated = storedParty.map(snap => hydrateFromPartyState(snap, _speciesMap));
+
+      // Build raw active/bench from stored indices
+      const rawActive = activeIdxs.map(i => (i != null ? allHydrated[i] : null)).filter(Boolean);
+      const allIdxSet = new Set(activeIdxs.filter(i => i != null));
+      const rawBench  = allHydrated.filter((_, i) => !allIdxSet.has(i) && allHydrated[i]).filter(Boolean);
+
       // Auto-fill fainted active slots with healthy bench mons
       const sanitized = sanitizeActives(rawActive, rawBench);
       playerActive = sanitized.active;
       playerBench  = sanitized.bench;
-      // Pad if needed
-      while (playerActive.filter(Boolean).length < 3) {
-        const extra = playerBenchPool[playerActive.length];
-        if (!extra) break;
-        playerActive.push(buildFreshPokemon(extra, 5, `${run.seed}:player:extra:${playerActive.length}`));
-      }
     } else {
-      // Init fresh
+      // Fallback: init fresh (should not happen if confirmStarters ran)
       playerActive = pickedIds.slice(0, 3).map((sid, i) => {
         const sp = getSpeciesById(sid);
         if (!sp) return null;
@@ -249,8 +248,6 @@ Deno.serve(async (req) => {
       playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
         buildFreshPokemon(sp, 5, `${run.seed}:player:bench:${i}:${sp.id}`)
       );
-      // Save initialized party state so future battles can persist it
-      newPartyState = initPartyState(pickedIds, playerBenchPool.slice(0, 3), run.seed);
     }
 
     // ── Enemy team ───────────────────────────────────────────────────────────
