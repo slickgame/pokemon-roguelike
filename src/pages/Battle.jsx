@@ -286,7 +286,9 @@ export default function Battle() {
           <p className="text-[10px] uppercase tracking-widest text-violet-400/70 font-semibold mb-2">Your Active</p>
           <div className="space-y-1.5">
             {playerActive.map((poke, i) => (
-              <PokemonBattleCard key={i} poke={poke} slot={i} side="player" isActive={true} />
+              poke
+                ? <PokemonBattleCard key={i} poke={poke} slot={i} side="player" isActive={true} />
+                : <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/2 text-white/20 text-xs">Empty slot</div>
             ))}
           </div>
           {playerBench.length > 0 && (
