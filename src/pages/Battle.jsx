@@ -85,6 +85,10 @@ export default function Battle() {
       setTurnNumber(data.turnNumber);
       const newWinner = data.winner ?? null;
       setWinner(newWinner);
+      // Refresh inventory from updated run
+      if (data.updatedInventory) {
+        setRun(r => r ? { ...r, results: { ...(r.results ?? {}), progress: { ...(r.results?.progress ?? {}), inventory: data.updatedInventory } } } : r);
+      }
 
       if (newWinner) {
         toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
