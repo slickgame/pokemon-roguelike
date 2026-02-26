@@ -283,14 +283,29 @@ Deno.serve(async (req) => {
       state: battleState, startedAt: new Date().toISOString(),
     });
 
-    // If we initialized partyState for the first time, persist it
-    if (newPartyState) {
+    // Persist partyState: either the freshly-initialized one, or the
+    // re-ordered one (active slots swapped due to sanitization).
+    if (newPartyState || (existingPartyState && existingPartyState.length >= 3)) {
+      // Rebuild partyState snapshots from the (possibly sanitized) hydrated mons
+      // so that activeIdxs order is reflected in the stored array (indices 0-2 = active)
+      const allHydratedForPersist = [...playerActive, ...playerBench].filter(Boolean);
+      const updatedPartyState = newPartyState ?? allHydratedForPersist.map(poke => ({
+        speciesId: poke.speciesId,
+        name: poke.name,
+        level: poke.level ?? 5,
+        currentHP: poke.currentHp ?? 0,
+        maxHP: poke.maxHp ?? 1,
+        fainted: poke.fainted ?? false,
+        status: poke.status ?? null,
+        moves: (poke.moves ?? []).map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
+      }));
+
       await base44.asServiceRole.entities.Run.update(runId, {
         results: {
           ...(run.results ?? {}),
           progress: {
             ...existingProgress,
-            partyState: newPartyState,
+            partyState: updatedPartyState,
             money: existingProgress.money ?? 0,
             inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
           },
