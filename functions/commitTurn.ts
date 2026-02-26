@@ -476,6 +476,9 @@ Deno.serve(async (req) => {
 
     // ── Extract partyState for persistence ────────────────────────────────────
     const partyState = extractPartyState(state.player);
+    // active slots are first 3 entries in the flat array after extraction
+    const activeIdxs = [0, 1, 2].map(i => partyState[i] ? i : null);
+    const benchIdxs  = partyState.slice(3).map((_, i) => i + 3);
 
     // ── Persist battle + run (inventory + partyState) ─────────────────────────
     const existingProgress = run.results?.progress ?? {};
@@ -483,6 +486,9 @@ Deno.serve(async (req) => {
       ...existingProgress,
       inventory: { ...(existingProgress.inventory ?? {}), ...inventory },
       partyState,
+      party: partyState,   // keep new layout field in sync
+      activeIdxs,
+      benchIdxs,
     };
 
     await Promise.all([
