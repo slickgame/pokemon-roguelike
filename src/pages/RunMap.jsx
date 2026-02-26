@@ -248,9 +248,8 @@ export default function RunMap() {
     </div>
   );
 
-  const isAtStartNode = !currentNodeId || (currentNodeId === startNodeId && !completedNodeIds.includes(startNodeId));
-  const isInUncompletedNode = currentNodeId && !completedNodeIds.includes(currentNodeId);
-  const battlesWon = actions.filter(a => a.actionType === "battle_end" && a.payload?.summary?.winner === "player").length;
+  const isInUncompletedNode = pendingEncounter !== null || (currentNodeId && !completedNodeIds.includes(currentNodeId));
+  const battlesWon = actions.filter(a => a.actionType === "node_resolved" && a.payload?.outcome === "win").length;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
