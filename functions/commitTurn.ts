@@ -458,6 +458,11 @@ Deno.serve(async (req) => {
     if (playerAllFainted) { winner = "enemy";  log.push("All your Pokémon fainted! You lost!"); }
     if (enemyAllFainted)  { winner = "player"; log.push("All enemy Pokémon fainted! You won!"); }
 
+    // If battle is over, clear any pending replacement — no replacement needed when game ends
+    if (winner) {
+      state.pendingReplacement = null;
+    }
+
     const rngUsed = rng.getCallCount();
     state.winner = winner;
     state.turnLog = log;
