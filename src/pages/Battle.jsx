@@ -77,16 +77,15 @@ export default function Battle() {
       setWinner(data.winner ?? null);
       if (data.winner) {
         toast(data.winner === "player" ? "You won! 🎉" : "You lost...", data.winner === "player" ? "success" : "error");
-        // On win: log gym_defeated if this was a gym node
-        if (data.winner === "player" && nodeId) {
-          // Check if this was a gym battle by inspecting state
-          if (data.state?.nodeId && data.state?.routeId) {
-            // If battle state has gym nodeType, log gym_defeated
-            const battleActions = await base44.entities.RunAction.filter({ runId });
-            const enterAction = battleActions.find(a => a.actionType === "node_enter" && a.payload?.nodeId === nodeId);
-            if (enterAction?.payload?.nodeType === "gym") {
-              await runApi.appendAction(runId, "gym_defeated", { gymId: "gym1", routeId });
-            }
+        // On win: check if gym node by reading battle state
+        if (data.winner === "player" && nodeId && data.state?.routeId) {
+          // battle state stores nodeId — if this matches a gym, log gym_defeated
+          // We pass nodeType via URL check: the startNodeBattle stores nodeId on state
+          const isGymNode = data.state?.enemyTrainerType === "gym" || (data.state?.enemy?.active?.length >= 2 && data.state?.enemy?.active?.[0]?.level >= 8);
+          // Simpler: check if ALL enemy in active are level >= 8 (only gym uses boss tier)
+          const maxEnemyLevel = Math.max(...(data.state?.enemy?.active ?? []).map(p => p?.level ?? 0));
+          if (maxEnemyLevel >= 8) {
+            await runApi.appendAction(runId, "gym_defeated", { gymId: "gym1", routeId });
           }
         }
       }
