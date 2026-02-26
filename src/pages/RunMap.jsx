@@ -142,32 +142,13 @@ export default function RunMap() {
   const currentNode = graph?.nodes.find(n => n.id === currentNodeId) ?? null;
   const availableNodes = graph?.nodes.filter(n => availableNodeIds.includes(n.id)) ?? [];
 
-  // Check if we just returned from a battle — mark node complete if needed
+  // Navigate to results when run is finished
   useEffect(() => {
-    if (!graph || !actions.length) return;
-
-    // Count player-won battles vs node_completed actions
-    const wonBattles = actions.filter(a => a.actionType === "battle_end" && a.payload?.summary?.winner === "player");
-    const nodeCompleted = actions.filter(a => a.actionType === "node_completed");
-
-    if (wonBattles.length > nodeCompleted.length && currentNodeId) {
-      runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId: currentNodeId })
-        .then(() => reload())
-        .catch(() => {});
-    }
-  }, [actions.length]);
-
-  // Navigate to results after gym_defeated is logged and run finished
-  useEffect(() => {
-    if (!gymDefeated || !run) return;
+    if (!run) return;
     if (run.status === "finished") {
       navigate(createPageUrl(`Results?runId=${runId}`));
-    } else {
-      runApi.finishRun(runId, { winner: "player", gymDefeated: true })
-        .then(() => navigate(createPageUrl(`Results?runId=${runId}`)))
-        .catch(() => {});
     }
-  }, [gymDefeated, run?.status]);
+  }, [run?.status]);
 
   // ── Node selection ───────────────────────────────────────────────────────────
   const handleNodeChoose = async (node) => {
