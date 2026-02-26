@@ -286,19 +286,79 @@ export default function RunMap() {
 
   const isInUncompletedNode = pendingEncounter !== null || (currentNodeId && !completedNodeIds.includes(currentNodeId));
   const battlesWon = actions.filter(a => a.actionType === "node_resolved" && a.payload?.outcome === "win").length;
+  const money = runProgress?.money ?? 0;
+  const inventory = runProgress?.inventory ?? { potion: 0, revive: 0 };
+  const partyForBag = (runProgress?.partyState ?? []);
+
+  const handleBagUse = async (itemId, partyIndex) => {
+    const party = runProgress?.partyState ?? [];
+    const poke = party[partyIndex];
+    if (!poke) throw new Error("No pokémon at that index");
+
+    const POTION_HEAL = 20;
+    let amountHealed = 0;
+    const updatedParty = party.map((p, i) => {
+      if (i !== partyIndex) return p;
+      if (itemId === "potion" && !p.fainted && p.currentHP < p.maxHP) {
+        amountHealed = Math.min(POTION_HEAL, p.maxHP - p.currentHP);
+        return { ...p, currentHP: p.currentHP + amountHealed };
+      }
+      if (itemId === "revive" && p.fainted) {
+        const halfHp = Math.floor(p.maxHP * 0.5);
+        amountHealed = halfHp;
+        return { ...p, currentHP: halfHp, fainted: false, status: null };
+      }
+      return p;
+    });
+
+    const existingProgress = runProgress ?? {};
+    const inv = { ...inventory };
+    inv[itemId] = Math.max(0, (inv[itemId] ?? 0) - 1);
+
+    await base44.entities.Run.update(runId, {
+      results: {
+        ...(run?.results ?? {}),
+        progress: { ...existingProgress, partyState: updatedParty, inventory: inv },
+      },
+    });
+    await runApi.appendAction(runId, "item_used", {
+      context: "map", itemId, targetPartyIndex: partyIndex, amountHealed,
+    });
+    await reload();
+    toast(`Used ${itemId} on ${poke.name}!`, "success");
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20">
-          <MapPin className="w-5 h-5 text-violet-400" />
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20">
+            <MapPin className="w-5 h-5 text-violet-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-white">Route 1</h1>
+            <p className="text-white/40 text-xs">
+              {completedNodeIds.length} nodes completed · {battlesWon} battles won
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-black text-white">Route 1</h1>
-          <p className="text-white/40 text-xs">
-            {completedNodeIds.length} nodes completed · {battlesWon} battles won · {potions} potions
-          </p>
+        <div className="flex items-center gap-2">
+          {/* Economy HUD */}
+          <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-xl">
+            <Coins className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-amber-300 font-bold text-xs">${money}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-xl text-xs text-white/60">
+            💊{inventory.potion ?? 0} · 💫{inventory.revive ?? 0}
+          </div>
+          <button
+            onClick={() => setShowBag(true)}
+            className="flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1.5 rounded-xl text-violet-300 text-xs hover:bg-violet-500/20 transition-colors"
+          >
+            <Package className="w-3.5 h-3.5" />
+            Bag
+          </button>
         </div>
       </div>
 
