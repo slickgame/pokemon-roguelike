@@ -280,13 +280,10 @@ Deno.serve(async (req) => {
       state: battleState, startedAt: new Date().toISOString(),
     });
 
-    // Persist partyState: either the freshly-initialized one, or the
-    // re-ordered one (active slots swapped due to sanitization).
-    if (newPartyState || (existingPartyState && existingPartyState.length >= 3)) {
-      // Rebuild partyState snapshots from the (possibly sanitized) hydrated mons
-      // so that activeIdxs order is reflected in the stored array (indices 0-2 = active)
-      const allHydratedForPersist = [...playerActive, ...playerBench].filter(Boolean);
-      const updatedPartyState = newPartyState ?? allHydratedForPersist.map(poke => ({
+    // Persist updated party layout (sanitized activeIdxs → flat party array, indices 0-2 active)
+    {
+      const allForPersist = [...playerActive, ...playerBench].filter(Boolean);
+      const updatedParty = allForPersist.map(poke => ({
         speciesId: poke.speciesId,
         name: poke.name,
         level: poke.level ?? 5,
@@ -296,13 +293,19 @@ Deno.serve(async (req) => {
         status: poke.status ?? null,
         moves: (poke.moves ?? []).map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
       }));
+      const newActiveIdxs = [0, 1, 2].slice(0, playerActive.filter(Boolean).length);
+      while (newActiveIdxs.length < 3) newActiveIdxs.push(null);
+      const newBenchIdxs = allForPersist.slice(3).map((_, i) => i + 3);
 
       await base44.asServiceRole.entities.Run.update(runId, {
         results: {
           ...(run.results ?? {}),
           progress: {
             ...existingProgress,
-            partyState: updatedPartyState,
+            party: updatedParty,
+            partyState: updatedParty, // keep legacy alias in sync
+            activeIdxs: newActiveIdxs,
+            benchIdxs: newBenchIdxs,
             money: existingProgress.money ?? 0,
             inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
           },
