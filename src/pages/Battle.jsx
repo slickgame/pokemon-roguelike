@@ -167,6 +167,7 @@ export default function Battle() {
         setRun(r => r ? { ...r, results: { ...(r.results ?? {}), progress: { ...(r.results?.progress ?? {}), inventory: data.updatedInventory } } } : r);
       }
       if (newWinner) {
+        setShowBag(false);
         toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
         await base44.functions.invoke("resolveEncounterFromBattle", { runId, battleId, outcome: newWinner === "player" ? "win" : "loss" });
       }
