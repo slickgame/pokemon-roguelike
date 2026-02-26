@@ -74,20 +74,14 @@ export default function Battle() {
       const data = res.data;
       setState(data.state);
       setTurnNumber(data.turnNumber);
-      setWinner(data.winner ?? null);
-      if (data.winner) {
-        toast(data.winner === "player" ? "You won! 🎉" : "You lost...", data.winner === "player" ? "success" : "error");
-        // On win: check if gym node by reading battle state
-        if (data.winner === "player" && nodeId && data.state?.routeId) {
-          // battle state stores nodeId — if this matches a gym, log gym_defeated
-          // We pass nodeType via URL check: the startNodeBattle stores nodeId on state
-          const isGymNode = data.state?.enemyTrainerType === "gym" || (data.state?.enemy?.active?.length >= 2 && data.state?.enemy?.active?.[0]?.level >= 8);
-          // Simpler: check if ALL enemy in active are level >= 8 (only gym uses boss tier)
-          const maxEnemyLevel = Math.max(...(data.state?.enemy?.active ?? []).map(p => p?.level ?? 0));
-          if (maxEnemyLevel >= 8) {
-            await runApi.appendAction(runId, "gym_defeated", { gymId: "gym1", routeId });
-          }
-        }
+      const newWinner = data.winner ?? null;
+      setWinner(newWinner);
+
+      if (newWinner) {
+        toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
+        // Resolve the encounter — clears pendingEncounter on Run, marks node complete
+        const outcome = newWinner === "player" ? "win" : "loss";
+        await base44.functions.invoke("resolveEncounterFromBattle", { runId, battleId, outcome });
       }
     } catch (e) {
       toast(e.response?.data?.error || e.message || "Failed to commit turn", "error");
