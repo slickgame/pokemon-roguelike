@@ -1,25 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// Modifier tag lookup (mirrored from computeRunResults)
+// Modifier tag lookup (mirrors finishRun registry)
 const MODIFIER_TAGS = {
-  permadeath: ["difficulty", "hardcore", "permadeath"],
-  xp_share_off: ["difficulty"],
-  enemy_iv_floor_10: ["difficulty"],
-  type_diversity_soft: ["ruleset"],
-  type_diversity_hard: ["ruleset"],
-  cull_rank_1: ["ruleset"],
-  cull_rank_1_2: ["ruleset"],
+  permadeath:            ["difficulty", "hardcore", "permadeath"],
+  xp_share_off:          ["difficulty"],
+  enemy_iv_floor_10:     ["difficulty"],
+  type_diversity_soft:   ["ruleset"],
+  type_diversity_hard:   ["ruleset"],
+  cull_rank_1:           ["ruleset"],
+  cull_rank_1_2:         ["ruleset"],
   starter_pool_expand_5: ["economy"],
-  starter_rerolls_3: ["economy"],
-  kanto_starter_direct: ["economy"],
-  start_money_300: ["economy"],
-  start_money_600: ["economy"],
-  xp_share_on: [],
+  starter_rerolls_3:     ["economy"],
+  kanto_starter_direct:  ["economy"],
+  start_money_300:       ["economy"],
+  start_money_600:       ["economy"],
+  xp_share_on:           [],
 };
 
-function getModifierTags(modifiers = {}) {
+function getModifierTags(modifiers) {
   const tags = new Set();
-  for (const id of Object.keys(modifiers)) {
+  for (const id of Object.keys(modifiers ?? {})) {
     if (!modifiers[id]) continue;
     for (const t of (MODIFIER_TAGS[id] ?? [])) tags.add(t);
   }
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
 
     // Determine category
     const tags = getModifierTags(run.modifiers ?? {});
-    const category = tags.has("hardcore") || tags.has("permadeath") ? "hardcore" : "standard";
+    const category = (tags.has("hardcore") || tags.has("permadeath")) ? "hardcore" : "standard";
 
     // Load current season
     const seasonRes = await base44.functions.invoke("getCurrentSeason", {});
