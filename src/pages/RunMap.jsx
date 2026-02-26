@@ -104,11 +104,15 @@ export default function RunMap() {
     reload().finally(() => setLoading(false));
   }, [runId]);
 
-  // Derive progress from actions
+  // Derive progress — prefer Run.results.progress as source of truth, fall back to actions
+  const runProgress = run?.results?.progress ?? null;
   const { currentNodeId, completedNodeIds, graphPayload, gymDefeated, potions } = useMemo(
-    () => deriveProgress(actions),
-    [actions]
+    () => deriveProgress(actions, runProgress),
+    [actions, runProgress]
   );
+
+  // pendingEncounter from Run.results.progress (set by resolveEncounterFromBattle / startNodeBattle)
+  const pendingEncounter = runProgress?.pendingEncounter ?? null;
 
   // Build or restore graph
   useEffect(() => {
