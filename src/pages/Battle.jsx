@@ -347,7 +347,7 @@ export default function Battle() {
         </GameCard>
       </div>
 
-      {pendingReplacement && playerBench.some(p => p && !p.fainted && p.currentHp > 0) && (
+      {!winner && pendingReplacement && playerBench.some(p => p && !p.fainted && p.currentHp > 0) && (
         <ReplacementPanel
           pendingReplacement={pendingReplacement}
           playerBench={playerBench}
