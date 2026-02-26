@@ -287,6 +287,20 @@ export default function RunMap() {
     </div>
   );
 
+  if (runInactive) return (
+    <div className="max-w-lg mx-auto px-4 py-12 text-center space-y-4">
+      <GameCard className="py-10 space-y-4">
+        <p className="text-white/60 text-lg font-semibold">This run has ended</p>
+        <p className="text-white/30 text-sm">Status: <span className="text-amber-400">{run.status}</span></p>
+        <div className="flex gap-2 justify-center">
+          <GameButton variant="secondary" size="md" onClick={() => navigate(createPageUrl(`Results?runId=${runId}`))}>View Results</GameButton>
+          <GameButton variant="primary" size="md" onClick={() => navigate(createPageUrl("Home"))}>Return Home</GameButton>
+        </div>
+      </GameCard>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
+    </div>
+  );
+
   const isInUncompletedNode = pendingEncounter !== null || (currentNodeId && !completedNodeIds.includes(currentNodeId));
   const battlesWon = actions.filter(a => a.actionType === "node_resolved" && a.payload?.outcome === "win").length;
   const money = runProgress?.money ?? 0;
