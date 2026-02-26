@@ -1,9 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// ── DB Bundle (mirrors components/db/dbLoader exactly) ────────────────────────
-// NOTE: Deno functions are deployed independently and cannot import local files.
-// This data is the single source of truth — keep in sync with dbLoader.js.
-
+// ── DB Bundle (mirrors components/db/dbLoader) ────────────────────────────────
 const DB_SPECIES = [
   { id: 1,  name: "Bulbasaur",  types: ["grass","poison"],  baseStats: { hp:45, atk:49, def:49, spa:65, spd:65, spe:45 }, abilities: ["overgrow"],    learnset: ["tackle","growl","vine_whip"] },
   { id: 4,  name: "Charmander", types: ["fire"],            baseStats: { hp:39, atk:52, def:43, spa:60, spd:50, spe:65 }, abilities: ["blaze"],       learnset: ["scratch","growl","ember"] },
@@ -11,7 +8,6 @@ const DB_SPECIES = [
   { id: 10, name: "Caterpie",   types: ["bug"],             baseStats: { hp:45, atk:30, def:35, spa:20, spd:20, spe:45 }, abilities: ["shield_dust"], learnset: ["tackle","string_shot"] },
   { id: 25, name: "Pikachu",    types: ["electric"],        baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"],     learnset: ["thunder_shock","growl","quick_attack"] },
 ];
-
 const DB_MOVES = [
   { id: "tackle",        name: "Tackle",       type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
   { id: "scratch",       name: "Scratch",      type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
@@ -24,20 +20,14 @@ const DB_MOVES = [
   { id: "string_shot",   name: "String Shot",  type: "bug",      category: "status",   power: null, accuracy: 95,  pp: 40, priority: 0, target: "all_opponents" },
   { id: "tail_whip",     name: "Tail Whip",    type: "normal",   category: "status",   power: null, accuracy: 100, pp: 30, priority: 0, target: "all_opponents" },
 ];
-
-const MVP_CONFIG = {
-  allowedSpeciesIds: [1, 4, 7, 10, 25],
-};
+const MVP_CONFIG = { allowedSpeciesIds: [1, 4, 7, 10, 25] };
 
 const NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
-// ── DB Lookups ────────────────────────────────────────────────────────────────
 const _speciesMap = {};
 for (const s of DB_SPECIES) _speciesMap[s.id] = s;
-
 const _movesMap = {};
 for (const m of DB_MOVES) _movesMap[m.id] = m;
-
 function getSpeciesById(id) { return _speciesMap[id] ?? null; }
 function getMoveById(id)    { return _movesMap[id] ?? null; }
 
@@ -67,12 +57,9 @@ function deterministicShuffle(arr, rng) {
 }
 
 // ── Move selection from learnset ─────────────────────────────────────────────
-// Returns move objects with currentPp set. Always tries: tackle, 1 STAB move, growl fallback.
 function buildMoveset(species) {
   const learnset = species.learnset ?? [];
   const moves = [];
-
-  // 1. Always include tackle (or scratch as normal physical fallback)
   const normalPhysical = learnset.find(id => {
     const m = getMoveById(id);
     return m && m.type === "normal" && m.category === "physical" && m.power;
@@ -81,8 +68,6 @@ function buildMoveset(species) {
     const m = getMoveById(normalPhysical);
     moves.push({ ...m, currentPp: m.pp });
   }
-
-  // 2. STAB move (non-normal type matching species primary type, with power)
   const primaryType = species.types[0];
   if (primaryType !== "normal") {
     const stabId = learnset.find(id => {
@@ -94,20 +79,15 @@ function buildMoveset(species) {
       moves.push({ ...m, currentPp: m.pp });
     }
   }
-
-  // 3. If we only have 1 move (or 0), add growl as filler
   if (moves.length < 2) {
     const growl = getMoveById("growl");
-    if (growl && learnset.includes("growl")) {
-      moves.push({ ...growl, currentPp: growl.pp });
-    }
+    if (growl && learnset.includes("growl")) moves.push({ ...growl, currentPp: growl.pp });
   }
-
   return moves;
 }
 
-// ── Pokémon builder ───────────────────────────────────────────────────────────
-function buildPokemon(species, level, subSeed) {
+// ── Build Pokémon from species + level (fresh, used for enemies) ──────────────
+function buildFreshPokemon(species, level, subSeed) {
   const rng = makeRng(subSeed);
   const nature = NATURES[rngInt(rng, NATURES.length)];
   const abilityId = species.abilities[rngInt(rng, species.abilities.length)];
@@ -115,30 +95,58 @@ function buildPokemon(species, level, subSeed) {
   const moves = buildMoveset(species);
   const hp = Math.floor((2 * species.baseStats.hp * level) / 100) + level + 10;
   return {
-    speciesId: species.id,
-    name: species.name,
-    types: species.types,
-    level,
-    nature,
-    abilityId,
-    shiny,
+    speciesId: species.id, name: species.name, types: species.types, level, nature, abilityId, shiny,
     ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
-    baseStats: species.baseStats,
-    maxHp: hp,
-    currentHp: hp,
-    status: null,
-    statusTurns: 0,
-    moves,
-    fainted: false,
+    baseStats: species.baseStats, maxHp: hp, currentHp: hp,
+    status: null, statusTurns: 0, moves, fainted: false,
   };
 }
 
-// ── Tier config ───────────────────────────────────────────────────────────────
+// ── Hydrate player Pokémon from partyState snapshot ───────────────────────────
+function hydrateFromPartyState(partySnap, speciesMap) {
+  const sp = speciesMap[partySnap.speciesId];
+  if (!sp) return null;
+  const moves = (partySnap.moves ?? []).map(m => {
+    const dbMove = getMoveById(m.id);
+    if (!dbMove) return null;
+    return { ...dbMove, currentPp: m.pp, pp: m.ppMax ?? dbMove.pp };
+  }).filter(Boolean);
+  if (moves.length === 0) moves.push(...buildMoveset(sp));
+  return {
+    speciesId: sp.id, name: sp.name, types: sp.types, level: partySnap.level ?? 5,
+    nature: "Hardy", abilityId: sp.abilities[0], shiny: false,
+    ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
+    baseStats: sp.baseStats,
+    maxHp: partySnap.maxHP,
+    currentHp: partySnap.fainted ? 0 : partySnap.currentHP,
+    status: partySnap.status ?? null, statusTurns: 0,
+    moves,
+    fainted: partySnap.fainted ?? false,
+  };
+}
+
+// ── Initialize partyState for a fresh run ─────────────────────────────────────
+function initPartyState(pickedIds, benchSpecies, seed) {
+  const allSpecies = [
+    ...pickedIds.map((sid, i) => ({ sid, seed: `${seed}:player:active:${i}:${sid}`, level: 5 })),
+    ...benchSpecies.map((sp, i) => ({ sid: sp.id, seed: `${seed}:player:bench:${i}:${sp.id}`, level: 5 })),
+  ];
+  return allSpecies.map(({ sid, seed: subSeed, level }) => {
+    const sp = _speciesMap[sid];
+    if (!sp) return null;
+    const poke = buildFreshPokemon(sp, level, subSeed);
+    return {
+      speciesId: poke.speciesId, name: poke.name, level: poke.level,
+      currentHP: poke.maxHp, maxHP: poke.maxHp, fainted: false, status: null,
+      moves: poke.moves.map(m => ({ id: m.id, pp: m.pp, ppMax: m.pp })),
+    };
+  }).filter(Boolean);
+}
+
 const TIER_LEVEL        = { weak: 5, avg: 6, skilled: 7, boss: 9 };
 const TIER_ACTIVE_COUNT = { weak: 1, avg: 2, skilled: 3, boss: 3 };
 const TIER_TRAINER_NAME = { weak: "Youngster", avg: "Camper", skilled: "Ace Trainer", boss: "Gym Leader Brock" };
 
-// ── Handler ───────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -154,7 +162,6 @@ Deno.serve(async (req) => {
     if (run.playerId !== user.id && user.role !== "admin")
       return Response.json({ error: "Forbidden" }, { status: 403 });
 
-    // Get player starters from RunActions
     const actions = await base44.asServiceRole.entities.RunAction.filter({ runId });
     actions.sort((a, b) => a.idx - b.idx);
 
@@ -169,77 +176,96 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Starters not confirmed" }, { status: 400 });
     }
 
-    const isGym       = nodeType === "gym" || tier === "boss";
-    const resolvedTier = tier ?? (isGym ? "boss" : "weak");
-    const level        = TIER_LEVEL[resolvedTier] ?? TIER_LEVEL.weak;
-    const activeCount  = TIER_ACTIVE_COUNT[resolvedTier] ?? 1;
-    const benchCount   = Math.min(activeCount, 2);
-    const trainerName  = TIER_TRAINER_NAME[resolvedTier] ?? "Trainer";
-
-    // ── Player team ──────────────────────────────────────────────────────────
-    const playerActive = pickedIds.slice(0, 3).map((sid, i) => {
-      const sp = getSpeciesById(sid);
-      if (!sp) return null;
-      return buildPokemon(sp, 5, `${run.seed}:player:active:${i}:${sid}`);
-    }).filter(Boolean);
-
     const allowedSpecies = MVP_CONFIG.allowedSpeciesIds.map(id => getSpeciesById(id)).filter(Boolean);
+    const isGym = nodeType === "gym" || tier === "boss";
+    const resolvedTier = tier ?? (isGym ? "boss" : "weak");
+    const level = TIER_LEVEL[resolvedTier] ?? TIER_LEVEL.weak;
+    const activeCount = TIER_ACTIVE_COUNT[resolvedTier] ?? 1;
+    const benchCount = Math.min(activeCount, 2);
+    const trainerName = TIER_TRAINER_NAME[resolvedTier] ?? "Trainer";
+
+    // ── Player team: hydrate from partyState or init fresh ──────────────────
+    const existingProgress = run.results?.progress ?? {};
+    const existingPartyState = existingProgress.partyState ?? null;
+
     const playerBenchPool = deterministicShuffle(
       allowedSpecies.filter(s => !pickedIds.includes(s.id)),
       makeRng(`${run.seed}:player:bench_select`)
     );
-    const playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
-      buildPokemon(sp, 5, `${run.seed}:player:bench:${i}:${sp.id}`)
-    );
+
+    let playerActive;
+    let playerBench;
+    let newPartyState = null;
+
+    if (existingPartyState && existingPartyState.length >= 3) {
+      // Hydrate from persisted state (respects HP/PP/fainted)
+      const allHydrated = existingPartyState.map(snap => hydrateFromPartyState(snap, _speciesMap)).filter(Boolean);
+      playerActive = allHydrated.slice(0, 3);
+      playerBench  = allHydrated.slice(3, 6);
+      // Pad if needed
+      while (playerActive.length < 3) {
+        const extra = playerBenchPool[playerActive.length];
+        if (!extra) break;
+        playerActive.push(buildFreshPokemon(extra, 5, `${run.seed}:player:extra:${playerActive.length}`));
+      }
+    } else {
+      // Init fresh
+      playerActive = pickedIds.slice(0, 3).map((sid, i) => {
+        const sp = getSpeciesById(sid);
+        if (!sp) return null;
+        return buildFreshPokemon(sp, 5, `${run.seed}:player:active:${i}:${sid}`);
+      }).filter(Boolean);
+      playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
+        buildFreshPokemon(sp, 5, `${run.seed}:player:bench:${i}:${sp.id}`)
+      );
+      // Save initialized party state so future battles can persist it
+      newPartyState = initPartyState(pickedIds, playerBenchPool.slice(0, 3), run.seed);
+    }
 
     // ── Enemy team ───────────────────────────────────────────────────────────
     const enemySeed = `${run.seed}:${routeId ?? "route1"}:${nodeId}:enemy`;
     const enemyRng  = makeRng(enemySeed);
-
     const enemyPool = deterministicShuffle(
       allowedSpecies.filter(s => !pickedIds.includes(s.id)),
       enemyRng
     );
-    // If pool too small (player picked all), allow overlapping
     const fullPool = enemyPool.length >= activeCount + benchCount
       ? enemyPool
       : deterministicShuffle([...allowedSpecies], makeRng(`${enemySeed}:fallback`));
 
-    const enemyActiveSpecies = fullPool.slice(0, activeCount);
-    const enemyBenchSpecies  = fullPool.slice(activeCount, activeCount + benchCount);
-
-    const enemyActive = enemyActiveSpecies.map((sp, i) =>
-      buildPokemon(sp, level, `${enemySeed}:active:${i}:${sp.id}`)
+    const enemyActive = fullPool.slice(0, activeCount).map((sp, i) =>
+      buildFreshPokemon(sp, level, `${enemySeed}:active:${i}:${sp.id}`)
     );
-    const enemyBench = enemyBenchSpecies.map((sp, i) =>
-      buildPokemon(sp, level, `${enemySeed}:bench:${i}:${sp.id}`)
+    const enemyBench = fullPool.slice(activeCount, activeCount + benchCount).map((sp, i) =>
+      buildFreshPokemon(sp, level, `${enemySeed}:bench:${i}:${sp.id}`)
     );
-
-    // Pad player active to 3 slots
-    while (playerActive.length < 3) {
-      const extra = playerBenchPool[playerActive.length];
-      if (!extra) break;
-      playerActive.push(buildPokemon(extra, 5, `${run.seed}:player:extra:${playerActive.length}`));
-    }
 
     const battleState = {
       player: { active: playerActive, bench: playerBench },
       enemy:  { active: enemyActive,  bench: enemyBench, trainerName },
-      turnLog: [],
-      rngCallCount: 0,
-      winner: null,
-      enemySwitchUsed: false,
-      nodeId,
-      routeId: routeId ?? "route1",
+      turnLog: [], rngCallCount: 0, winner: null, enemySwitchUsed: false,
+      nodeId, routeId: routeId ?? "route1",
     };
 
     const battle = await base44.entities.Battle.create({
-      runId,
-      status: "active",
-      turnNumber: 0,
-      state: battleState,
-      startedAt: new Date().toISOString(),
+      runId, status: "active", turnNumber: 0,
+      state: battleState, startedAt: new Date().toISOString(),
     });
+
+    // If we initialized partyState for the first time, persist it
+    if (newPartyState) {
+      await base44.asServiceRole.entities.Run.update(runId, {
+        results: {
+          ...(run.results ?? {}),
+          progress: {
+            ...existingProgress,
+            partyState: newPartyState,
+            money: existingProgress.money ?? 0,
+            inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
+          },
+        },
+      });
+    }
 
     // Log node_enter action
     const currentRun = (await base44.asServiceRole.entities.Run.filter({ id: runId }))[0];

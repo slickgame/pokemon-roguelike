@@ -56,6 +56,7 @@ import Results from './pages/Results';
 import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
 import StarterSelect from './pages/StarterSelect';
+import Shop from './pages/Shop';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +70,7 @@ export const PAGES = {
     "RunMap": RunMap,
     "Seasons": Seasons,
     "StarterSelect": StarterSelect,
+    "Shop": Shop,
 }
 
 export const pagesConfig = {
