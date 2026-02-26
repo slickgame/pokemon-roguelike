@@ -8,18 +8,17 @@ const DB_SPECIES = [
   { id: 25, name: "Pikachu",    types: ["electric"],        baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"],     learnset: ["thunder_shock","growl","quick_attack"] },
 ];
 const DB_MOVES = [
-  { id: "tackle",        name: "Tackle",       type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35 },
-  { id: "scratch",       name: "Scratch",      type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35 },
-  { id: "ember",         name: "Ember",        type: "fire",     category: "special",  power: 40,   accuracy: 100, pp: 25 },
-  { id: "growl",         name: "Growl",        type: "normal",   category: "status",   power: null, accuracy: 100, pp: 40 },
-  { id: "vine_whip",     name: "Vine Whip",    type: "grass",    category: "physical", power: 45,   accuracy: 100, pp: 25 },
-  { id: "water_gun",     name: "Water Gun",    type: "water",    category: "special",  power: 40,   accuracy: 100, pp: 25 },
-  { id: "thunder_shock", name: "ThunderShock", type: "electric", category: "special",  power: 40,   accuracy: 100, pp: 30 },
-  { id: "quick_attack",  name: "Quick Attack", type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 30 },
-  { id: "string_shot",   name: "String Shot",  type: "bug",      category: "status",   power: null, accuracy: 95,  pp: 40 },
-  { id: "tail_whip",     name: "Tail Whip",    type: "normal",   category: "status",   power: null, accuracy: 100, pp: 30 },
+  { id: "tackle",        pp: 35 },
+  { id: "scratch",       pp: 35 },
+  { id: "ember",         pp: 25 },
+  { id: "growl",         pp: 40 },
+  { id: "vine_whip",     pp: 25 },
+  { id: "water_gun",     pp: 25 },
+  { id: "thunder_shock", pp: 30 },
+  { id: "quick_attack",  pp: 30 },
+  { id: "string_shot",   pp: 40 },
+  { id: "tail_whip",     pp: 30 },
 ];
-
 const _speciesMap = {};
 for (const s of DB_SPECIES) _speciesMap[s.id] = s;
 const _movesMap = {};
@@ -52,28 +51,21 @@ function deterministicShuffle(arr, rng) {
 function buildMoveset(species) {
   const learnset = species.learnset ?? [];
   const moves = [];
-  const normalPhysical = learnset.find(id => {
+  const physNormal = learnset.find(id => {
     const m = _movesMap[id];
-    return m && m.type === "normal" && m.category === "physical" && m.power;
+    return m && ["tackle","scratch","quick_attack"].includes(id);
   });
-  if (normalPhysical) {
-    const m = _movesMap[normalPhysical];
-    moves.push({ id: m.id, pp: m.pp, ppMax: m.pp });
-  }
+  if (physNormal) moves.push({ id: physNormal, pp: _movesMap[physNormal]?.pp ?? 35, ppMax: _movesMap[physNormal]?.pp ?? 35 });
+
   const primaryType = species.types[0];
-  if (primaryType !== "normal") {
-    const stabId = learnset.find(id => {
-      const m = _movesMap[id];
-      return m && m.type === primaryType && m.power;
-    });
-    if (stabId) {
-      const m = _movesMap[stabId];
-      moves.push({ id: m.id, pp: m.pp, ppMax: m.pp });
-    }
+  const stabMoves = { grass:"vine_whip", fire:"ember", water:"water_gun", electric:"thunder_shock", bug:"string_shot" };
+  const stabId = stabMoves[primaryType];
+  if (stabId && learnset.includes(stabId) && stabId !== physNormal) {
+    const pp = _movesMap[stabId]?.pp ?? 25;
+    moves.push({ id: stabId, pp, ppMax: pp });
   }
-  if (moves.length < 2) {
-    const growl = _movesMap["growl"];
-    if (growl && learnset.includes("growl")) moves.push({ id: "growl", pp: growl.pp, ppMax: growl.pp });
+  if (moves.length < 2 && learnset.includes("growl")) {
+    moves.push({ id: "growl", pp: 40, ppMax: 40 });
   }
   return moves;
 }
@@ -88,7 +80,8 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { runId, pickedSpeciesIds } = await req.json();
+    const body = await req.json();
+    const { runId, pickedSpeciesIds } = body;
     if (!runId || !Array.isArray(pickedSpeciesIds) || pickedSpeciesIds.length !== 3) {
       return Response.json({ error: "runId and pickedSpeciesIds (3 ids) required" }, { status: 400 });
     }
@@ -106,19 +99,19 @@ Deno.serve(async (req) => {
     const LEVEL = 5;
     const pickedIds = pickedSpeciesIds.map(Number);
 
-    // Build bench pool deterministically (same as startNodeBattle)
+    // Bench pool: same deterministic shuffle as startNodeBattle
     const benchPool = deterministicShuffle(
       DB_SPECIES.filter(s => !pickedIds.includes(s.id)),
       makeRng(`${run.seed}:player:bench_select`)
     ).slice(0, 3);
 
-    // Build party array: indices 0-2 = actives, 3-5 = bench
+    // Flat party: indices 0-2 = actives, 3-5 = bench
     const partyEntries = [
       ...pickedIds.map((sid, i) => ({ sid, subSeed: `${run.seed}:player:active:${i}:${sid}` })),
       ...benchPool.map((sp, i) => ({ sid: sp.id, subSeed: `${run.seed}:player:bench:${i}:${sp.id}` })),
     ];
 
-    const party = partyEntries.map(({ sid, subSeed }) => {
+    const party = partyEntries.map(({ sid }) => {
       const sp = _speciesMap[sid];
       if (!sp) return null;
       const maxHp = calcMaxHp(sp, LEVEL);
@@ -135,25 +128,24 @@ Deno.serve(async (req) => {
     }).filter(Boolean);
 
     const initialProgress = {
-      party,             // flat array, 0-2 active, 3-5 bench
+      party,
       activeIdxs: [0, 1, 2],
       benchIdxs:  [3, 4, 5],
+      partyState: party, // legacy alias
       money: 0,
       inventory: { potion: 0, revive: 0 },
-      partyState: party, // alias used by legacy hydration in startNodeBattle
       completedNodeIds: [],
       currentNodeId: null,
       pendingEncounter: null,
     };
 
-    // Write starter_confirm action + initialize progress atomically
     const currentIdx = run.nextActionIdx ?? 0;
     await Promise.all([
       base44.entities.RunAction.create({
         runId,
         idx: currentIdx,
         actionType: "starter_confirm",
-        payload: { team: pickedIds.map(sid => ({ speciesId: sid, name: _speciesMap[sid]?.name ?? sid })) },
+        payload: { team: pickedIds.map(sid => ({ speciesId: sid, name: _speciesMap[sid]?.name ?? String(sid) })) },
       }),
       base44.entities.Run.update(runId, {
         nextActionIdx: currentIdx + 1,
