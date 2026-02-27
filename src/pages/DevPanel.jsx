@@ -19,6 +19,8 @@ export default function DevPanel() {
   const [loadingInspect, setLoadingInspect] = useState(false);
   const [loadingAutoConfirm, setLoadingAutoConfirm] = useState(false);
   const [loadingRecent, setLoadingRecent] = useState(false);
+  const [loadingReconcile, setLoadingReconcile] = useState(false);
+  const [reconcileResult, setReconcileResult] = useState(null);
   const [runSummary, setRunSummary] = useState(null);
   const [toast, setToast] = useState(null);
   const [battleError, setBattleError] = useState(null);
