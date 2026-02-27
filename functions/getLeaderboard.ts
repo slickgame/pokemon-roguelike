@@ -14,18 +14,16 @@ Deno.serve(async (req) => {
     );
 
     if (entries.length > 0) {
-      // Enrich with player display names
-      const uniquePlayerIds = [...new Set(entries.map(e => e.playerId).filter(Boolean))];
-      const playerMap = {};
-      if (uniquePlayerIds.length > 0) {
-        const players = await base44.asServiceRole.entities.Player.filter({});
-        for (const p of players) {
-          if (p.id) playerMap[p.id] = p.displayName;
+      // Enrich with player display names via per-id fetch
+      const enriched = await Promise.all(entries.map(async (e) => {
+        let playerName = e.playerNameSnapshot || null;
+        if (!playerName && e.playerId) {
+          try {
+            const p = await base44.asServiceRole.entities.Player.get(e.playerId);
+            if (p?.displayName) playerName = p.displayName;
+          } catch (_) { /* ignore */ }
         }
-      }
-      const enriched = entries.map(e => ({
-        ...e,
-        playerName: playerMap[e.playerId] || "Unknown Trainer",
+        return { ...e, playerName: playerName || "Unknown Trainer" };
       }));
       return Response.json({ entries: enriched });
     }
