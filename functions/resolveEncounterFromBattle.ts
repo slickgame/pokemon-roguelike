@@ -173,15 +173,11 @@ Deno.serve(async (req) => {
         const finishIdx = gymIdx + 1;
         await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } });
 
-        await Promise.all([
-          base44.entities.Run.update(runId, {
-            status: 'finished', endedAt: nowIso, nextActionIdx: finishIdx,
-            results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'player', gymDefeated: true, resultsSummary, finalizedAt: nowIso },
-          }),
-          base44.asServiceRole.entities.Player.update(run.playerId, {
-            aether: ((await base44.asServiceRole.entities.Player.get(run.playerId))?.aether ?? 0) + resultsSummary.aetherEarned,
-          }),
-        ]);
+        const playerAetherAfter = await awardAether(base44, run, resultsSummary.aetherEarned);
+        await base44.entities.Run.update(runId, {
+          status: 'finished', endedAt: nowIso, nextActionIdx: finishIdx,
+          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'player', gymDefeated: true, resultsSummary, finalizedAt: nowIso, aetherAwarded: true, aetherDelta: resultsSummary.aetherEarned, playerAetherAfter },
+        });
       }
     } else {
       // loss — persist final party state + compute resultsSummary + award aether
