@@ -98,7 +98,7 @@ export default function Leaderboard() {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-white/80 text-sm font-medium truncate">
-                  {entry.playerId?.slice(0, 16) || "Unknown"}
+                  {entry.playerName || entry.playerId?.slice(0, 16) || "Unknown"}
                 </p>
                 {entry.modifiers && Object.keys(entry.modifiers).filter(k => entry.modifiers[k]).length > 0 && (
                   <p className="text-white/25 text-[10px] truncate">
