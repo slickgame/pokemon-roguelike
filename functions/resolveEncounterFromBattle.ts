@@ -19,9 +19,12 @@ const MODIFIER_REGISTRY = {
 
 async function awardAether(base44, run, aetherEarned) {
   if (aetherEarned <= 0) return 0;
-  const player = await base44.asServiceRole.entities.Player.get(run.playerId);
-  const newAether = (player?.aether ?? 0) + aetherEarned;
-  await base44.asServiceRole.entities.Player.update(run.playerId, { aether: newAether });
+  // Run.playerId = authUserId — find Player by authUserId
+  const players = await base44.asServiceRole.entities.Player.filter({ authUserId: run.playerId });
+  const player = players[0];
+  if (!player) return 0;
+  const newAether = (player.aether ?? 0) + aetherEarned;
+  await base44.asServiceRole.entities.Player.update(player.id, { aether: newAether });
   return newAether;
 }
 

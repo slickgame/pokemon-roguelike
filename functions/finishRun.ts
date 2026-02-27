@@ -88,10 +88,10 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, resultsSummary: existingResults.resultsSummary, alreadyFinalized: true });
     }
 
-    // Award aether to player
+    // Award aether to player — find by authUserId (Run.playerId = authUserId)
     let playerAetherAfter = null;
     if (resultsSummary.aetherEarned > 0) {
-      const players = await base44.asServiceRole.entities.Player.filter({ id: run.playerId });
+      const players = await base44.asServiceRole.entities.Player.filter({ authUserId: run.playerId });
       const player = players[0];
       if (player) {
         playerAetherAfter = (player.aether ?? 0) + resultsSummary.aetherEarned;
