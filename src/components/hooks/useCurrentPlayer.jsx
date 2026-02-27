@@ -7,6 +7,9 @@ export function useCurrentPlayer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = () => setRefreshKey(k => k + 1);
+
   useEffect(() => {
     let mounted = true;
 
