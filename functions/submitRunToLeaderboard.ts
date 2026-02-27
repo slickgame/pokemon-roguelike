@@ -61,11 +61,19 @@ Deno.serve(async (req) => {
     const seasonRes = await base44.functions.invoke("getCurrentSeason", {});
     const season = seasonRes?.data ?? { seasonId: "S1", dbVersionHash: "unknown" };
 
+    // Fetch player display name for snapshot
+    let playerNameSnapshot = "Unknown Trainer";
+    try {
+      const player = await base44.asServiceRole.entities.Player.get(run.playerId);
+      if (player?.displayName) playerNameSnapshot = player.displayName;
+    } catch (_) { /* ignore */ }
+
     // Create leaderboard entry
     await base44.asServiceRole.entities.LeaderboardEntry.create({
       seasonId: season.seasonId,
       category,
       playerId: run.playerId,
+      playerNameSnapshot,
       runId,
       aetherEarned: summary.aetherEarned ?? 0,
       faints: summary.faints ?? 0,
