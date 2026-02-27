@@ -98,13 +98,14 @@ export default function Leaderboard() {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-white/80 text-sm font-medium truncate">
-                  {entry.playerName || entry.playerId?.slice(0, 16) || "Unknown"}
+                  {entry.playerName || "Unknown Trainer"}
                 </p>
-                {entry.modifiers && Object.keys(entry.modifiers).filter(k => entry.modifiers[k]).length > 0 && (
-                  <p className="text-white/25 text-[10px] truncate">
-                    {Object.keys(entry.modifiers).filter(k => entry.modifiers[k]).join(", ")}
-                  </p>
-                )}
+                <p className="text-white/20 text-[10px] truncate font-mono">
+                  {entry.playerId?.slice(0, 12) ?? ""}
+                  {entry.modifiers && Object.keys(entry.modifiers).filter(k => entry.modifiers[k]).length > 0
+                    ? ` · ${Object.keys(entry.modifiers).filter(k => entry.modifiers[k]).join(", ")}`
+                    : ""}
+                </p>
               </div>
               <div className="flex items-center gap-3 text-xs text-white/50 shrink-0">
                 <span className="flex items-center gap-1">

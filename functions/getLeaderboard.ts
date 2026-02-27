@@ -14,13 +14,14 @@ Deno.serve(async (req) => {
     );
 
     if (entries.length > 0) {
-      // Enrich with player display names via per-id fetch
+      // Enrich: use playerNameSnapshot first, then look up by authUserId
       const enriched = await Promise.all(entries.map(async (e) => {
         let playerName = e.playerNameSnapshot || null;
         if (!playerName && e.playerId) {
           try {
-            const p = await base44.asServiceRole.entities.Player.get(e.playerId);
-            if (p?.displayName) playerName = p.displayName;
+            // e.playerId = authUserId (Run.playerId semantics)
+            const players = await base44.asServiceRole.entities.Player.filter({ authUserId: e.playerId });
+            if (players[0]?.displayName) playerName = players[0].displayName;
           } catch (_) { /* ignore */ }
         }
         return { ...e, playerName: playerName || "Unknown Trainer" };
