@@ -355,7 +355,6 @@ export default function Battle() {
         <BagModal
           inventory={inventory}
           party={allPartyForBag}
-          onUse={handleBagUseInBattle}
           onClose={() => setShowBag(false)}
           context="battle"
         />
