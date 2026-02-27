@@ -182,10 +182,18 @@ Deno.serve(async (req) => {
         const finishIdx = gymIdx + 1;
         await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } });
 
-        const playerAetherAfter = await awardAether(base44, run, resultsSummary.aetherEarned);
+        const aetherResult = await awardAetherToPlayer(base44, run.playerId, resultsSummary.aetherEarned);
+        const aetherAwarded = aetherResult.ok && aetherResult.after > 0;
         await base44.entities.Run.update(runId, {
           status: 'finished', endedAt: nowIso, nextActionIdx: finishIdx,
-          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'player', gymDefeated: true, resultsSummary, finalizedAt: nowIso, aetherAwarded: true, aetherDelta: resultsSummary.aetherEarned, playerAetherAfter },
+          results: {
+            ...(run.results ?? {}), progress: updatedProgress, winner: 'player', gymDefeated: true,
+            resultsSummary, finalizedAt: nowIso,
+            aetherAwarded,
+            aetherDelta: resultsSummary.aetherEarned,
+            playerAetherAfter: aetherResult.after,
+            ...(!aetherResult.ok ? { aetherAwardError: aetherResult.reason } : {}),
+          },
         });
       }
     } else {
