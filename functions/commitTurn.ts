@@ -51,11 +51,16 @@ function calcDamage(attacker, move, defender, rng) {
   return { dmg, typeEff };
 }
 
+// ── Null-safe alive check ─────────────────────────────────────────────────────
+function isAlive(mon) {
+  return !!mon && mon.currentHp > 0 && !mon.fainted;
+}
+
 // ── Target validation ─────────────────────────────────────────────────────────
 function isValidTarget(state, side, slot) {
   const sideState = side === "player" ? state.player : state.enemy;
   const poke = sideState.active[slot];
-  return !!(poke && !poke.fainted && poke.currentHp > 0);
+  return isAlive(poke);
 }
 
 // ── Damage estimate ────────────────────────────────────────────────────────────
@@ -109,7 +114,7 @@ function autoReplace(sideState, activeIdx, label, log) {
 
 // ── Enemy AI ──────────────────────────────────────────────────────────────────
 function enemyPickMove(poke, playerActive) {
-  const targets = playerActive.filter(p => !p.fainted);
+  const targets = playerActive.filter(p => isAlive(p));
   if (targets.length === 0) return null;
   const target = targets[0];
   let bestMove = poke.moves[0];
@@ -128,9 +133,9 @@ function enemyPickSwitch(activeIdx, sideState, playerActive) {
   const poke = sideState.active[activeIdx];
   if (!poke || poke.fainted) return -1;
   if (poke.currentHp / poke.maxHp >= 0.25) return -1;
-  const healthyBench = sideState.bench.map((p, i) => ({ p, i })).filter(({ p }) => !p.fainted);
+  const healthyBench = sideState.bench.map((p, i) => ({ p, i })).filter(({ p }) => isAlive(p));
   if (healthyBench.length === 0) return -1;
-  const playerTarget = [...playerActive].filter(p => !p.fainted).sort((a, b) => b.currentHp - a.currentHp)[0];
+  const playerTarget = [...playerActive].filter(p => isAlive(p)).sort((a, b) => b.currentHp - a.currentHp)[0];
   if (!playerTarget) return -1;
   let best = healthyBench[0];
   let bestScore = -1;
@@ -236,7 +241,7 @@ function validateItem(cmd, state, inventory) {
 // ── Convert battle state → partyState snapshot ───────────────────────────────
 function extractPartyState(playerSide) {
   const allPokes = [...playerSide.active, ...playerSide.bench];
-  return allPokes.map(p => ({
+  return allPokes.filter(p => !!p).map(p => ({
     speciesId: p.speciesId,
     name: p.name,
     level: p.level,
@@ -269,8 +274,14 @@ Deno.serve(async (req) => {
     if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
     const inventory = run.results?.progress?.inventory ?? { potion: 0, revive: 0 };
 
-    // Validate player commands
+    // Validate player commands — skip commands for empty/null active slots
+    const validatedCommands = [];
     for (const cmd of playerCommands) {
+      const actorPoke = battle.state.player.active[cmd.actorSlot];
+      if (!actorPoke) {
+        console.warn(`[commitTurn] Ignoring command for empty active slot ${cmd.actorSlot}`);
+        continue;
+      }
       if (cmd.type === "switch") {
         const err = validateSwitch(cmd, battle.state);
         if (err) return Response.json({ error: err }, { status: 400 });
@@ -280,7 +291,9 @@ Deno.serve(async (req) => {
       } else if (cmd.type !== "move") {
         return Response.json({ error: `Unknown action type: ${cmd.type}` }, { status: 400 });
       }
+      validatedCommands.push(cmd);
     }
+    const playerCommands_ = validatedCommands;
 
     const state = battle.state;
     const turnNumber = (battle.turnNumber ?? 0) + 1;
@@ -291,7 +304,7 @@ Deno.serve(async (req) => {
     const inventoryDelta = {};
 
     const allowEnemySwitch = !state.enemySwitchUsed;
-    const actions = buildActions(playerCommands, state, rng, allowEnemySwitch);
+    const actions = buildActions(playerCommands_, state, rng, allowEnemySwitch);
 
     for (const a of actions) {
       actionOrder.push(`${a.side}:${a.isSwitch ? "switch" : a.isItem ? `item:${a.cmd?.itemId}` : a.move?.id ?? "?"} (activeIdx ${a.activeIdx}, pri ${a.priority}, spd ${a.speed})`);
