@@ -1,5 +1,55 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// ── Modifier registry (mirrors computeRunResults) ─────────────────────────────
+const MODIFIER_REGISTRY = {
+  xp_share_on:           { aetherPct: 0   },
+  xp_share_off:          { aetherPct: 10  },
+  starter_pool_expand_5: { aetherPct: -5  },
+  starter_rerolls_3:     { aetherPct: -5  },
+  kanto_starter_direct:  { aetherPct: -10 },
+  type_diversity_soft:   { aetherPct: -5  },
+  type_diversity_hard:   { aetherPct: -10 },
+  cull_rank_1:           { aetherPct: -10 },
+  cull_rank_1_2:         { aetherPct: -20 },
+  start_money_300:       { aetherPct: -5  },
+  start_money_600:       { aetherPct: -10 },
+  enemy_iv_floor_10:     { aetherPct: 10  },
+  permadeath:            { aetherPct: 25  },
+};
+
+async function computeAndFinalizeRun(base44, run, updatedProgress, nowIso) {
+  // Guard: already finalized
+  if (run.results?.resultsSummary) return run.results.resultsSummary;
+
+  const actions = await base44.asServiceRole.entities.RunAction.filter({ runId: run.id });
+  actions.sort((a, b) => a.idx - b.idx);
+
+  const battlesWon   = actions.filter(a => a.actionType === 'battle_end' && a.payload?.summary?.winner === 'player').length;
+  const battlesLost  = actions.filter(a => a.actionType === 'battle_end' && a.payload?.summary?.winner === 'enemy').length;
+  const gymsDefeated = actions.filter(a => a.actionType === 'gym_defeated').length;
+
+  let faints = actions.filter(a => a.actionType === 'pokemon_fainted').length;
+  if (faints === 0) {
+    for (const a of actions) {
+      if (a.actionType === 'battle_end' && a.payload?.summary?.playerFaints) faints += a.payload.summary.playerFaints;
+    }
+  }
+
+  const startedAt  = run.startedAt ? new Date(run.startedAt).getTime() : null;
+  const endedAt    = new Date(nowIso).getTime();
+  const durationMs = startedAt ? endedAt - startedAt : null;
+
+  const baseAether = gymsDefeated >= 1 ? 100 : battlesWon * 10;
+
+  const activeIds = Object.keys(run.modifiers ?? {}).filter(id => run.modifiers[id]);
+  let rawPct = 0;
+  for (const id of activeIds) rawPct += (MODIFIER_REGISTRY[id]?.aetherPct ?? 0);
+  const modifierTotalPct = Math.max(-90, Math.min(200, rawPct));
+  const aetherEarned = Math.max(0, Math.floor(baseAether * (1 + modifierTotalPct / 100)));
+
+  return { baseAether, modifierTotalPct, aetherEarned, battlesWon, battlesLost, faints, durationMs, gymsDefeated, scoreVersion: 'm9_v1' };
+}
+
 // Deterministic RNG for reward drops
 function hashString(str) {
   let h = 2166136261;
