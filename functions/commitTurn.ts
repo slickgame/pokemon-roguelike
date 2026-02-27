@@ -203,7 +203,9 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
   actions.sort((a, b) => {
     if (b.priority !== a.priority) return b.priority - a.priority;
     if (b.speed !== a.speed) return b.speed - a.speed;
-    return rng.next() - 0.5;
+    // Deterministic tie-breaker: player before enemy, then by actorSlot
+    if (a.side !== b.side) return a.side === "player" ? -1 : 1;
+    return (a.activeIdx ?? 0) - (b.activeIdx ?? 0);
   });
 
   return actions;
