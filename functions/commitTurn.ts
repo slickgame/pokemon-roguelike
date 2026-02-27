@@ -173,8 +173,8 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
     if (cmd.type === "switch") {
       actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true });
     } else if (cmd.type === "item") {
-      // Item commands use priority=0, speed tie-break like moves
-      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: 0, speed: poke.baseStats.spe, isItem: true });
+      // Items resolve before moves (priority 6, same as switch)
+      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: 6, speed: poke.baseStats.spe, isItem: true });
     } else {
       const move = poke.moves.find(m => m.id === cmd.moveId);
       if (!move) continue;
