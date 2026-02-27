@@ -315,6 +315,7 @@ export default function Battle() {
               commands={commands}
               onChange={(slot, cmd) => setCommands(prev => ({ ...prev, [slot]: cmd }))}
               enemyActive={enemyActive}
+              inventory={inventory}
             />
             <GameButton
               variant="primary"
