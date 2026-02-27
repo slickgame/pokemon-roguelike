@@ -152,14 +152,28 @@ Deno.serve(async (req) => {
         base44.entities.Run.update(runId, { nextActionIdx: rewardIdx }),
       ]);
 
-      // If gym — finish run
+      // If gym — finish run with resultsSummary + aether award
       if (nodeType === 'gym') {
+        const nowIso = new Date().toISOString();
         const gymIdx = rewardIdx + 1;
         await base44.entities.RunAction.create({ runId, idx: gymIdx, actionType: 'gym_defeated', payload: { gymId: 'gym1', routeId: updatedProgress.routeId } });
-        await base44.entities.Run.update(runId, {
-          status: 'finished', endedAt: new Date().toISOString(), nextActionIdx: gymIdx,
-          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'player', gymDefeated: true },
-        });
+
+        // Temporarily update run so computeAndFinalizeRun sees the gym action
+        const runForCompute = { ...run, endedAt: nowIso };
+        const resultsSummary = await computeAndFinalizeRun(base44, runForCompute, updatedProgress, nowIso);
+
+        const finishIdx = gymIdx + 1;
+        await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } });
+
+        await Promise.all([
+          base44.entities.Run.update(runId, {
+            status: 'finished', endedAt: nowIso, nextActionIdx: finishIdx,
+            results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'player', gymDefeated: true, resultsSummary, finalizedAt: nowIso },
+          }),
+          base44.asServiceRole.entities.Player.update(run.playerId, {
+            aether: ((await base44.asServiceRole.entities.Player.get(run.playerId))?.aether ?? 0) + resultsSummary.aetherEarned,
+          }),
+        ]);
       }
     } else {
       // loss — persist final party state
