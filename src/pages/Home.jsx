@@ -118,7 +118,10 @@ function useModifiers() {
 
 export default function Home() {
   const navigate = useNavigate();
-  const { player, user, loading: playerLoading, error: playerError } = useCurrentPlayer();
+  const { player, user, loading: playerLoading, error: playerError, refresh: refreshPlayer } = useCurrentPlayer();
+
+  // Force-refresh player on every mount so Aether is up to date after returning from Results
+  useEffect(() => { refreshPlayer(); }, []);
   const [loading, setLoading] = useState(false);
   const [isRanked, setIsRanked] = useState(false);
   const [season, setSeason] = useState(null);
