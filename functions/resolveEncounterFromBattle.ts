@@ -218,12 +218,20 @@ Deno.serve(async (req) => {
         }),
         base44.entities.RunAction.create({ runId, idx: nextIdx, actionType: 'node_resolved', payload: { nodeId, nodeType, battleId, outcome: 'loss' } }),
       ]);
-      const playerAetherAfter = await awardAether(base44, run, resultsSummary.aetherEarned);
+      const aetherResult = await awardAetherToPlayer(base44, run.playerId, resultsSummary.aetherEarned);
+      const aetherAwarded = aetherResult.ok && aetherResult.after > 0;
       await Promise.all([
         base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } }),
         base44.entities.Run.update(runId, {
           nextActionIdx: finishIdx,
-          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'enemy', reason: 'battle_loss', resultsSummary, finalizedAt: nowIso, aetherAwarded: true, aetherDelta: resultsSummary.aetherEarned, playerAetherAfter },
+          results: {
+            ...(run.results ?? {}), progress: updatedProgress, winner: 'enemy', reason: 'battle_loss',
+            resultsSummary, finalizedAt: nowIso,
+            aetherAwarded,
+            aetherDelta: resultsSummary.aetherEarned,
+            playerAetherAfter: aetherResult.after,
+            ...(!aetherResult.ok ? { aetherAwardError: aetherResult.reason } : {}),
+          },
         }),
       ]);
     }
