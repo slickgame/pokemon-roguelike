@@ -201,11 +201,12 @@ Deno.serve(async (req) => {
         }),
         base44.entities.RunAction.create({ runId, idx: nextIdx, actionType: 'node_resolved', payload: { nodeId, nodeType, battleId, outcome: 'loss' } }),
       ]);
+      const playerAetherAfter = await awardAether(base44, run, resultsSummary.aetherEarned);
       await Promise.all([
         base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } }),
-        base44.entities.Run.update(runId, { nextActionIdx: finishIdx }),
-        base44.asServiceRole.entities.Player.update(run.playerId, {
-          aether: ((await base44.asServiceRole.entities.Player.get(run.playerId))?.aether ?? 0) + resultsSummary.aetherEarned,
+        base44.entities.Run.update(runId, {
+          nextActionIdx: finishIdx,
+          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'enemy', reason: 'battle_loss', resultsSummary, finalizedAt: nowIso, aetherAwarded: true, aetherDelta: resultsSummary.aetherEarned, playerAetherAfter },
         }),
       ]);
     }
