@@ -14,7 +14,20 @@ Deno.serve(async (req) => {
     );
 
     if (entries.length > 0) {
-      return Response.json({ entries });
+      // Enrich with player display names
+      const uniquePlayerIds = [...new Set(entries.map(e => e.playerId).filter(Boolean))];
+      const playerMap = {};
+      if (uniquePlayerIds.length > 0) {
+        const players = await base44.asServiceRole.entities.Player.filter({});
+        for (const p of players) {
+          if (p.id) playerMap[p.id] = p.displayName;
+        }
+      }
+      const enriched = entries.map(e => ({
+        ...e,
+        playerName: playerMap[e.playerId] || "Unknown Trainer",
+      }));
+      return Response.json({ entries: enriched });
     }
 
     // Stub: return mock leaderboard entries
