@@ -17,15 +17,21 @@ const MODIFIER_REGISTRY = {
   permadeath:            { aetherPct: 25  },
 };
 
-async function awardAether(base44, run, aetherEarned) {
-  if (aetherEarned <= 0) return 0;
-  // Run.playerId = authUserId — find Player by authUserId
-  const players = await base44.asServiceRole.entities.Player.filter({ authUserId: run.playerId });
-  const player = players[0];
-  if (!player) return 0;
-  const newAether = (player.aether ?? 0) + aetherEarned;
-  await base44.asServiceRole.entities.Player.update(player.id, { aether: newAether });
-  return newAether;
+async function awardAetherToPlayer(base44, authUserId, delta) {
+  const d = Number(delta ?? 0);
+  if (Number.isNaN(d) || d <= 0) return { ok: false, reason: "invalid_delta", after: 0 };
+
+  const players = await base44.asServiceRole.entities.Player.filter({ authUserId });
+  const player = players?.[0];
+  if (!player) return { ok: false, reason: "player_not_found", after: 0 };
+
+  const current = Number.isNaN(Number(player.aether)) ? 0 : Number(player.aether ?? 0);
+  const newValue = current + d;
+  await base44.asServiceRole.entities.Player.update(player.id, { aether: newValue });
+
+  const confirm = await base44.asServiceRole.entities.Player.get(player.id);
+  const confirmedValue = Number.isNaN(Number(confirm?.aether)) ? newValue : Number(confirm?.aether ?? newValue);
+  return { ok: true, playerEntityId: player.id, after: confirmedValue };
 }
 
 async function computeAndFinalizeRun(base44, run, updatedProgress, nowIso) {
