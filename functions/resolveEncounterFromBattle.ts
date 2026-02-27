@@ -17,9 +17,17 @@ const MODIFIER_REGISTRY = {
   permadeath:            { aetherPct: 25  },
 };
 
+async function awardAether(base44, run, aetherEarned) {
+  if (aetherEarned <= 0) return 0;
+  const player = await base44.asServiceRole.entities.Player.get(run.playerId);
+  const newAether = (player?.aether ?? 0) + aetherEarned;
+  await base44.asServiceRole.entities.Player.update(run.playerId, { aether: newAether });
+  return newAether;
+}
+
 async function computeAndFinalizeRun(base44, run, updatedProgress, nowIso) {
   // Guard: already finalized
-  if (run.results?.resultsSummary) return run.results.resultsSummary;
+  if (run.results?.aetherAwarded === true) return run.results.resultsSummary;
 
   const actions = await base44.asServiceRole.entities.RunAction.filter({ runId: run.id });
   actions.sort((a, b) => a.idx - b.idx);
