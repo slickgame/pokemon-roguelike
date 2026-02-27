@@ -56,7 +56,7 @@ export function useCurrentPlayer() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [refreshKey]);
 
-  return { player, user, loading, error };
+  return { player, user, loading, error, refresh };
 }
