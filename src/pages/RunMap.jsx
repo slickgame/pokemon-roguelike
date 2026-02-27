@@ -265,7 +265,28 @@ export default function RunMap() {
       await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
       await runApi.appendAction(runId, "event_resolved", { routeId: ROUTE_ID, nodeId, reward: "potion" });
       await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
-      await completeNodeInProgress(nodeId);
+
+      // Increment inventory + complete node in progress atomically
+      const existingProgress = run?.results?.progress ?? {};
+      const currentInventory = existingProgress.inventory ?? { potion: 0, revive: 0 };
+      const updatedInventory = { ...currentInventory, potion: (currentInventory.potion ?? 0) + 1 };
+      const updatedIds = [...(existingProgress.completedNodeIds ?? [])];
+      if (!updatedIds.includes(nodeId)) updatedIds.push(nodeId);
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(run?.results ?? {}),
+          progress: {
+            ...existingProgress,
+            routeId: ROUTE_ID,
+            currentNodeId: nodeId,
+            completedNodeIds: updatedIds,
+            pendingEncounter: null,
+            inventory: updatedInventory,
+          },
+        },
+      });
+      await runApi.appendAction(runId, "reward_granted", { nodeId, nodeType: "event", moneyDelta: 0, itemsDelta: { potion: 1 } });
+
       toast(node.meta?.label === "Route Start" ? "Your journey begins!" : "Found a Potion! ✨", "success");
       await reload();
       return;
