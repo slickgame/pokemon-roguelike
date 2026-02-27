@@ -166,39 +166,7 @@ export default function Battle() {
   const money = run?.results?.progress?.money ?? 0;
   const allPartyForBag = [...playerActive, ...playerBench];
 
-  // Handle bag item use in battle — generates an item command for the first alive active poke
-  const handleBagUseInBattle = async (itemId, partyIndex) => {
-    // Find first alive active slot to consume its action
-    const actorSlot = playerActive.findIndex(p => p && !p.fainted);
-    if (actorSlot === -1) throw new Error("No active Pokémon to use item with");
-    const itemCmd = { actorSlot, type: "item", itemId, target: { partyIndex } };
-    // Replace this actor's move command with the item command
-    const otherCmds = Object.values(commands).filter(c => c.actorSlot !== actorSlot);
-    const newCmds = [...otherCmds, itemCmd];
-    setCommitting(true);
-    try {
-      const res = await base44.functions.invoke("commitTurn", {
-        runId, battleId, playerCommands: newCmds,
-      });
-      const data = res.data;
-      setState(data.state);
-      setTurnNumber(data.turnNumber);
-      const newWinner = data.winner ?? null;
-      setWinner(newWinner);
-      if (data.updatedInventory) {
-        setRun(r => r ? { ...r, results: { ...(r.results ?? {}), progress: { ...(r.results?.progress ?? {}), inventory: data.updatedInventory } } } : r);
-      }
-      if (newWinner) {
-        setShowBag(false);
-        toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
-        await base44.functions.invoke("resolveEncounterFromBattle", { runId, battleId, outcome: newWinner === "player" ? "win" : "loss" });
-      }
-    } catch (e) {
-      toast(e.response?.data?.error || e.message || "Failed", "error");
-    } finally {
-      setCommitting(false);
-    }
-  };
+
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
