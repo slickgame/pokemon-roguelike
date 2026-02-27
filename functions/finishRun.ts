@@ -82,12 +82,30 @@ Deno.serve(async (req) => {
     const runForCompute = { ...run, endedAt };
     const resultsSummary = computeRunResults(runForCompute, actions);
 
-    // Update run: finished + results
+    // Guard: prevent double-award
     const existingResults = run.results ?? {};
+    if (existingResults.aetherAwarded === true) {
+      return Response.json({ ok: true, resultsSummary: existingResults.resultsSummary, alreadyFinalized: true });
+    }
+
+    // Award aether to player
+    let playerAetherAfter = null;
+    if (resultsSummary.aetherEarned > 0) {
+      const players = await base44.asServiceRole.entities.Player.filter({ id: run.playerId });
+      const player = players[0];
+      if (player) {
+        playerAetherAfter = (player.aether ?? 0) + resultsSummary.aetherEarned;
+        await base44.asServiceRole.entities.Player.update(player.id, { aether: playerAetherAfter });
+      }
+    }
+
     const updatedResults = {
       ...existingResults,
       resultsSummary,
       finalizedAt: endedAt,
+      aetherAwarded: true,
+      aetherDelta: resultsSummary.aetherEarned,
+      playerAetherAfter,
     };
 
     await base44.asServiceRole.entities.Run.update(runId, {
@@ -95,16 +113,6 @@ Deno.serve(async (req) => {
       endedAt,
       results: updatedResults,
     });
-
-    // Award aether to player
-    if (resultsSummary.aetherEarned > 0) {
-      const players = await base44.asServiceRole.entities.Player.filter({ id: run.playerId });
-      const player = players[0];
-      if (player) {
-        const newAether = (player.aether ?? 0) + resultsSummary.aetherEarned;
-        await base44.asServiceRole.entities.Player.update(player.id, { aether: newAether });
-      }
-    }
 
     // Log run_finished action
     const currentRun = (await base44.asServiceRole.entities.Run.filter({ id: runId }))[0];
