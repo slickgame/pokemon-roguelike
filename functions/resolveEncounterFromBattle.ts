@@ -176,22 +176,34 @@ Deno.serve(async (req) => {
         ]);
       }
     } else {
-      // loss — persist final party state
+      // loss — persist final party state + compute resultsSummary + award aether
+      const nowIso = new Date().toISOString();
       updatedProgress = {
         ...existingProgress,
         pendingEncounter: null,
         partyState,
       };
 
+      const runForCompute = { ...run, endedAt: nowIso };
+      const resultsSummary = await computeAndFinalizeRun(base44, runForCompute, updatedProgress, nowIso);
+
       const nextIdx = (run.nextActionIdx ?? 0) + 1;
+      const finishIdx = nextIdx + 1;
+
       await Promise.all([
         base44.entities.Run.update(runId, {
-          status: 'finished', endedAt: new Date().toISOString(),
-          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'enemy', reason: 'battle_loss' },
+          status: 'finished', endedAt: nowIso,
+          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'enemy', reason: 'battle_loss', resultsSummary, finalizedAt: nowIso },
         }),
         base44.entities.RunAction.create({ runId, idx: nextIdx, actionType: 'node_resolved', payload: { nodeId, nodeType, battleId, outcome: 'loss' } }),
       ]);
-      await base44.entities.Run.update(runId, { nextActionIdx: nextIdx });
+      await Promise.all([
+        base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } }),
+        base44.entities.Run.update(runId, { nextActionIdx: finishIdx }),
+        base44.asServiceRole.entities.Player.update(run.playerId, {
+          aether: ((await base44.asServiceRole.entities.Player.get(run.playerId))?.aether ?? 0) + resultsSummary.aetherEarned,
+        }),
+      ]);
     }
 
     return Response.json({ progress: updatedProgress, outcome });
