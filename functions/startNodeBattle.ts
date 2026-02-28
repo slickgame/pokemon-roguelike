@@ -150,16 +150,24 @@ function hydrateFromPartyState(partySnap, speciesMap) {
   }).filter(Boolean);
   if (moves.length === 0) moves.push(...buildMoveset(sp));
   const level = partySnap.level ?? 5;
-  // CRITICAL: use stored exp — never recompute from level
   const exp = partySnap.exp ?? 0;
+  // Recompute stats so they're always level-accurate; use stored HP
+  const freshStats = computeStats(sp.baseStats, level);
+  const storedStats = partySnap.stats ?? null;
+  const resolvedStats = storedStats
+    ? { atk: storedStats.atk || freshStats.atk, def: storedStats.def || freshStats.def, spa: storedStats.spa || freshStats.spa, spd: storedStats.spd || freshStats.spd, spe: storedStats.spe || freshStats.spe }
+    : { atk: freshStats.atk, def: freshStats.def, spa: freshStats.spa, spd: freshStats.spd, spe: freshStats.spe };
+  const maxHp = freshStats.hp;
+  const currentHp = partySnap.fainted ? 0 : Math.min(partySnap.currentHP ?? maxHp, maxHp);
   return {
     speciesId: sp.id, name: sp.name, types: sp.types, level,
     exp,
     nature: "Hardy", abilityId: sp.abilities[0], shiny: false,
     ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
     baseStats: sp.baseStats,
-    maxHp: partySnap.maxHP,
-    currentHp: partySnap.fainted ? 0 : partySnap.currentHP,
+    stats: resolvedStats,
+    maxHp,
+    currentHp,
     status: partySnap.status ?? null, statusTurns: 0,
     moves,
     fainted: partySnap.fainted ?? false,
