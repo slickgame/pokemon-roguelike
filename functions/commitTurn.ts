@@ -312,19 +312,7 @@ function computeStatValue(statName, base, level, iv, ev, nature) {
 }
 
 function recomputeStats(poke) {
-  const base = poke.baseStats;
-  const level = poke.level;
-  const IV = 0, EV = 0; // MVP: no IVs/EVs
-  const computeStat = (b) => Math.floor((((2 * b + IV + Math.floor(EV / 4)) * level) / 100 + 5));
-  const computeHP   = (b) => Math.floor(((2 * b + IV + Math.floor(EV / 4)) * level) / 100) + level + 10;
-  return {
-    hp:  computeHP(base.hp),
-    atk: computeStat(base.atk),
-    def: computeStat(base.def),
-    spa: computeStat(base.spa),
-    spd: computeStat(base.spd),
-    spe: computeStat(base.spe),
-  };
+  return computeAllStats(poke);
 }
 
 // Learnsets — must mirror components/db/learnsets.js (keyed by speciesId integer)
