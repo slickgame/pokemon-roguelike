@@ -367,6 +367,36 @@ export default function Battle() {
         />
       )}
 
+      {learnQueue.length > 0 && (
+        <LearnMoveModal
+          prompt={learnQueue[0]}
+          currentMoves={
+            // Find the Pokémon's current moves from state
+            (() => {
+              const all = [...playerActive, ...playerBench];
+              const mon = all.find(p => p && p.name === learnQueue[0].pokeName);
+              return mon?.moves ?? [];
+            })()
+          }
+          onConfirm={(newMoves, replacedSlot) => {
+            // Apply move replacement directly to state
+            setState(prev => {
+              if (!prev) return prev;
+              const updated = { ...prev, player: { ...prev.player } };
+              const applyMoves = (arr) => arr.map(p => {
+                if (!p || p.name !== learnQueue[0].pokeName) return p;
+                return { ...p, moves: newMoves };
+              });
+              updated.player.active = applyMoves(updated.player.active);
+              updated.player.bench = applyMoves(updated.player.bench);
+              return updated;
+            });
+            setLearnQueue(q => q.slice(1));
+          }}
+          onSkip={() => setLearnQueue(q => q.slice(1))}
+        />
+      )}
+
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
