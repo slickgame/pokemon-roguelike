@@ -133,8 +133,12 @@ function hydrateFromPartyState(partySnap, speciesMap) {
     return { ...dbMove, currentPp: m.pp, pp: m.ppMax ?? dbMove.pp };
   }).filter(Boolean);
   if (moves.length === 0) moves.push(...buildMoveset(sp));
+  const level = partySnap.level ?? 5;
+  // CRITICAL: use stored exp — never recompute from level
+  const exp = partySnap.exp ?? 0;
   return {
-    speciesId: sp.id, name: sp.name, types: sp.types, level: partySnap.level ?? 5,
+    speciesId: sp.id, name: sp.name, types: sp.types, level,
+    exp,
     nature: "Hardy", abilityId: sp.abilities[0], shiny: false,
     ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
     baseStats: sp.baseStats,
