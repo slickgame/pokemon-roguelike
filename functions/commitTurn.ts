@@ -347,7 +347,7 @@ function applyXpToPoke(poke, xpAmount, log) {
         }
       }
     }
-    newLevel = getLevelFromExp(poke.exp);
+    newLevel = getLevelFromExp(poke.exp, curve);
   }
   return learnQueue;
 }
