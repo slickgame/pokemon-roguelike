@@ -566,6 +566,18 @@ Deno.serve(async (req) => {
           log.push(`${faintLabel} fainted!`);
 
           if (side === "player") {
+            // ── XP Award ─────────────────────────────────────────────────────
+            // Track per-enemy-instance to avoid double-award
+            const enemyInstanceId = target.instanceId ?? `enemy_${effectiveTargetSlot}`;
+            if (!state.xpAwardedForFaints) state.xpAwardedForFaints = [];
+            if (!state.xpAwardedForFaints.includes(enemyInstanceId)) {
+              state.xpAwardedForFaints.push(enemyInstanceId);
+              const prompts = awardXpForFaint(state, target, run.modifiers, log);
+              if (prompts.length > 0) {
+                if (!state.pendingLearnPrompts) state.pendingLearnPrompts = [];
+                state.pendingLearnPrompts.push(...prompts);
+              }
+            }
             autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
           } else {
             const validBench = state.player.bench.filter(p => p && !p.fainted && p.currentHp > 0);
