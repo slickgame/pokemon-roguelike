@@ -17,21 +17,28 @@ const MODIFIER_REGISTRY = {
   permadeath:            { aetherPct: 25  },
 };
 
-async function awardAether(base44, run, aetherEarned) {
-  if (aetherEarned <= 0) return 0;
-  // Run.playerId = authUserId — find Player by authUserId
-  const players = await base44.asServiceRole.entities.Player.filter({ authUserId: run.playerId });
-  const player = players[0];
-  if (!player) return 0;
-  const newAether = (player.aether ?? 0) + aetherEarned;
-  await base44.asServiceRole.entities.Player.update(player.id, { aether: newAether });
-  return newAether;
+// Safe aether award — only marks awarded AFTER confirmed Player update
+async function awardAetherToPlayer(base44, authUserId, delta) {
+  const d = Number(delta ?? 0);
+  if (Number.isNaN(d) || d <= 0) return { ok: false, reason: 'invalid_delta' };
+
+  const players = await base44.asServiceRole.entities.Player.filter({ authUserId });
+  const player = players?.[0];
+  if (!player) return { ok: false, reason: 'player_not_found' };
+
+  const current = Number.isNaN(Number(player.aether)) ? 0 : Number(player.aether ?? 0);
+  const newValue = current + d;
+
+  await base44.asServiceRole.entities.Player.update(player.id, { aether: newValue });
+
+  // Confirm persisted
+  const confirm = await base44.asServiceRole.entities.Player.get(player.id);
+  const after = Number.isNaN(Number(confirm?.aether)) ? newValue : Number(confirm?.aether ?? newValue);
+
+  return { ok: true, playerEntityId: player.id, after };
 }
 
-async function computeAndFinalizeRun(base44, run, updatedProgress, nowIso) {
-  // Guard: already finalized
-  if (run.results?.aetherAwarded === true) return run.results.resultsSummary;
-
+async function computeAndFinalizeRun(base44, run, nowIso) {
   const actions = await base44.asServiceRole.entities.RunAction.filter({ runId: run.id });
   actions.sort((a, b) => a.idx - b.idx);
 
@@ -77,7 +84,7 @@ function makeRng(seedStr) {
   };
 }
 
-const TIER_MONEY   = { weak: 50, avg: 80, skilled: 120, boss: 0 };
+const TIER_MONEY       = { weak: 50, avg: 80, skilled: 120, boss: 0 };
 const TIER_DROP_CHANCE = { weak: 0.60, avg: 0.70, skilled: 0.80 };
 
 Deno.serve(async (req) => {
@@ -112,9 +119,6 @@ Deno.serve(async (req) => {
     }
 
     const { nodeId, nodeType } = pending;
-
-    // Get partyState from the latest battle state (commitTurn already wrote it)
-    // but we also accept it already in progress if commitTurn updated it
     const partyState = existingProgress.partyState ?? null;
 
     let updatedProgress;
@@ -123,7 +127,6 @@ Deno.serve(async (req) => {
       const completedNodeIds = [...(existingProgress.completedNodeIds ?? [])];
       if (!completedNodeIds.includes(nodeId)) completedNodeIds.push(nodeId);
 
-      // ── Compute rewards ────────────────────────────────────────────────────
       const tier = pending.tier ?? 'weak';
       const moneyDelta = TIER_MONEY[tier] ?? 50;
       const dropChance = TIER_DROP_CHANCE[tier] ?? 0.6;
@@ -148,13 +151,11 @@ Deno.serve(async (req) => {
         partyState,
       };
 
-      const runUpdateData = { results: { ...(run.results ?? {}), progress: updatedProgress } };
-
       const nextIdx = (run.nextActionIdx ?? 0) + 1;
       const rewardPayload = { nodeId, nodeType, battleId, outcome: 'win', moneyDelta, itemsDelta: dropsPotion > 0 ? { potion: dropsPotion } : {} };
 
       await Promise.all([
-        base44.entities.Run.update(runId, runUpdateData),
+        base44.entities.Run.update(runId, { results: { ...(run.results ?? {}), progress: updatedProgress } }),
         base44.entities.RunAction.create({ runId, idx: nextIdx, actionType: 'node_resolved', payload: { nodeId, nodeType, battleId, outcome: 'win' } }),
       ]);
       const rewardIdx = nextIdx + 1;
@@ -169,17 +170,42 @@ Deno.serve(async (req) => {
         const gymIdx = rewardIdx + 1;
         await base44.entities.RunAction.create({ runId, idx: gymIdx, actionType: 'gym_defeated', payload: { gymId: 'gym1', routeId: updatedProgress.routeId } });
 
-        // Temporarily update run so computeAndFinalizeRun sees the gym action
-        const runForCompute = { ...run, endedAt: nowIso };
-        const resultsSummary = await computeAndFinalizeRun(base44, runForCompute, updatedProgress, nowIso);
+        const resultsSummary = await computeAndFinalizeRun(base44, run, nowIso);
+
+        // Award aether — only set aetherAwarded=true if Player update confirmed
+        let aetherAwarded = false;
+        let playerAetherAfter = null;
+        let aetherAwardError = null;
+
+        if (resultsSummary.aetherEarned > 0) {
+          const award = await awardAetherToPlayer(base44, run.playerId, resultsSummary.aetherEarned);
+          if (award.ok) {
+            aetherAwarded = true;
+            playerAetherAfter = award.after;
+          } else {
+            aetherAwardError = award.reason;
+          }
+        } else {
+          aetherAwarded = true;
+        }
 
         const finishIdx = gymIdx + 1;
-        await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } });
+        await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary, aetherAwarded, playerAetherAfter } });
 
-        const playerAetherAfter = await awardAether(base44, run, resultsSummary.aetherEarned);
         await base44.entities.Run.update(runId, {
           status: 'finished', endedAt: nowIso, nextActionIdx: finishIdx,
-          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'player', gymDefeated: true, resultsSummary, finalizedAt: nowIso, aetherAwarded: true, aetherDelta: resultsSummary.aetherEarned, playerAetherAfter },
+          results: {
+            ...(run.results ?? {}),
+            progress: updatedProgress,
+            winner: 'player',
+            gymDefeated: true,
+            resultsSummary,
+            finalizedAt: nowIso,
+            aetherAwarded,
+            aetherDelta: resultsSummary.aetherEarned,
+            playerAetherAfter,
+            ...(aetherAwardError ? { aetherAwardError } : {}),
+          },
         });
       }
     } else {
@@ -191,8 +217,24 @@ Deno.serve(async (req) => {
         partyState,
       };
 
-      const runForCompute = { ...run, endedAt: nowIso };
-      const resultsSummary = await computeAndFinalizeRun(base44, runForCompute, updatedProgress, nowIso);
+      const resultsSummary = await computeAndFinalizeRun(base44, run, nowIso);
+
+      // Award aether — only set aetherAwarded=true if Player update confirmed
+      let aetherAwarded = false;
+      let playerAetherAfter = null;
+      let aetherAwardError = null;
+
+      if (resultsSummary.aetherEarned > 0) {
+        const award = await awardAetherToPlayer(base44, run.playerId, resultsSummary.aetherEarned);
+        if (award.ok) {
+          aetherAwarded = true;
+          playerAetherAfter = award.after;
+        } else {
+          aetherAwardError = award.reason;
+        }
+      } else {
+        aetherAwarded = true;
+      }
 
       const nextIdx = (run.nextActionIdx ?? 0) + 1;
       const finishIdx = nextIdx + 1;
@@ -200,17 +242,24 @@ Deno.serve(async (req) => {
       await Promise.all([
         base44.entities.Run.update(runId, {
           status: 'finished', endedAt: nowIso,
-          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'enemy', reason: 'battle_loss', resultsSummary, finalizedAt: nowIso },
+          results: {
+            ...(run.results ?? {}),
+            progress: updatedProgress,
+            winner: 'enemy',
+            reason: 'battle_loss',
+            resultsSummary,
+            finalizedAt: nowIso,
+            aetherAwarded,
+            aetherDelta: resultsSummary.aetherEarned,
+            playerAetherAfter,
+            ...(aetherAwardError ? { aetherAwardError } : {}),
+          },
         }),
         base44.entities.RunAction.create({ runId, idx: nextIdx, actionType: 'node_resolved', payload: { nodeId, nodeType, battleId, outcome: 'loss' } }),
       ]);
-      const playerAetherAfter = await awardAether(base44, run, resultsSummary.aetherEarned);
       await Promise.all([
-        base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary } }),
-        base44.entities.Run.update(runId, {
-          nextActionIdx: finishIdx,
-          results: { ...(run.results ?? {}), progress: updatedProgress, winner: 'enemy', reason: 'battle_loss', resultsSummary, finalizedAt: nowIso, aetherAwarded: true, aetherDelta: resultsSummary.aetherEarned, playerAetherAfter },
-        }),
+        base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary, aetherAwarded, playerAetherAfter } }),
+        base44.entities.Run.update(runId, { nextActionIdx: finishIdx }),
       ]);
     }
 

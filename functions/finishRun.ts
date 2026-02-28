@@ -55,6 +55,27 @@ function computeRunResults(run, actions) {
   };
 }
 
+// Safe aether award — only sets aetherAwarded=true AFTER confirmed Player update
+async function awardAetherToPlayer(base44, authUserId, delta) {
+  const d = Number(delta ?? 0);
+  if (Number.isNaN(d) || d <= 0) return { ok: false, reason: 'invalid_delta' };
+
+  const players = await base44.asServiceRole.entities.Player.filter({ authUserId });
+  const player = players?.[0];
+  if (!player) return { ok: false, reason: 'player_not_found' };
+
+  const current = Number.isNaN(Number(player.aether)) ? 0 : Number(player.aether ?? 0);
+  const newValue = current + d;
+
+  await base44.asServiceRole.entities.Player.update(player.id, { aether: newValue });
+
+  // Confirm persisted
+  const confirm = await base44.asServiceRole.entities.Player.get(player.id);
+  const after = Number.isNaN(Number(confirm?.aether)) ? newValue : Number(confirm?.aether ?? newValue);
+
+  return { ok: true, playerEntityId: player.id, after };
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -78,34 +99,43 @@ Deno.serve(async (req) => {
     const actions = await base44.asServiceRole.entities.RunAction.filter({ runId });
     actions.sort((a, b) => a.idx - b.idx);
 
-    // Temporarily set endedAt on the run object for durationMs computation
     const runForCompute = { ...run, endedAt };
     const resultsSummary = computeRunResults(runForCompute, actions);
 
-    // Guard: prevent double-award
     const existingResults = run.results ?? {};
+
+    // Guard: prevent double-award
     if (existingResults.aetherAwarded === true) {
       return Response.json({ ok: true, resultsSummary: existingResults.resultsSummary, alreadyFinalized: true });
     }
 
-    // Award aether to player — find by authUserId (Run.playerId = authUserId)
+    // Award aether — only mark awarded if Player update confirmed
+    let aetherAwarded = false;
     let playerAetherAfter = null;
+    let aetherAwardError = null;
+
     if (resultsSummary.aetherEarned > 0) {
-      const players = await base44.asServiceRole.entities.Player.filter({ authUserId: run.playerId });
-      const player = players[0];
-      if (player) {
-        playerAetherAfter = (player.aether ?? 0) + resultsSummary.aetherEarned;
-        await base44.asServiceRole.entities.Player.update(player.id, { aether: playerAetherAfter });
+      const award = await awardAetherToPlayer(base44, run.playerId, resultsSummary.aetherEarned);
+      if (award.ok) {
+        aetherAwarded = true;
+        playerAetherAfter = award.after;
+      } else {
+        aetherAwardError = award.reason;
       }
+    } else {
+      // No aether to award, still mark done
+      aetherAwarded = true;
+      playerAetherAfter = null;
     }
 
     const updatedResults = {
       ...existingResults,
       resultsSummary,
       finalizedAt: endedAt,
-      aetherAwarded: true,
+      aetherAwarded,
       aetherDelta: resultsSummary.aetherEarned,
       playerAetherAfter,
+      ...(aetherAwardError ? { aetherAwardError } : {}),
     };
 
     await base44.asServiceRole.entities.Run.update(runId, {
@@ -122,12 +152,12 @@ Deno.serve(async (req) => {
         runId,
         idx: nextIdx,
         actionType: "run_finished",
-        payload: { resultsSummary },
+        payload: { resultsSummary, aetherAwarded, playerAetherAfter },
       }),
       base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: nextIdx }),
     ]);
 
-    return Response.json({ ok: true, resultsSummary });
+    return Response.json({ ok: true, resultsSummary, aetherAwarded, playerAetherAfter });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
