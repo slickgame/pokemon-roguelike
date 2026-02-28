@@ -9,16 +9,26 @@ const SPECIES = [
   { id: 25, name: "Pikachu",    types: ["electric"],         baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"] },
 ];
 
-const MOVES_BY_TYPE = {
-  grass:    { id: "vine_whip",     name: "Vine Whip",     type: "grass",    category: "physical", power: 45,   accuracy: 100, pp: 25 },
-  fire:     { id: "ember",         name: "Ember",         type: "fire",     category: "special",  power: 40,   accuracy: 100, pp: 25 },
-  water:    { id: "water_gun",     name: "Water Gun",     type: "water",    category: "special",  power: 40,   accuracy: 100, pp: 25 },
-  bug:      { id: "string_shot",   name: "String Shot",   type: "bug",      category: "status",   power: null, accuracy: 95,  pp: 40 },
-  electric: { id: "thunder_shock", name: "ThunderShock",  type: "electric", category: "special",  power: 40,   accuracy: 100, pp: 30 },
-  poison:   { id: "poison_sting",  name: "Poison Sting",  type: "poison",   category: "physical", power: 15,   accuracy: 100, pp: 35 },
-  normal:   { id: "tackle",        name: "Tackle",        type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35 },
+const ALL_MOVES = {
+  tackle:        { id: "tackle",        name: "Tackle",       type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0 },
+  scratch:       { id: "scratch",       name: "Scratch",      type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0 },
+  growl:         { id: "growl",         name: "Growl",        type: "normal",   category: "status",   power: null, accuracy: 100, pp: 40, priority: 0 },
+  vine_whip:     { id: "vine_whip",     name: "Vine Whip",    type: "grass",    category: "physical", power: 45,   accuracy: 100, pp: 25, priority: 0 },
+  ember:         { id: "ember",         name: "Ember",        type: "fire",     category: "special",  power: 40,   accuracy: 100, pp: 25, priority: 0 },
+  water_gun:     { id: "water_gun",     name: "Water Gun",    type: "water",    category: "special",  power: 40,   accuracy: 100, pp: 25, priority: 0 },
+  thunder_shock: { id: "thunder_shock", name: "ThunderShock", type: "electric", category: "special",  power: 40,   accuracy: 100, pp: 30, priority: 0 },
+  quick_attack:  { id: "quick_attack",  name: "Quick Attack", type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 30, priority: 1 },
+  string_shot:   { id: "string_shot",   name: "String Shot",  type: "bug",      category: "status",   power: null, accuracy: 95,  pp: 40, priority: 0 },
+  tail_whip:     { id: "tail_whip",     name: "Tail Whip",    type: "normal",   category: "status",   power: null, accuracy: 100, pp: 30, priority: 0 },
 };
-const TACKLE = { id: "tackle", name: "Tackle", type: "normal", category: "physical", power: 40, accuracy: 100, pp: 35 };
+// Learnset registry — authoritative source for start moves
+const LEARNSETS = {
+  1:  { startMoves: ["tackle","growl"],        levelUp: [{ level: 7, moveId: "vine_whip" }] },
+  4:  { startMoves: ["scratch","growl"],       levelUp: [{ level: 7, moveId: "ember" }] },
+  7:  { startMoves: ["tackle","tail_whip"],    levelUp: [{ level: 7, moveId: "water_gun" }] },
+  10: { startMoves: ["tackle","string_shot"],  levelUp: [] },
+  25: { startMoves: ["thunder_shock","growl"], levelUp: [{ level: 9, moveId: "quick_attack" }] },
+};
 
 const NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
