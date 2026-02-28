@@ -292,6 +292,7 @@ Deno.serve(async (req) => {
         speciesId: poke.speciesId,
         name: poke.name,
         level: poke.level ?? 5,
+        exp: poke.exp ?? 0,
         currentHP: poke.currentHp ?? 0,
         maxHP: poke.maxHp ?? 1,
         fainted: poke.fainted ?? false,
