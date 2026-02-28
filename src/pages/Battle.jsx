@@ -32,6 +32,7 @@ export default function Battle() {
   const [choosing, setChoosing] = useState(false);
   const [showBag, setShowBag] = useState(false);
   const [run, setRun] = useState(null);
+  const [learnQueue, setLearnQueue] = useState([]); // queued learn prompts
 
   // Load run for inventory/economy display + status guard
   useEffect(() => {
