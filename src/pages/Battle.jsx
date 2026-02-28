@@ -390,6 +390,14 @@ export default function Battle() {
         />
       )}
 
+      {currentLearnPrompt && (
+        <LearnMoveModal
+          prompt={currentLearnPrompt}
+          onLearn={handleLearnMove}
+          disabled={applyingLearn}
+        />
+      )}
+
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
