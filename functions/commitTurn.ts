@@ -279,18 +279,24 @@ function recomputeStats(poke) {
   };
 }
 
-// Minimal learnsets (level-up moves only — must mirror components/db/learnsets.js)
+// Learnsets — must mirror components/db/learnsets.js (keyed by speciesId integer)
 const LEVEL_UP_LEARNSETS = {
-  1:  [{ level: 7,  moveId: "vine_whip" }],
-  4:  [{ level: 7,  moveId: "ember" }],
-  7:  [{ level: 7,  moveId: "water_gun" }],
-  16: [{ level: 9,  moveId: "quick_attack" }],
-  19: [{ level: 7,  moveId: "quick_attack" }],
-  21: [{ level: 9,  moveId: "quick_attack" }],
-  25: [{ level: 9,  moveId: "quick_attack" }],
-  33: [{ level: 9,  moveId: "quick_attack" }], // Nidoran-M-like
-  52: [{ level: 9,  moveId: "quick_attack" }],
-  133:[{ level: 9,  moveId: "quick_attack" }],
+  1:  [{ level: 7, moveId: "vine_whip" }],
+  4:  [{ level: 7, moveId: "ember" }],
+  7:  [{ level: 7, moveId: "water_gun" }],
+  10: [],
+  16: [{ level: 9, moveId: "quick_attack" }],
+  17: [],
+  18: [],
+  19: [{ level: 7, moveId: "quick_attack" }],
+  20: [],
+  21: [{ level: 9, moveId: "quick_attack" }],
+  22: [],
+  25: [{ level: 9, moveId: "quick_attack" }],
+  26: [],
+  33: [{ level: 9, moveId: "quick_attack" }],
+  52: [{ level: 9, moveId: "quick_attack" }],
+  133:[{ level: 9, moveId: "quick_attack" }],
 };
 
 // Minimal move data for level-up moves (just enough to add to movesets)
