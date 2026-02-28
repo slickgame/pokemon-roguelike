@@ -343,12 +343,18 @@ function applyXpToPoke(poke, xpAmount, log) {
   while (newLevel > poke.level) {
     poke.level++;
     const oldMaxHp = poke.maxHp;
+    // PATCH 1: Recompute FULL stats after level-up — never partial, never merged into baseStats
     const newStats = recomputeStats(poke);
-    const hpGain = newStats.hp - oldMaxHp;
+    poke.stats = {
+      atk: newStats.atk,
+      def: newStats.def,
+      spa: newStats.spa,
+      spd: newStats.spd,
+      spe: newStats.spe,
+    };
     poke.maxHp = newStats.hp;
-    poke.baseStats = { ...poke.baseStats, ...newStats };
     // Gen-like: gain HP from level up
-    poke.currentHp = Math.max(0, poke.currentHp + Math.max(0, hpGain));
+    poke.currentHp = Math.max(0, poke.currentHp + Math.max(0, newStats.hp - oldMaxHp));
     poke.currentHp = Math.min(poke.currentHp, poke.maxHp);
     log.push(`${poke.name} grew to Lv.${poke.level}!`);
 
