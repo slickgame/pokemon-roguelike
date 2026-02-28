@@ -427,7 +427,7 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
     if (allowEnemySwitch) {
       const switchBenchIdx = enemyPickSwitch(ei, state.enemy, state.player.active);
       if (switchBenchIdx >= 0) {
-        actions.push({ side: "enemy", activeIdx: ei, poke, cmd: { type: "switch", benchIdx: switchBenchIdx }, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true, benchIdx: switchBenchIdx });
+        actions.push({ side: "enemy", activeIdx: ei, poke, cmd: { type: "switch", benchIdx: switchBenchIdx }, priority: SWITCH_PRIORITY, speed: getStat(poke, "spe"), isSwitch: true, benchIdx: switchBenchIdx });
         continue;
       }
     }
