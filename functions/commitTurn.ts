@@ -697,7 +697,8 @@ Deno.serve(async (req) => {
       ]);
     }
 
-    return Response.json({ state, turnNumber, winner, log, rngUsed, actionOrder, updatedInventory: inventory });
+    const pendingLearnPrompts = state.pendingLearnPrompts ?? [];
+    return Response.json({ state, turnNumber, winner, log, rngUsed, actionOrder, updatedInventory: inventory, pendingLearnPrompts });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
