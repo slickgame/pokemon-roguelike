@@ -625,8 +625,8 @@ Deno.serve(async (req) => {
             const enemyKey = `${effectiveTargetSlot}_${target.speciesId}_${target.level}`;
             if (!state.xpAwardedEnemyIds[enemyKey]) {
               state.xpAwardedEnemyIds[enemyKey] = true;
-              const xpYield = Math.floor((20 + (target.level ?? 5) * 5) * 1.2); // trainer battle
-              log.push(`Your team earned ${xpYield} XP!`);
+              // Official formula: floor((a * b * L) / 7), a=1.5 trainer, b=baseExpYield, L=level
+              const xpYield = calcXpYield(target.level ?? 5, target.speciesId, true);
 
               // Award to active (alive or fainted-this-battle)
               const allPlayerPokes = [...state.player.active, ...(xpShareBench ? state.player.bench : [])];
