@@ -399,13 +399,30 @@ export default function RunMap() {
         {pendingEncounter && (
           <div className="text-center py-6 text-white/30 text-sm space-y-2">
             <p>Complete your current encounter to continue.</p>
-            <GameButton
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${pendingEncounter.battleId}&nodeId=${pendingEncounter.nodeId}&routeId=${ROUTE_ID}`))}
-            >
-              Return to Battle
-            </GameButton>
+            {pendingEncounter.battleId && (
+              <GameButton
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${pendingEncounter.battleId}&nodeId=${pendingEncounter.nodeId}&routeId=${ROUTE_ID}`))}
+              >
+                Return to Battle
+              </GameButton>
+            )}
+            {(pendingEncounter.nodeType === "event" || pendingEncounter.nodeType === "event_item") && (
+              <GameButton variant="secondary" size="sm" onClick={() => navigate(createPageUrl(`EventNode?runId=${runId}&nodeId=${pendingEncounter.nodeId}`))}>
+                Continue Event
+              </GameButton>
+            )}
+            {pendingEncounter.nodeType === "center" && (
+              <GameButton variant="secondary" size="sm" onClick={() => navigate(createPageUrl(`Center?runId=${runId}&nodeId=${pendingEncounter.nodeId}`))}>
+                Go to Center
+              </GameButton>
+            )}
+            {pendingEncounter.nodeType === "shop" && (
+              <GameButton variant="secondary" size="sm" onClick={() => navigate(createPageUrl(`Shop?runId=${runId}&nodeId=${pendingEncounter.nodeId}`))}>
+                Go to Shop
+              </GameButton>
+            )}
           </div>
         )}
 
