@@ -183,9 +183,10 @@ function makeRng(seedStr) {
 // ── Damage formula ────────────────────────────────────────────────────────────
 function calcDamage(attacker, move, defender, rng) {
   if (!move.power) return { dmg: 0, typeEff: 1 };
+  // baseStats holds computed (level-scaled) stats after Gen 9 formula
   const lvl = attacker.level;
-  const atkStat = move.category === "physical" ? attacker.baseStats.atk : attacker.baseStats.spa;
-  const defStat = move.category === "physical" ? defender.baseStats.def : defender.baseStats.spd;
+  const atkStat = move.category === "physical" ? (attacker.baseStats.atk) : (attacker.baseStats.spa);
+  const defStat = move.category === "physical" ? (defender.baseStats.def) : (defender.baseStats.spd);
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const typeEff = effectiveness(move.type, defender.types);
   const roll = 0.85 + rng.next() * 0.15;
