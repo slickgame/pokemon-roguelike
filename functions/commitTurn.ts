@@ -442,7 +442,7 @@ function extractPartyState(playerSide) {
     speciesId: p.speciesId,
     name: p.name,
     level: p.level,
-    exp: p.exp ?? 0,
+    exp: p.exp ?? 0,          // ALWAYS persist exp
     ivs: p.ivs ?? {},
     nature: p.nature ?? "hardy",
     currentHP: p.currentHp,
