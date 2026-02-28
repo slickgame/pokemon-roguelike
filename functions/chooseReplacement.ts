@@ -40,6 +40,8 @@ Deno.serve(async (req) => {
 
     // Perform the swap: bench → active slot, fainted mon → bench slot
     const fainted = state.player.active[slot];
+    // Mark as just switched in so it cannot act this turn
+    bench.justSwitchedIn = true;
     state.player.active[slot] = bench;
     state.player.bench[benchIndex] = fainted;
 
