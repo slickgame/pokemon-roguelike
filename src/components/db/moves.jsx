@@ -8,5 +8,14 @@
   { "id": "thunder_shock","name": "ThunderShock",  "type": "electric", "category": "special",  "power": 40,   "accuracy": 100, "pp": 30, "priority": 0, "target": "single" },
   { "id": "quick_attack", "name": "Quick Attack",  "type": "normal",   "category": "physical", "power": 40,   "accuracy": 100, "pp": 30, "priority": 1, "target": "single" },
   { "id": "string_shot",  "name": "String Shot",   "type": "bug",      "category": "status",   "power": null, "accuracy": 95,  "pp": 40, "priority": 0, "target": "all_opponents" },
-  { "id": "tail_whip",    "name": "Tail Whip",     "type": "normal",   "category": "status",   "power": null, "accuracy": 100, "pp": 30, "priority": 0, "target": "all_opponents" }
+  { "id": "tail_whip",    "name": "Tail Whip",     "type": "normal",   "category": "status",   "power": null, "accuracy": 100, "pp": 30, "priority": 0, "target": "all_opponents" },
+  { "id": "poison_powder","name": "PoisonPowder",  "type": "poison",   "category": "status",   "power": null, "accuracy": 75,  "pp": 35, "priority": 0, "target": "single" },
+  { "id": "razor_leaf",   "name": "Razor Leaf",    "type": "grass",    "category": "physical", "power": 55,   "accuracy": 95,  "pp": 25, "priority": 0, "target": "single" },
+  { "id": "smokescreen",  "name": "Smokescreen",   "type": "normal",   "category": "status",   "power": null, "accuracy": 100, "pp": 20, "priority": 0, "target": "single" },
+  { "id": "slash",        "name": "Slash",         "type": "normal",   "category": "physical", "power": 70,   "accuracy": 100, "pp": 20, "priority": 0, "target": "single" },
+  { "id": "withdraw",     "name": "Withdraw",      "type": "water",    "category": "status",   "power": null, "accuracy": 100, "pp": 40, "priority": 0, "target": "self" },
+  { "id": "bubble_beam",  "name": "BubbleBeam",    "type": "water",    "category": "special",  "power": 65,   "accuracy": 100, "pp": 20, "priority": 0, "target": "single" },
+  { "id": "bug_bite",     "name": "Bug Bite",      "type": "bug",      "category": "physical", "power": 60,   "accuracy": 100, "pp": 20, "priority": 0, "target": "single" },
+  { "id": "thunder_wave", "name": "Thunder Wave",  "type": "electric", "category": "status",   "power": null, "accuracy": 90,  "pp": 20, "priority": 0, "target": "single" },
+  { "id": "thunderbolt",  "name": "Thunderbolt",   "type": "electric", "category": "special",  "power": 90,   "accuracy": 100, "pp": 15, "priority": 0, "target": "single" }
 ]
