@@ -106,36 +106,36 @@ function makeRng(seedStr) {
 function rngInt(rng, max) { return Math.floor(rng() * max); }
 
 // ── Build a Pokémon object ────────────────────────────────────────────────────
-function buildPokemon(species, level, subSeed) {
+function buildPokemon(species, level, subSeed, overrideData = {}) {
   const rng = makeRng(subSeed);
-  const nature = NATURES[rngInt(rng, NATURES.length)];
-  const abilityId = species.abilities[rngInt(rng, species.abilities.length)];
-  const shiny = rngInt(rng, 1024) === 0;
+  const nature = overrideData.nature ?? NATURES[rngInt(rng, NATURES.length)];
+  const abilityId = overrideData.abilityId ?? species.abilities[rngInt(rng, species.abilities.length)];
+  const shiny = overrideData.shiny ?? (rngInt(rng, 1024) === 0);
+  const ivs = overrideData.ivs ?? { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 };
+  const exp = overrideData.exp ?? 0;
 
-  const stab = MOVES_BY_TYPE[species.types[0]] ?? MOVES_BY_TYPE.normal;
-  const moves = [
-    { ...TACKLE, currentPp: TACKLE.pp },
-    { ...stab,   currentPp: stab.pp },
-  ];
-
-  const hp = Math.floor((2 * species.baseStats.hp * level) / 100) + level + 10;
+  const stats = computeStatsB(species.baseStats, level, ivs, nature);
+  const hp = stats.hp;
+  const moves = overrideData.moves ?? buildStartingMoves(species.id, level);
 
   return {
     speciesId: species.id,
+    instanceId: overrideData.instanceId ?? `${subSeed}`,
     name: species.name,
     types: species.types,
     level,
+    exp,
     nature,
     abilityId,
     shiny,
-    ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
-    baseStats: species.baseStats,
+    ivs,
+    baseStats: { ...species.baseStats, ...stats }, // computed stats stored for damage formula
     maxHp: hp,
-    currentHp: hp,
-    status: null,
+    currentHp: overrideData.currentHP ?? hp,
+    status: overrideData.status ?? null,
     statusTurns: 0,
     moves,
-    fainted: false,
+    fainted: overrideData.fainted ?? false,
   };
 }
 
