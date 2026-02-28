@@ -182,17 +182,13 @@ export default function RunMap() {
     const { type, tier, id: nodeId } = node;
 
     if (type === "trainer" || type === "gym") {
-      // Start a battle and record pendingEncounter on Run
+      const resolvedTier = tier ?? (type === "gym" ? "boss" : "weak");
       const res = await base44.functions.invoke("startNodeBattle", {
-        runId,
-        nodeId,
-        nodeType: type,
-        tier: tier ?? (type === "gym" ? "boss" : "weak"),
-        routeId: ROUTE_ID,
+        runId, nodeId, nodeType: type, tier: resolvedTier, routeId: ROUTE_ID,
       });
       const { battleId } = res.data;
 
-      // Persist pendingEncounter so RunMap knows an encounter is in-flight
+      // Persist pendingEncounter with canonical status field
       const existingProgress = run?.results?.progress ?? {};
       await base44.entities.Run.update(runId, {
         results: {
@@ -201,7 +197,7 @@ export default function RunMap() {
             ...existingProgress,
             routeId: ROUTE_ID,
             currentNodeId: nodeId,
-            pendingEncounter: { nodeId, nodeType: type, battleId },
+            pendingEncounter: { nodeId, nodeType: type, tier: resolvedTier, battleId, status: "pending", createdAt: new Date().toISOString() },
           },
         },
       });
@@ -210,85 +206,29 @@ export default function RunMap() {
       return;
     }
 
-    // Helper: update Run.results.progress after instant-complete nodes
-    const completeNodeInProgress = async (nid) => {
-      const existingProgress = run?.results?.progress ?? {};
-      const existing = existingProgress.completedNodeIds ?? [];
-      const updatedIds = existing.includes(nid) ? existing : [...existing, nid];
-      await base44.entities.Run.update(runId, {
-        results: {
-          ...(run?.results ?? {}),
-          progress: {
-            ...existingProgress,
-            routeId: ROUTE_ID,
-            currentNodeId: nid,
-            completedNodeIds: updatedIds,
-            pendingEncounter: null,
-          },
-        },
-      });
-    };
+    // For non-battle nodes: create pendingEncounter then navigate to the appropriate page
+    const existingProgress = run?.results?.progress ?? {};
+    const pendingPayload = { nodeId, nodeType: type, status: "pending", createdAt: new Date().toISOString() };
+    await base44.entities.Run.update(runId, {
+      results: {
+        ...(run?.results ?? {}),
+        progress: { ...existingProgress, routeId: ROUTE_ID, currentNodeId: nodeId, pendingEncounter: pendingPayload },
+      },
+    });
+    await runApi.appendAction(runId, "node_selected", { routeId: ROUTE_ID, nodeId, nodeType: type });
 
     if (type === "center") {
-      await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
-      await runApi.appendAction(runId, "center_used", { routeId: ROUTE_ID, nodeId });
-      await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
-      // Full heal partyState
-      const existingProgress = run?.results?.progress ?? {};
-      const partyState = (existingProgress.partyState ?? []).map(p => ({
-        ...p,
-        currentHP: p.maxHP,
-        fainted: false,
-        status: null,
-        moves: p.moves.map(m => ({ ...m, pp: m.ppMax ?? m.pp })),
-      }));
-      const updatedIds = [...(existingProgress.completedNodeIds ?? [])];
-      if (!updatedIds.includes(nodeId)) updatedIds.push(nodeId);
-      await base44.entities.Run.update(runId, {
-        results: {
-          ...(run?.results ?? {}),
-          progress: { ...existingProgress, routeId: ROUTE_ID, currentNodeId: nodeId, completedNodeIds: updatedIds, pendingEncounter: null, partyState },
-        },
-      });
-      toast("Your party was fully healed! 💊", "success");
-      await reload();
+      navigate(createPageUrl(`Center?runId=${runId}&nodeId=${nodeId}`));
       return;
     }
 
     if (type === "shop") {
-      await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
       navigate(createPageUrl(`Shop?runId=${runId}&nodeId=${nodeId}`));
       return;
     }
 
-    if (type === "event") {
-      await runApi.appendAction(runId, "node_enter", { routeId: ROUTE_ID, nodeId, nodeType: type });
-      await runApi.appendAction(runId, "event_resolved", { routeId: ROUTE_ID, nodeId, reward: "potion" });
-      await runApi.appendAction(runId, "node_completed", { routeId: ROUTE_ID, nodeId });
-
-      // Increment inventory + complete node in progress atomically
-      const existingProgress = run?.results?.progress ?? {};
-      const currentInventory = existingProgress.inventory ?? { potion: 0, revive: 0 };
-      const updatedInventory = { ...currentInventory, potion: (currentInventory.potion ?? 0) + 1 };
-      const updatedIds = [...(existingProgress.completedNodeIds ?? [])];
-      if (!updatedIds.includes(nodeId)) updatedIds.push(nodeId);
-      await base44.entities.Run.update(runId, {
-        results: {
-          ...(run?.results ?? {}),
-          progress: {
-            ...existingProgress,
-            routeId: ROUTE_ID,
-            currentNodeId: nodeId,
-            completedNodeIds: updatedIds,
-            pendingEncounter: null,
-            inventory: updatedInventory,
-          },
-        },
-      });
-      await runApi.appendAction(runId, "reward_granted", { nodeId, nodeType: "event", moneyDelta: 0, itemsDelta: { potion: 1 } });
-
-      toast(node.meta?.label === "Route Start" ? "Your journey begins!" : "Found a Potion! ✨", "success");
-      await reload();
+    if (type === "event" || type === "event_item") {
+      navigate(createPageUrl(`EventNode?runId=${runId}&nodeId=${nodeId}`));
       return;
     }
   };
