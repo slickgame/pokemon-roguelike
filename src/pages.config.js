@@ -59,6 +59,7 @@ import Shop from './pages/Shop';
 import StarterSelect from './pages/StarterSelect';
 import NodeComplete from './pages/NodeComplete';
 import EventNode from './pages/EventNode';
+import Center from './pages/Center';
 import __Layout from './Layout.jsx';
 
 
@@ -75,6 +76,7 @@ export const PAGES = {
     "StarterSelect": StarterSelect,
     "NodeComplete": NodeComplete,
     "EventNode": EventNode,
+    "Center": Center,
 }
 
 export const pagesConfig = {
