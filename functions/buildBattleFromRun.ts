@@ -250,12 +250,16 @@ Deno.serve(async (req) => {
       if (!usedEnemyIds.has(sp.id)) { enemyBenchSpecies.push(sp); usedEnemyIds.add(sp.id); }
     }
 
-    const enemyActive = enemyActiveSpecies.map((sp, i) =>
-      buildPokemon(sp, LEVEL, `${run.seed}:enemy:active:${i}:${sp.id}`)
-    );
-    const enemyBench = enemyBenchSpecies.map((sp, i) =>
-      buildPokemon(sp, LEVEL, `${run.seed}:enemy:bench:${i}:${sp.id}`)
-    );
+    const enemyActive = enemyActiveSpecies.map((sp, i) => {
+      const p = buildPokemon(sp, LEVEL, `${run.seed}:enemy:active:${i}:${sp.id}`);
+      p.instanceId = `enemy_active_${i}_${sp.id}`;
+      return p;
+    });
+    const enemyBench = enemyBenchSpecies.map((sp, i) => {
+      const p = buildPokemon(sp, LEVEL, `${run.seed}:enemy:bench:${i}:${sp.id}`);
+      p.instanceId = `enemy_bench_${i}_${sp.id}`;
+      return p;
+    });
 
     // State uses separate active/bench arrays (indices 0-2 map to active/bench arrays directly)
     const battleState = {
