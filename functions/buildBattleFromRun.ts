@@ -264,18 +264,20 @@ Deno.serve(async (req) => {
     // State uses separate active/bench arrays (indices 0-2 map to active/bench arrays directly)
     const battleState = {
       player: {
-        active: playerActive,   // array of 3 active Pokémon objects
-        bench:  playerBench,    // array of 3 bench Pokémon objects
+        active: playerActive,
+        bench:  playerBench,
       },
       enemy: {
         active: enemyActive,
         bench:  enemyBench,
+        isTrainer: false, // MVP: wild encounters; set true for trainer battles
       },
       turnLog: [],
       rngCallCount: 0,
       winner: null,
-      // Track enemy AI switch usage
       enemySwitchUsed: false,
+      xpAwardedForFaints: [],
+      pendingLearnPrompts: [],
     };
 
     const battle = await base44.entities.Battle.create({
