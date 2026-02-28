@@ -298,11 +298,14 @@ function getBaseExpYield(speciesId) {
   return BASE_EXP_YIELDS[speciesId] ?? 50;
 }
 
-// Official XP gain: floor((a * b * L) / 7)
+// XP pacing multiplier for 3v3 format — reduce XP gain to prevent hyper-fast levelling
+const XP_MULT_3V3 = 0.7;
+
+// Official XP gain: floor((a * b * L) / 7) * XP_MULT_3V3
 function calcXpYield(enemyLevel, enemySpeciesId, isTrainerOwned = true) {
   const b = getBaseExpYield(enemySpeciesId);
   const a = isTrainerOwned ? 1.5 : 1.0;
-  return Math.max(1, Math.floor((a * b * enemyLevel) / 7));
+  return Math.max(1, Math.floor(Math.floor((a * b * enemyLevel) / 7) * XP_MULT_3V3));
 }
 
 function computeStatValue(statName, base, level, iv, ev, nature) {
