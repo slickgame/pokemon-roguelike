@@ -381,7 +381,7 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
 
   for (let ei = 0; ei < state.enemy.active.length; ei++) {
     const poke = state.enemy.active[ei];
-    if (!poke || poke.fainted) continue;
+    if (!poke || poke.fainted || poke.justSwitchedIn) continue;
     if (allowEnemySwitch) {
       const switchBenchIdx = enemyPickSwitch(ei, state.enemy, state.player.active);
       if (switchBenchIdx >= 0) {
