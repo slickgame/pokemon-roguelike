@@ -316,8 +316,9 @@ const MOVE_DATA = {
 // Apply XP to a Pokémon and handle level-ups. Returns queued learn prompts.
 function applyXpToPoke(poke, xpAmount, log) {
   if (!poke || xpAmount <= 0) return [];
-  poke.exp = (poke.exp ?? 0) + xpAmount;
-  log.push(`${poke.name} gained ${xpAmount} Exp. Points!`);
+  const beforeExp = poke.exp ?? 0;
+  poke.exp = beforeExp + xpAmount;
+  log.push(`${poke.name} gained ${xpAmount} Exp. Points! [DEV: ${beforeExp} → ${poke.exp}]`);
 
   const curve = getGrowthRateForSpecies(poke.speciesId);
   const learnQueue = [];
