@@ -65,32 +65,17 @@ function deterministicShuffle(arr, rng) {
   return out;
 }
 
-// ── Move selection from learnset ─────────────────────────────────────────────
+// ── Move selection from learnset registry ────────────────────────────────────
 function buildMoveset(species) {
-  const learnset = species.learnset ?? [];
-  const moves = [];
-  const normalPhysical = learnset.find(id => {
-    const m = getMoveById(id);
-    return m && m.type === "normal" && m.category === "physical" && m.power;
-  });
-  if (normalPhysical) {
-    const m = getMoveById(normalPhysical);
-    moves.push({ ...m, currentPp: m.pp });
-  }
-  const primaryType = species.types[0];
-  if (primaryType !== "normal") {
-    const stabId = learnset.find(id => {
-      const m = getMoveById(id);
-      return m && m.type === primaryType && m.power;
-    });
-    if (stabId) {
-      const m = getMoveById(stabId);
-      moves.push({ ...m, currentPp: m.pp });
-    }
-  }
-  if (moves.length < 2) {
-    const growl = getMoveById("growl");
-    if (growl && learnset.includes("growl")) moves.push({ ...growl, currentPp: growl.pp });
+  const learnset = LEARNSETS[species.id] ?? { startMoves: ["tackle"], levelUp: [] };
+  const moves = learnset.startMoves
+    .map(id => getMoveById(id))
+    .filter(Boolean)
+    .slice(0, 4)
+    .map(m => ({ ...m, currentPp: m.pp }));
+  if (moves.length === 0) {
+    const tackle = getMoveById("tackle");
+    moves.push({ ...tackle, currentPp: tackle.pp });
   }
   return moves;
 }
