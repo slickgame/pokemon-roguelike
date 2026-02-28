@@ -162,6 +162,7 @@ function initPartyState(pickedIds, benchSpecies, seed) {
     const poke = buildFreshPokemon(sp, level, subSeed);
     return {
       speciesId: poke.speciesId, name: poke.name, level: poke.level,
+      exp: 0,
       currentHP: poke.maxHp, maxHP: poke.maxHp, fainted: false, status: null,
       moves: poke.moves.map(m => ({ id: m.id, pp: m.pp, ppMax: m.pp })),
     };
