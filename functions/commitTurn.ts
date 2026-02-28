@@ -390,6 +390,7 @@ function extractPartyState(playerSide) {
   const allPokes = [...playerSide.active, ...playerSide.bench];
   return allPokes.filter(p => !!p).map(p => ({
     speciesId: p.speciesId,
+    instanceId: p.instanceId,
     name: p.name,
     level: p.level,
     exp: p.exp ?? 0,
@@ -400,7 +401,7 @@ function extractPartyState(playerSide) {
     maxHP: p.maxHp,
     fainted: p.fainted,
     status: p.status ?? null,
-    moves: (p.moves ?? []).map(m => ({ id: m.id, name: m.name, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
+    moves: (p.moves ?? []).map(m => ({ id: m.id, name: m.name ?? m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp ?? m.ppMax ?? 20 })),
   }));
 }
 
