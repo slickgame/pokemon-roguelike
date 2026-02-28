@@ -99,8 +99,13 @@ export default function Battle() {
       if (data.updatedInventory) {
         setRun(r => r ? { ...r, results: { ...(r.results ?? {}), progress: { ...(r.results?.progress ?? {}), inventory: data.updatedInventory } } } : r);
       }
+      // Queue learn prompts from backend
+      if (data.pendingLearnPrompts && data.pendingLearnPrompts.length > 0) {
+        setLearnQueue(prev => [...prev, ...data.pendingLearnPrompts]);
+      }
 
       if (newWinner) {
+        setLearnQueue([]); // clear learn prompts on battle end
         setShowBag(false); // auto-close bag/replacement modals on battle end
         toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
         // Resolve the encounter — clears pendingEncounter on Run, marks node complete
