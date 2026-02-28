@@ -113,8 +113,9 @@ export default function RunMap() {
     [actions, runProgress]
   );
 
-  // pendingEncounter from Run.results.progress (set by resolveEncounterFromBattle / startNodeBattle)
-  const pendingEncounter = runProgress?.pendingEncounter ?? null;
+  // pendingEncounter — only block if status is "pending" (not resolved)
+  const rawPending = runProgress?.pendingEncounter ?? null;
+  const pendingEncounter = rawPending?.status === "resolved" ? null : rawPending;
 
   // Build or restore graph
   useEffect(() => {
