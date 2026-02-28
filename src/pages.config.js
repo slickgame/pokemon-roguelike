@@ -47,7 +47,9 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Battle from './pages/Battle';
 import CarryoverRoster from './pages/CarryoverRoster';
+import DevPanel from './pages/DevPanel';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import Results from './pages/Results';
@@ -55,13 +57,14 @@ import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
 import Shop from './pages/Shop';
 import StarterSelect from './pages/StarterSelect';
-import Battle from './pages/Battle';
-import DevPanel from './pages/DevPanel';
+import NodeComplete from './pages/NodeComplete';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Battle": Battle,
     "CarryoverRoster": CarryoverRoster,
+    "DevPanel": DevPanel,
     "Home": Home,
     "Leaderboard": Leaderboard,
     "Results": Results,
@@ -69,8 +72,7 @@ export const PAGES = {
     "Seasons": Seasons,
     "Shop": Shop,
     "StarterSelect": StarterSelect,
-    "Battle": Battle,
-    "DevPanel": DevPanel,
+    "NodeComplete": NodeComplete,
 }
 
 export const pagesConfig = {
