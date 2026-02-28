@@ -529,6 +529,8 @@ Deno.serve(async (req) => {
       const sideState = side === "player" ? state.player : state.enemy;
       const poke = sideState.active[activeIdx];
       if (!poke || poke.fainted) continue;
+      // Skip if poke entered this turn (KO replacement) — identified by reference to snapshot
+      if (poke !== action.poke) continue;
 
       // ── Switch ──────────────────────────────────────────────────────────────
       if (isSwitch) {
