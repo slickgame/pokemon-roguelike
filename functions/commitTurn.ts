@@ -35,12 +35,27 @@ function makeRng(seedStr) {
   return { next, getCallCount: () => callCount };
 }
 
+// ── Safe stat getter (PATCH 2) ────────────────────────────────────────────────
+function getStat(mon, key) {
+  const val = mon.stats?.[key];
+  if (typeof val === "number" && isFinite(val)) return val;
+  // Emergency recompute fallback — never return NaN
+  const base = mon.baseStats;
+  const level = mon.level;
+  const IV = 0, EV = 0;
+  const computed = Math.floor((((2 * base[key] + IV + Math.floor(EV / 4)) * level) / 100 + 5));
+  if (!mon.stats) mon.stats = {};
+  mon.stats[key] = computed;
+  return computed;
+}
+
 // ── Damage formula ────────────────────────────────────────────────────────────
 function calcDamage(attacker, move, defender, rng) {
   if (!move.power) return { dmg: 0, typeEff: 1 };
   const lvl = attacker.level;
-  const atkStat = move.category === "physical" ? attacker.baseStats.atk : attacker.baseStats.spa;
-  const defStat = move.category === "physical" ? defender.baseStats.def : defender.baseStats.spd;
+  const isSpecial = move.category === "special";
+  const atkStat = getStat(attacker, isSpecial ? "spa" : "atk");
+  const defStat = getStat(defender, isSpecial ? "spd" : "def");
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const typeEff = effectiveness(move.type, defender.types);
   const roll = 0.85 + rng.next() * 0.15;
