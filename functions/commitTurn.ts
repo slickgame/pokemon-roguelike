@@ -157,31 +157,125 @@ const ITEM_CONFIG = {
 };
 
 // ── XP / Level-up Engine ─────────────────────────────────────────────────────
-function getLevelFromExp(exp) {
+
+// Official growth curve formulas (inlined — Deno cannot import frontend modules)
+function getExpForLevel(level, curve) {
+  if (level <= 1) return 0;
+  const n = level;
+  switch (curve) {
+    case "Fast":        return Math.floor(4 * n * n * n / 5);
+    case "Medium Fast": return n * n * n;
+    case "Medium Slow": return Math.floor(6 / 5 * n * n * n - 15 * n * n + 100 * n - 140);
+    case "Slow":        return Math.floor(5 * n * n * n / 4);
+    case "Erratic": {
+      if (n <= 50)  return Math.floor(n * n * n * (100 - n) / 50);
+      if (n <= 68)  return Math.floor(n * n * n * (150 - n) / 100);
+      if (n <= 98)  return Math.floor(n * n * n * Math.floor((1911 - 10 * n) / 3) / 500);
+      return Math.floor(n * n * n * (160 - n) / 100);
+    }
+    case "Fluctuating": {
+      if (n <= 15)  return Math.floor(n * n * n * (Math.floor((n + 1) / 3) + 24) / 50);
+      if (n <= 35)  return Math.floor(n * n * n * (n + 14) / 50);
+      return Math.floor(n * n * n * (Math.floor(n / 2) + 32) / 50);
+    }
+    default:            return n * n * n; // Medium Fast fallback
+  }
+}
+
+function getLevelFromExp(exp, curve) {
   if (exp <= 0) return 1;
-  return Math.max(1, Math.min(100, Math.floor(Math.cbrt(exp))));
+  let lo = 1, hi = 100;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi + 1) / 2);
+    if (getExpForLevel(mid, curve) <= exp) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+}
+
+// Official base exp yields for Kanto 1-151 (Gen 1 / FRLG)
+const BASE_EXP_YIELDS = {
+  1:64,2:142,3:263,4:62,5:142,6:267,7:63,8:142,9:265,10:39,11:72,12:198,
+  13:39,14:72,15:220,16:50,17:122,18:239,19:51,20:145,21:52,22:162,23:58,
+  24:177,25:112,26:218,27:64,28:177,29:55,30:128,31:227,32:55,33:128,34:227,
+  35:68,36:188,37:60,38:197,39:76,40:197,41:54,42:171,43:78,44:132,45:184,
+  46:74,47:141,48:128,49:202,50:45,51:157,52:69,53:163,54:80,55:175,56:74,
+  57:176,58:91,59:213,60:77,61:145,62:230,63:75,64:145,65:250,66:75,67:145,
+  68:250,69:60,70:138,71:191,72:71,73:205,74:73,75:148,76:218,77:82,78:175,
+  79:99,80:199,81:65,82:165,83:94,84:65,85:166,86:65,87:166,88:90,89:218,
+  90:75,91:199,92:95,93:180,94:261,95:78,96:64,97:176,98:65,99:173,100:66,
+  101:172,102:98,103:207,104:78,105:173,106:114,107:114,108:165,109:95,110:175,
+  111:111,112:234,113:255,114:166,115:218,116:66,117:170,118:83,119:198,120:83,
+  121:207,122:136,123:187,124:137,125:172,126:172,127:200,128:172,129:40,130:239,
+  131:207,132:101,133:65,134:197,135:197,136:197,137:130,138:71,139:164,140:71,
+  141:170,142:215,143:189,144:216,145:216,146:216,147:60,148:147,149:270,150:340,151:270,
+};
+
+// Official growth rates for Kanto 1-151
+const GROWTH_RATES = {
+  1:"Medium Slow",2:"Medium Slow",3:"Medium Slow",4:"Medium Slow",5:"Medium Slow",
+  6:"Medium Slow",7:"Medium Slow",8:"Medium Slow",9:"Medium Slow",10:"Fast",11:"Fast",
+  12:"Fast",13:"Fast",14:"Fast",15:"Fast",16:"Medium Fast",17:"Medium Fast",18:"Medium Fast",
+  19:"Medium Fast",20:"Medium Fast",21:"Medium Fast",22:"Medium Fast",23:"Medium Fast",
+  24:"Medium Fast",25:"Medium Fast",26:"Medium Fast",27:"Medium Fast",28:"Medium Fast",
+  29:"Medium Slow",30:"Medium Slow",31:"Medium Slow",32:"Medium Slow",33:"Medium Slow",
+  34:"Medium Slow",35:"Fast",36:"Fast",37:"Medium Fast",38:"Medium Fast",39:"Fast",40:"Fast",
+  41:"Medium Fast",42:"Medium Fast",43:"Medium Slow",44:"Medium Slow",45:"Medium Slow",
+  46:"Medium Fast",47:"Medium Fast",48:"Medium Fast",49:"Medium Fast",50:"Medium Fast",
+  51:"Medium Fast",52:"Medium Fast",53:"Medium Fast",54:"Medium Fast",55:"Medium Fast",
+  56:"Medium Fast",57:"Medium Fast",58:"Medium Slow",59:"Medium Slow",60:"Medium Slow",
+  61:"Medium Slow",62:"Medium Slow",63:"Medium Slow",64:"Medium Slow",65:"Medium Slow",
+  66:"Medium Fast",67:"Medium Fast",68:"Medium Fast",69:"Medium Slow",70:"Medium Slow",
+  71:"Medium Slow",72:"Slow",73:"Slow",74:"Medium Slow",75:"Medium Slow",76:"Medium Slow",
+  77:"Medium Fast",78:"Medium Fast",79:"Slow",80:"Slow",81:"Medium Fast",82:"Medium Fast",
+  83:"Medium Fast",84:"Medium Fast",85:"Medium Fast",86:"Medium Fast",87:"Medium Fast",
+  88:"Medium Fast",89:"Medium Fast",90:"Fast",91:"Slow",92:"Medium Fast",93:"Medium Fast",
+  94:"Medium Slow",95:"Medium Fast",96:"Fast",97:"Fast",98:"Medium Fast",99:"Medium Fast",
+  100:"Medium Fast",101:"Medium Fast",102:"Medium Slow",103:"Medium Slow",104:"Medium Slow",
+  105:"Medium Slow",106:"Medium Fast",107:"Medium Fast",108:"Medium Slow",109:"Medium Fast",
+  110:"Medium Fast",111:"Slow",112:"Slow",113:"Fast",114:"Medium Slow",115:"Slow",
+  116:"Medium Fast",117:"Medium Fast",118:"Medium Fast",119:"Slow",120:"Slow",121:"Slow",
+  122:"Medium Fast",123:"Medium Slow",124:"Medium Slow",125:"Medium Slow",126:"Medium Slow",
+  127:"Slow",128:"Slow",129:"Slow",130:"Slow",131:"Slow",132:"Medium Fast",
+  133:"Medium Fast",134:"Medium Fast",135:"Medium Fast",136:"Medium Fast",137:"Medium Fast",
+  138:"Medium Fast",139:"Medium Fast",140:"Medium Fast",141:"Medium Fast",142:"Slow",
+  143:"Slow",144:"Slow",145:"Slow",146:"Slow",147:"Slow",148:"Slow",149:"Slow",150:"Slow",
+  151:"Medium Slow",
+};
+
+function getGrowthRateForSpecies(speciesId) {
+  return GROWTH_RATES[speciesId] ?? "Medium Fast";
+}
+
+function getBaseExpYield(speciesId) {
+  return BASE_EXP_YIELDS[speciesId] ?? 50;
+}
+
+// Official XP gain: floor((a * b * L) / 7)
+function calcXpYield(enemyLevel, enemySpeciesId, isTrainerOwned = true) {
+  const b = getBaseExpYield(enemySpeciesId);
+  const a = isTrainerOwned ? 1.5 : 1.0;
+  return Math.max(1, Math.floor((a * b * enemyLevel) / 7));
 }
 
 function computeStatValue(statName, base, level, iv, ev, nature) {
   const evContrib = Math.floor((ev ?? 0) / 4);
   const inner = Math.floor((2 * base + (iv ?? 0) + evContrib) * level / 100);
   if (statName === "hp") return inner + level + 10;
-  return Math.floor((inner + 5) * 1); // neutral nature for MVP
+  return Math.floor((inner + 5) * 1); // neutral nature MVP
 }
 
 function recomputeStats(poke) {
   const base = poke.baseStats;
   const level = poke.level;
   const ivs = poke.ivs ?? {};
-  const evs = {};
-  const nature = poke.nature ?? "hardy";
   return {
-    hp:  computeStatValue("hp",  base.hp,  level, ivs.hp  ?? 0, 0, nature),
-    atk: computeStatValue("atk", base.atk, level, ivs.atk ?? 0, 0, nature),
-    def: computeStatValue("def", base.def, level, ivs.def ?? 0, 0, nature),
-    spa: computeStatValue("spa", base.spa, level, ivs.spa ?? 0, 0, nature),
-    spd: computeStatValue("spd", base.spd, level, ivs.spd ?? 0, 0, nature),
-    spe: computeStatValue("spe", base.spe, level, ivs.spe ?? 0, 0, nature),
+    hp:  computeStatValue("hp",  base.hp,  level, ivs.hp  ?? 0, 0),
+    atk: computeStatValue("atk", base.atk, level, ivs.atk ?? 0, 0),
+    def: computeStatValue("def", base.def, level, ivs.def ?? 0, 0),
+    spa: computeStatValue("spa", base.spa, level, ivs.spa ?? 0, 0),
+    spd: computeStatValue("spd", base.spd, level, ivs.spd ?? 0, 0),
+    spe: computeStatValue("spe", base.spe, level, ivs.spe ?? 0, 0),
   };
 }
 
