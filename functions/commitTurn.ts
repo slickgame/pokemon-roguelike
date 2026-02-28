@@ -465,9 +465,10 @@ function extractPartyState(playerSide) {
     speciesId: p.speciesId,
     name: p.name,
     level: p.level,
-    exp: p.exp ?? 0,          // ALWAYS persist exp
+    exp: p.exp ?? 0,
     ivs: p.ivs ?? {},
     nature: p.nature ?? "hardy",
+    stats: p.stats ?? null,   // PATCH 3: always persist computed stats
     currentHP: p.currentHp,
     maxHP: p.maxHp,
     fainted: p.fainted,
