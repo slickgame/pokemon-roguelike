@@ -662,6 +662,7 @@ Deno.serve(async (req) => {
             if (validBench.length > 0 && !state.pendingReplacement) {
               state.pendingReplacement = { side: "player", slot: effectiveTargetSlot, faintedName: target.name, reason: "fainted" };
             }
+            // Player's active that was KO'd — any auto-fill will be marked justSwitchedIn in chooseReplacement
           }
         }
       } else {
