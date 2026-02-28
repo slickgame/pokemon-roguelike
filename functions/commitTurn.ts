@@ -113,8 +113,9 @@ function isValidTarget(state, side, slot) {
 function estimateDamage(attacker, move, defender) {
   if (!move.power) return 0;
   const lvl = attacker.level;
-  const atkStat = move.category === "physical" ? attacker.baseStats.atk : attacker.baseStats.spa;
-  const defStat = move.category === "physical" ? defender.baseStats.def : defender.baseStats.spd;
+  const isSpecial = move.category === "special";
+  const atkStat = getStat(attacker, isSpecial ? "spa" : "atk");
+  const defStat = getStat(defender, isSpecial ? "spd" : "def");
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const typeEff = effectiveness(move.type, defender.types);
   return Math.max(1, Math.floor(
