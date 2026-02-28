@@ -311,10 +311,11 @@ const MOVE_DATA = {
 function applyXpToPoke(poke, xpAmount, log) {
   if (!poke || xpAmount <= 0) return [];
   poke.exp = (poke.exp ?? 0) + xpAmount;
-  log.push(`${poke.name} gained ${xpAmount} XP!`);
+  log.push(`${poke.name} gained ${xpAmount} Exp. Points!`);
 
+  const curve = getGrowthRateForSpecies(poke.speciesId);
   const learnQueue = [];
-  let newLevel = getLevelFromExp(poke.exp);
+  let newLevel = getLevelFromExp(poke.exp, curve);
   while (newLevel > poke.level) {
     poke.level++;
     const oldMaxHp = poke.maxHp;
