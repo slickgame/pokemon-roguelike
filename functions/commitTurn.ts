@@ -35,22 +35,37 @@ function makeRng(seedStr) {
   return { next, getCallCount: () => callCount };
 }
 
-// ── Safe stat getter (PATCH 2) ────────────────────────────────────────────────
+// ── Stat helpers ──────────────────────────────────────────────────────────────
+function computeStatValue(base, level, isHP = false) {
+  const inner = Math.floor((2 * base * level) / 100);
+  return isHP ? inner + level + 10 : Math.floor((inner + 5));
+}
+
+function computeAllStats(mon) {
+  const b = mon.baseStats;
+  const lv = mon.level;
+  return {
+    hp:  computeStatValue(b.hp,  lv, true),
+    atk: computeStatValue(b.atk, lv),
+    def: computeStatValue(b.def, lv),
+    spa: computeStatValue(b.spa, lv),
+    spd: computeStatValue(b.spd, lv),
+    spe: computeStatValue(b.spe, lv),
+  };
+}
+
 function getStat(mon, key) {
   const val = mon.stats?.[key];
-  if (typeof val === "number" && isFinite(val)) return val;
-  // Emergency recompute fallback — never return NaN
-  const base = mon.baseStats;
-  const level = mon.level;
-  const IV = 0, EV = 0;
-  const computed = Math.floor((((2 * base[key] + IV + Math.floor(EV / 4)) * level) / 100 + 5));
+  if (typeof val === "number" && isFinite(val) && val > 0) return val;
+  // Emergency recompute fallback
   if (!mon.stats) mon.stats = {};
+  const computed = computeStatValue(mon.baseStats[key], mon.level, key === "hp");
   mon.stats[key] = computed;
   return computed;
 }
 
 // ── Damage formula ────────────────────────────────────────────────────────────
-function calcDamage(attacker, move, defender, rng) {
+function calcDamage(attacker, move, defender, rng, log) {
   if (!move.power) return { dmg: 0, typeEff: 1 };
   const lvl = attacker.level;
   const isSpecial = move.category === "special";
@@ -59,11 +74,27 @@ function calcDamage(attacker, move, defender, rng) {
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const typeEff = effectiveness(move.type, defender.types);
   const roll = 0.85 + rng.next() * 0.15;
-  const dmg = Math.max(1, Math.floor(
-    Math.floor(Math.floor(2 * lvl / 5 + 2) * move.power * atkStat / defStat / 50 + 2)
-    * stab * typeEff * roll
-  ));
-  return { dmg, typeEff };
+
+  // Base damage
+  let dmg = Math.floor(Math.floor(2 * lvl / 5 + 2) * move.power * atkStat / defStat / 50 + 2);
+
+  // Burn modifier (halves physical damage)
+  if (attacker.status === "burn" && move.category === "physical") dmg = Math.floor(dmg * 0.5);
+
+  // Spread modifier (AoE moves deal 75% per target)
+  if (move.target && move.target !== "single") dmg = Math.floor(dmg * 0.75);
+
+  // Crit (1/24 chance, 1.5x)
+  const isCrit = rng.next() < (1 / 24);
+  if (isCrit) {
+    dmg = Math.floor(dmg * 1.5);
+    if (log) log.push("A critical hit!");
+  }
+
+  // Random roll + STAB + type
+  dmg = Math.max(1, Math.floor(dmg * stab * typeEff * roll));
+
+  return { dmg, typeEff, isCrit };
 }
 
 // ── Null-safe alive check ─────────────────────────────────────────────────────
