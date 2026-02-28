@@ -71,6 +71,7 @@ function buildPokemon(species, level, subSeed) {
     name: species.name,
     types: species.types,
     level,
+    exp: 0,
     nature,
     abilityId,
     shiny,
