@@ -283,14 +283,16 @@ function computeStatValue(statName, base, level, iv, ev, nature) {
 function recomputeStats(poke) {
   const base = poke.baseStats;
   const level = poke.level;
-  const ivs = poke.ivs ?? {};
+  const IV = 0, EV = 0; // MVP: no IVs/EVs
+  const computeStat = (b) => Math.floor((((2 * b + IV + Math.floor(EV / 4)) * level) / 100 + 5));
+  const computeHP   = (b) => Math.floor(((2 * b + IV + Math.floor(EV / 4)) * level) / 100) + level + 10;
   return {
-    hp:  computeStatValue("hp",  base.hp,  level, ivs.hp  ?? 0, 0),
-    atk: computeStatValue("atk", base.atk, level, ivs.atk ?? 0, 0),
-    def: computeStatValue("def", base.def, level, ivs.def ?? 0, 0),
-    spa: computeStatValue("spa", base.spa, level, ivs.spa ?? 0, 0),
-    spd: computeStatValue("spd", base.spd, level, ivs.spd ?? 0, 0),
-    spe: computeStatValue("spe", base.spe, level, ivs.spe ?? 0, 0),
+    hp:  computeHP(base.hp),
+    atk: computeStat(base.atk),
+    def: computeStat(base.def),
+    spa: computeStat(base.spa),
+    spd: computeStat(base.spd),
+    spe: computeStat(base.spe),
   };
 }
 
