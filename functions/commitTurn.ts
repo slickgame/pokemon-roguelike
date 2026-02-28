@@ -664,7 +664,7 @@ Deno.serve(async (req) => {
       action.wasRetargeted = retargeted;
 
       if (move.power) {
-        const { dmg, typeEff } = calcDamage(poke, move, target, rng);
+        const { dmg, typeEff } = calcDamage(poke, move, target, rng, log);
         target.currentHp = Math.max(0, target.currentHp - dmg);
         const effText = typeEff >= 2 ? " It's super effective!" : typeEff <= 0.5 ? " It's not very effective..." : "";
         const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
