@@ -221,14 +221,14 @@ Deno.serve(async (req) => {
       return buildPlayerPokemon(sid, `${run.seed}:player:active:${i}:${sid}`);
     }).filter(Boolean);
 
-    // Bench: pick from species NOT in player actives
+    // Bench: pick from species NOT in player actives — restore saved state too
     const playerBenchPool = deterministicShuffle(
       SPECIES.filter(s => !pickedIds.includes(s.id)),
       makeRng(`${run.seed}:player:bench_select`)
     );
     const playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
-      buildPokemon(sp, LEVEL, `${run.seed}:player:bench:${i}:${sp.id}`)
-    );
+      buildPlayerPokemon(sp.id, `${run.seed}:player:bench:${i}:${sp.id}`)
+    ).filter(Boolean);
 
     // ── Enemy team: 3 active + 3 bench ───────────────────────────────────────
     const enemyActiveRng = makeRng(`${run.seed}:enemy:active_select`);
