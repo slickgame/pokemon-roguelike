@@ -6,7 +6,7 @@ import RunDebugPanel from "../components/dev/RunDebugPanel";
 import DbVersionCard from "../components/dev/DbVersionCard";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Beaker, PlayCircle, Plus, CheckCircle, Swords, Search, Zap, ExternalLink } from "lucide-react";
+import { Beaker, PlayCircle, Plus, CheckCircle, Swords, Search, Zap, ExternalLink, RefreshCw } from "lucide-react";
 
 export default function DevPanel() {
   const navigate = useNavigate();
