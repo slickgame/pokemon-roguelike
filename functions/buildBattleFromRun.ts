@@ -181,15 +181,44 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    const LEVEL = 5;
+    const BASE_LEVEL = 5;
     const speciesMap = {};
     for (const s of SPECIES) speciesMap[s.id] = s;
 
-    // ── Player team: 3 active (confirmed starters) + 3 bench ─────────────────
-    const playerActive = pickedIds.slice(0, 3).map((sid, i) => {
+    // Pull existing partyState (if any) to restore exp/level/moves from persistence
+    const existingPartyState = run.results?.progress?.partyState ?? [];
+    const partyStateBySpecies = {};
+    for (const ps of existingPartyState) {
+      if (ps.speciesId) partyStateBySpecies[ps.speciesId] = ps;
+    }
+
+    function buildPlayerPokemon(sid, slotSeed) {
       const sp = speciesMap[sid];
       if (!sp) return null;
-      return buildPokemon(sp, LEVEL, `${run.seed}:player:active:${i}:${sid}`);
+      const saved = partyStateBySpecies[sid];
+      const level = saved?.level ?? BASE_LEVEL;
+      const overrides = saved ? {
+        exp: saved.exp ?? 0,
+        level,
+        nature: saved.nature,
+        ivs: saved.ivs,
+        currentHP: saved.currentHP,
+        fainted: saved.fainted ?? false,
+        status: saved.status ?? null,
+        moves: saved.moves ? saved.moves.map(m => ({
+          id: m.id, name: m.name ?? m.id, type: "normal", category: "physical",
+          power: null, pp: m.ppMax ?? 20, currentPp: m.pp ?? 20, priority: 0,
+          ...(MOVE_DB_B[m.id] ?? {}),
+          currentPp: m.pp ?? m.ppMax ?? 20,
+        })) : null,
+      } : {};
+      return buildPokemon(sp, level, slotSeed, overrides);
+    }
+
+    // ── Player team: 3 active (confirmed starters) + 3 bench ─────────────────
+    const LEVEL = BASE_LEVEL;
+    const playerActive = pickedIds.slice(0, 3).map((sid, i) => {
+      return buildPlayerPokemon(sid, `${run.seed}:player:active:${i}:${sid}`);
     }).filter(Boolean);
 
     // Bench: pick from species NOT in player actives
