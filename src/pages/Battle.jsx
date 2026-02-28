@@ -11,6 +11,7 @@ import { ToastContainer, useToast } from "../components/ui/Toast";
 import { Swords, Bug, Package, Coins } from "lucide-react";
 import ReplacementPanel from "../components/battle/ReplacementPanel";
 import BagModal from "../components/battle/BagModal";
+import LearnMoveModal from "../components/battle/LearnMoveModal";
 
 export default function Battle() {
   const navigate = useNavigate();
