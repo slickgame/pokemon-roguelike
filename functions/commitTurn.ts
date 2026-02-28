@@ -366,7 +366,7 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
 
   for (const cmd of playerCommands) {
     const poke = state.player.active[cmd.actorSlot];
-    if (!poke || poke.fainted) continue;
+    if (!poke || poke.fainted || poke.justSwitchedIn) continue;
     if (cmd.type === "switch") {
       actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true });
     } else if (cmd.type === "item") {
