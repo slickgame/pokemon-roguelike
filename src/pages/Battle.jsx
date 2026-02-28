@@ -101,10 +101,15 @@ export default function Battle() {
         setRun(r => r ? { ...r, results: { ...(r.results ?? {}), progress: { ...(r.results?.progress ?? {}), inventory: data.updatedInventory } } } : r);
       }
 
+      // Collect any learn prompts returned from the server
+      if (data.pendingLearnPrompts?.length > 0) {
+        setLearnPrompts(data.pendingLearnPrompts);
+      }
+
       if (newWinner) {
-        setShowBag(false); // auto-close bag/replacement modals on battle end
+        setShowBag(false);
+        setLearnPrompts([]);
         toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
-        // Resolve the encounter — clears pendingEncounter on Run, marks node complete
         const outcome = newWinner === "player" ? "win" : "loss";
         await base44.functions.invoke("resolveEncounterFromBattle", { runId, battleId, outcome });
       }
