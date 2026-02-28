@@ -156,10 +156,105 @@ const ITEM_CONFIG = {
   revive: { healPercent: 0.5, canTargetFainted: true, revives: true },
 };
 
-// Find a pokémon from player state by party index (active first, then bench)
-function getPlayerPartyPoke(state, partyIndex) {
-  const allPlayer = [...state.player.active, ...state.player.bench];
-  return allPlayer[partyIndex] ?? null;
+// ── XP / Level-up Engine ─────────────────────────────────────────────────────
+function getLevelFromExp(exp) {
+  if (exp <= 0) return 1;
+  return Math.max(1, Math.min(100, Math.floor(Math.cbrt(exp))));
+}
+
+function computeStatValue(statName, base, level, iv, ev, nature) {
+  const evContrib = Math.floor((ev ?? 0) / 4);
+  const inner = Math.floor((2 * base + (iv ?? 0) + evContrib) * level / 100);
+  if (statName === "hp") return inner + level + 10;
+  return Math.floor((inner + 5) * 1); // neutral nature for MVP
+}
+
+function recomputeStats(poke) {
+  const base = poke.baseStats;
+  const level = poke.level;
+  const ivs = poke.ivs ?? {};
+  const evs = {};
+  const nature = poke.nature ?? "hardy";
+  return {
+    hp:  computeStatValue("hp",  base.hp,  level, ivs.hp  ?? 0, 0, nature),
+    atk: computeStatValue("atk", base.atk, level, ivs.atk ?? 0, 0, nature),
+    def: computeStatValue("def", base.def, level, ivs.def ?? 0, 0, nature),
+    spa: computeStatValue("spa", base.spa, level, ivs.spa ?? 0, 0, nature),
+    spd: computeStatValue("spd", base.spd, level, ivs.spd ?? 0, 0, nature),
+    spe: computeStatValue("spe", base.spe, level, ivs.spe ?? 0, 0, nature),
+  };
+}
+
+// Minimal learnsets (level-up moves only — must mirror components/db/learnsets.js)
+const LEVEL_UP_LEARNSETS = {
+  1:  [{ level: 7,  moveId: "vine_whip" }],
+  4:  [{ level: 7,  moveId: "ember" }],
+  7:  [{ level: 7,  moveId: "water_gun" }],
+  16: [{ level: 9,  moveId: "quick_attack" }],
+  19: [{ level: 7,  moveId: "quick_attack" }],
+  21: [{ level: 9,  moveId: "quick_attack" }],
+  25: [{ level: 9,  moveId: "quick_attack" }],
+  33: [{ level: 9,  moveId: "quick_attack" }], // Nidoran-M-like
+  52: [{ level: 9,  moveId: "quick_attack" }],
+  133:[{ level: 9,  moveId: "quick_attack" }],
+};
+
+// Minimal move data for level-up moves (just enough to add to movesets)
+const MOVE_DATA = {
+  vine_whip:    { id: "vine_whip",    name: "Vine Whip",    type: "grass",    category: "physical", power: 45,  pp: 25, priority: 0 },
+  ember:        { id: "ember",        name: "Ember",        type: "fire",     category: "special",  power: 40,  pp: 25, priority: 0 },
+  water_gun:    { id: "water_gun",    name: "Water Gun",    type: "water",    category: "special",  power: 40,  pp: 25, priority: 0 },
+  quick_attack: { id: "quick_attack", name: "Quick Attack", type: "normal",   category: "physical", power: 40,  pp: 30, priority: 1 },
+  tackle:       { id: "tackle",       name: "Tackle",       type: "normal",   category: "physical", power: 40,  pp: 35, priority: 0 },
+  scratch:      { id: "scratch",      name: "Scratch",      type: "normal",   category: "physical", power: 40,  pp: 35, priority: 0 },
+  growl:        { id: "growl",        name: "Growl",        type: "normal",   category: "status",   power: null,pp: 40, priority: 0 },
+  thunder_shock:{ id: "thunder_shock",name: "ThunderShock", type: "electric", category: "special",  power: 40,  pp: 30, priority: 0 },
+  string_shot:  { id: "string_shot",  name: "String Shot",  type: "bug",      category: "status",   power: null,pp: 40, priority: 0 },
+  tail_whip:    { id: "tail_whip",    name: "Tail Whip",    type: "normal",   category: "status",   power: null,pp: 30, priority: 0 },
+};
+
+// Apply XP to a Pokémon and handle level-ups. Returns queued learn prompts.
+function applyXpToPoke(poke, xpAmount, log) {
+  if (!poke || xpAmount <= 0) return [];
+  poke.exp = (poke.exp ?? 0) + xpAmount;
+  log.push(`${poke.name} gained ${xpAmount} XP!`);
+
+  const learnQueue = [];
+  let newLevel = getLevelFromExp(poke.exp);
+  while (newLevel > poke.level) {
+    poke.level++;
+    const oldMaxHp = poke.maxHp;
+    const newStats = recomputeStats(poke);
+    const hpGain = newStats.hp - oldMaxHp;
+    poke.maxHp = newStats.hp;
+    poke.baseStats = { ...poke.baseStats, ...newStats };
+    // Gen-like: gain HP from level up
+    poke.currentHp = Math.max(0, poke.currentHp + Math.max(0, hpGain));
+    poke.currentHp = Math.min(poke.currentHp, poke.maxHp);
+    log.push(`${poke.name} grew to Lv.${poke.level}!`);
+
+    // Check for learned moves at this level
+    const learnEntries = LEVEL_UP_LEARNSETS[poke.speciesId] ?? [];
+    for (const entry of learnEntries) {
+      if (entry.level === poke.level) {
+        const moveData = MOVE_DATA[entry.moveId];
+        if (!moveData) continue;
+        const alreadyHas = poke.moves.some(m => m.id === entry.moveId);
+        if (alreadyHas) continue;
+
+        if (poke.moves.length < 4) {
+          // Auto-learn
+          poke.moves.push({ ...moveData, currentPp: moveData.pp });
+          log.push(`${poke.name} learned ${moveData.name}!`);
+        } else {
+          // Queue learn prompt for UI
+          learnQueue.push({ pokeName: poke.name, pokeRef: poke, moveData, level: poke.level });
+        }
+      }
+    }
+    newLevel = getLevelFromExp(poke.exp);
+  }
+  return learnQueue;
 }
 
 // ── Build action list ─────────────────────────────────────────────────────────
@@ -173,7 +268,6 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
     if (cmd.type === "switch") {
       actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true });
     } else if (cmd.type === "item") {
-      // Items resolve before moves (priority 6, same as switch)
       actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: 6, speed: poke.baseStats.spe, isItem: true });
     } else {
       const move = poke.moves.find(m => m.id === cmd.moveId);
@@ -203,7 +297,6 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
   actions.sort((a, b) => {
     if (b.priority !== a.priority) return b.priority - a.priority;
     if (b.speed !== a.speed) return b.speed - a.speed;
-    // Deterministic tie-breaker: player before enemy, then by actorSlot
     if (a.side !== b.side) return a.side === "player" ? -1 : 1;
     return (a.activeIdx ?? 0) - (b.activeIdx ?? 0);
   });
@@ -247,6 +340,9 @@ function extractPartyState(playerSide) {
     speciesId: p.speciesId,
     name: p.name,
     level: p.level,
+    exp: p.exp ?? 0,
+    ivs: p.ivs ?? {},
+    nature: p.nature ?? "hardy",
     currentHP: p.currentHp,
     maxHP: p.maxHp,
     fainted: p.fainted,
@@ -270,11 +366,15 @@ Deno.serve(async (req) => {
     if (!battle) return Response.json({ error: "Battle not found" }, { status: 404 });
     if (battle.status !== "active") return Response.json({ error: "Battle already finished" }, { status: 400 });
 
-    // Load run for inventory
+    // Load run for inventory + modifiers (xp share)
     const runs = await base44.asServiceRole.entities.Run.filter({ id: runId });
     const run = runs[0];
     if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
     const inventory = run.results?.progress?.inventory ?? { potion: 0, revive: 0 };
+
+    // XP share: xp_share_on is default; bench gets XP unless xp_share_off is explicitly set
+    const modifiers = run.modifiers ?? {};
+    const xpShareBench = !modifiers.xp_share_off;
 
     // Validate player commands — skip commands for empty/null active slots
     const validatedCommands = [];
@@ -304,6 +404,10 @@ Deno.serve(async (req) => {
     const log = [];
     const actionOrder = [];
     const inventoryDelta = {};
+    const pendingLearnPrompts = []; // learn prompts to send to frontend
+
+    // Track which enemy slots already awarded XP this turn (persisted in state)
+    if (!state.xpAwardedEnemyIds) state.xpAwardedEnemyIds = {};
 
     const allowEnemySwitch = !state.enemySwitchUsed;
     const actions = buildActions(playerCommands_, state, rng, allowEnemySwitch);
@@ -352,7 +456,6 @@ Deno.serve(async (req) => {
         const targetPoke = allPlayer[target?.partyIndex];
         if (!targetPoke) { log.push(`No Pokémon at party index ${target?.partyIndex}!`); continue; }
 
-        // Decrement inventory
         inventory[itemId] = Math.max(0, (inventory[itemId] ?? 0) - 1);
         inventoryDelta[itemId] = (inventoryDelta[itemId] ?? 0) - 1;
 
@@ -422,6 +525,28 @@ Deno.serve(async (req) => {
 
           if (side === "player") {
             autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
+
+            // ── XP Award on enemy faint ────────────────────────────────────
+            const enemyKey = `${effectiveTargetSlot}_${target.speciesId}_${target.level}`;
+            if (!state.xpAwardedEnemyIds[enemyKey]) {
+              state.xpAwardedEnemyIds[enemyKey] = true;
+              const xpYield = Math.floor((20 + (target.level ?? 5) * 5) * 1.2); // trainer battle
+              log.push(`Your team earned ${xpYield} XP!`);
+
+              // Award to active (alive or fainted-this-battle)
+              const allPlayerPokes = [...state.player.active, ...(xpShareBench ? state.player.bench : [])];
+              for (const recipient of allPlayerPokes) {
+                if (!recipient) continue;
+                const prompts = applyXpToPoke(recipient, xpYield, log);
+                for (const prompt of prompts) {
+                  pendingLearnPrompts.push({
+                    pokeName: prompt.pokeName,
+                    moveData: prompt.moveData,
+                    level: prompt.level,
+                  });
+                }
+              }
+            }
           } else {
             const validBench = state.player.bench.filter(p => p && !p.fainted && p.currentHp > 0);
             if (validBench.length > 0 && !state.pendingReplacement) {
@@ -473,7 +598,6 @@ Deno.serve(async (req) => {
     if (playerAllFainted) { winner = "enemy";  log.push("All your Pokémon fainted! You lost!"); }
     if (enemyAllFainted)  { winner = "player"; log.push("All enemy Pokémon fainted! You won!"); }
 
-    // If battle is over, clear any pending replacement — no replacement needed when game ends
     if (winner) {
       state.pendingReplacement = null;
     }
@@ -484,12 +608,14 @@ Deno.serve(async (req) => {
     state.rngCallCount = (state.rngCallCount ?? 0) + rngUsed;
     state.lastActionOrder = actionOrder;
     state.lastRngUsed = rngUsed;
+    // Store pending learn prompts in state so UI can show them
+    state.pendingLearnPrompts = pendingLearnPrompts;
 
     const newStatus = winner ? "finished" : "active";
     const updatePayload = { state, turnNumber, status: newStatus };
     if (winner) updatePayload.endedAt = new Date().toISOString();
 
-    // ── Extract partyState for persistence ────────────────────────────────────
+    // ── Extract partyState for persistence (now includes exp/level) ───────────
     const partyState = extractPartyState(state.player);
 
     // ── Persist battle + run (inventory + partyState) ─────────────────────────
@@ -536,7 +662,7 @@ Deno.serve(async (req) => {
       ]);
     }
 
-    return Response.json({ state, turnNumber, winner, log, rngUsed, actionOrder, updatedInventory: inventory });
+    return Response.json({ state, turnNumber, winner, log, rngUsed, actionOrder, updatedInventory: inventory, pendingLearnPrompts });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
