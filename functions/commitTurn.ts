@@ -561,9 +561,12 @@ Deno.serve(async (req) => {
         const cfg = ITEM_CONFIG[itemId];
         if (!cfg) { log.push(`Unknown item: ${itemId}!`); continue; }
 
+        // partyIndex is stable: 0-2 = active slots, 3-5 = bench slots
         const allPlayer = [...state.player.active, ...state.player.bench];
-        const targetPoke = allPlayer[target?.partyIndex];
-        if (!targetPoke) { log.push(`No Pokémon at party index ${target?.partyIndex}!`); continue; }
+        const partyIdx = target?.partyIndex;
+        const targetPoke = partyIdx !== undefined && partyIdx !== null ? allPlayer[partyIdx] : null;
+        if (!targetPoke) { log.push(`No Pokémon at party index ${partyIdx}!`); continue; }
+        console.log(`[commitTurn] Item target partyIndex=${partyIdx} name=${targetPoke.name}`);
 
         inventory[itemId] = Math.max(0, (inventory[itemId] ?? 0) - 1);
         inventoryDelta[itemId] = (inventoryDelta[itemId] ?? 0) - 1;
