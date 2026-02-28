@@ -19,8 +19,6 @@ export default function DevPanel() {
   const [loadingInspect, setLoadingInspect] = useState(false);
   const [loadingAutoConfirm, setLoadingAutoConfirm] = useState(false);
   const [loadingRecent, setLoadingRecent] = useState(false);
-  const [loadingReconcile, setLoadingReconcile] = useState(false);
-  const [reconcileResult, setReconcileResult] = useState(null);
   const [runSummary, setRunSummary] = useState(null);
   const [toast, setToast] = useState(null);
   const [battleError, setBattleError] = useState(null);
@@ -318,45 +316,6 @@ export default function DevPanel() {
           <GameButton onClick={handleFinishRun} disabled={loadingFinish || !runId} loading={loadingFinish} variant="amber">
             Finish Run
           </GameButton>
-        </GameCard>
-
-        {/* 7. Reconcile Aether Awards */}
-        <GameCard>
-          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-400" />
-            7. Reconcile Aether Awards
-          </h3>
-          <p className="text-white/40 text-xs mb-3">Fix runs where aetherAwarded=true but Player.aether wasn't updated (playerAetherAfter=0).</p>
-          <GameButton
-            onClick={async () => {
-              setLoadingReconcile(true);
-              setReconcileResult(null);
-              try {
-                const res = await base44.functions.invoke("reconcileAetherAwards", { limit: 50 });
-                setReconcileResult(res.data);
-                showToast(`Reconciled ${res.data.fixed}/${res.data.total} runs`, res.data.fixed > 0 ? "success" : "info");
-              } catch (err) {
-                showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
-              } finally {
-                setLoadingReconcile(false);
-              }
-            }}
-            disabled={loadingReconcile}
-            loading={loadingReconcile}
-            variant="amber"
-          >
-            Reconcile Aether Awards
-          </GameButton>
-          {reconcileResult && (
-            <div className="mt-3 p-3 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-white/60 space-y-1">
-              <div>Fixed: <span className="text-emerald-400">{reconcileResult.fixed}</span> / {reconcileResult.total} candidates</div>
-              {reconcileResult.results?.map((r, i) => (
-                <div key={i} className={r.ok ? "text-emerald-400" : "text-red-400"}>
-                  {r.runId?.slice(0, 12)}… {r.ok ? `+${r.delta} → ${r.after}` : `✗ ${r.reason}`}
-                </div>
-              ))}
-            </div>
-          )}
         </GameCard>
 
         {/* Run Debug */}

@@ -1,150 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// ── XP + Level helpers (inlined — no local imports in Deno) ──────────────────
-function getExpToReachLevel(level) {
-  if (level <= 1) return 0;
-  return level * level * level; // Medium Fast
-}
-function getLevelFromExp(exp) {
-  const e = Math.max(0, exp ?? 0);
-  let lv = 1;
-  while (lv < 100 && getExpToReachLevel(lv + 1) <= e) lv++;
-  return lv;
-}
-const NATURE_TABLE = {
-  Hardy:{up:null,down:null},Lonely:{up:"atk",down:"def"},Brave:{up:"atk",down:"spe"},
-  Adamant:{up:"atk",down:"spa"},Naughty:{up:"atk",down:"spd"},Bold:{up:"def",down:"atk"},
-  Docile:{up:null,down:null},Relaxed:{up:"def",down:"spe"},Impish:{up:"def",down:"spa"},
-  Lax:{up:"def",down:"spd"},Timid:{up:"spe",down:"atk"},Hasty:{up:"spe",down:"def"},
-  Serious:{up:null,down:null},Jolly:{up:"spe",down:"spa"},Naive:{up:"spe",down:"spd"},
-  Modest:{up:"spa",down:"atk"},Mild:{up:"spa",down:"def"},Quiet:{up:"spa",down:"spe"},
-  Bashful:{up:null,down:null},Rash:{up:"spa",down:"spd"},Calm:{up:"spd",down:"atk"},
-  Gentle:{up:"spd",down:"def"},Sassy:{up:"spd",down:"spe"},Careful:{up:"spd",down:"spa"},
-  Quirky:{up:null,down:null},
-};
-function computeStats(baseStats, level, ivs = {}, evs = {}, nature = "Hardy") {
-  const nm = NATURE_TABLE[nature] ?? { up: null, down: null };
-  const stats = {};
-  for (const stat of ["hp","atk","def","spa","spd","spe"]) {
-    const base = baseStats[stat] ?? 0;
-    const iv = ivs[stat] ?? 0;
-    const ev = evs[stat] ?? 0;
-    if (stat === "hp") {
-      stats[stat] = Math.floor((2*base + iv + Math.floor(ev/4)) * level / 100 + level + 10);
-    } else {
-      let val = Math.floor((2*base + iv + Math.floor(ev/4)) * level / 100) + 5;
-      if (nm.up === stat) val = Math.floor(val * 1.1);
-      if (nm.down === stat) val = Math.floor(val * 0.9);
-      stats[stat] = val;
-    }
-  }
-  return stats;
-}
-
-// Minimal learnsets (inlined for Deno)
-const LEARNSETS = {
-  1:  { levelUp: [{level:7,moveId:"vine_whip"},{level:13,moveId:"poison_powder"},{level:20,moveId:"razor_leaf"}] },
-  4:  { levelUp: [{level:7,moveId:"ember"},{level:13,moveId:"smokescreen"},{level:19,moveId:"slash"}] },
-  7:  { levelUp: [{level:7,moveId:"water_gun"},{level:13,moveId:"withdraw"},{level:20,moveId:"bubble_beam"}] },
-  10: { levelUp: [{level:6,moveId:"bug_bite"}] },
-  25: { levelUp: [{level:9,moveId:"quick_attack"},{level:16,moveId:"thunder_wave"},{level:26,moveId:"thunderbolt"}] },
-};
-function getMovesLearnedAtLevel(speciesId, level) {
-  return (LEARNSETS[speciesId]?.levelUp ?? []).filter(e => e.level === level).map(e => e.moveId);
-}
-
-// Minimal move name map for log messages
-const MOVE_NAMES = {
-  tackle:"Tackle",scratch:"Scratch",ember:"Ember",growl:"Growl",vine_whip:"Vine Whip",
-  water_gun:"Water Gun",thunder_shock:"ThunderShock",quick_attack:"Quick Attack",
-  string_shot:"String Shot",tail_whip:"Tail Whip",poison_powder:"PoisonPowder",
-  razor_leaf:"Razor Leaf",smokescreen:"Smokescreen",slash:"Slash",withdraw:"Withdraw",
-  bubble_beam:"BubbleBeam",bug_bite:"Bug Bite",thunder_wave:"Thunder Wave",thunderbolt:"Thunderbolt",
-};
-
-/**
- * Award XP to eligible player Pokémon when an enemy faints.
- * Returns array of learnPrompts: { pokemonName, newMoveId, newMoveName, slotIndex, currentMoves }
- */
-function awardXpForFaint(state, enemyPoke, modifiers, log) {
-  const xpShare = modifiers?.xp_share_off ? false : true; // default ON
-  const isTrainerOwned = state.enemy.isTrainer ?? false;
-  const enemyLevel = Number(enemyPoke.level ?? 5);
-  const baseXp = Math.floor((20 + enemyLevel * 5) * (isTrainerOwned ? 1.2 : 1));
-
-  // Eligible: all active + (if xp_share) bench too
-  const allPlayer = [
-    ...state.player.active.map((p, i) => ({ p, i, isBench: false })),
-    ...state.player.bench.map((p, i) => ({ p, i, isBench: true })),
-  ];
-
-  // Active who are alive or fainted this battle (all active slots that have a poke)
-  // + bench if xp_share_on
-  const eligible = allPlayer.filter(({ p, isBench }) => {
-    if (!p) return false;
-    if (isBench) return xpShare; // bench only if xp_share
-    return true; // all active (alive or fainted)
-  });
-
-  if (eligible.length === 0) return [];
-
-  const learnPrompts = [];
-
-  for (const { p, i, isBench } of eligible) {
-    const prevLevel = getLevelFromExp(p.exp ?? 0);
-    p.exp = (p.exp ?? 0) + baseXp;
-    const newLevel = getLevelFromExp(p.exp);
-    log.push(`${p.name} gained ${baseXp} XP!`);
-
-    // Level-up loop
-    for (let lv = prevLevel + 1; lv <= newLevel; lv++) {
-      const oldMaxHp = p.maxHp ?? p.maxHp;
-      p.level = lv;
-
-      // Recompute stats
-      const base = p.baseStats ?? {};
-      const ivs  = p.ivs  ?? {};
-      const evs  = {};
-      const nature = p.nature ?? "Hardy";
-      const newStats = computeStats(base, lv, ivs, evs, nature);
-      const newMaxHp = newStats.hp;
-      const hpGain = Math.max(0, newMaxHp - oldMaxHp);
-      p.maxHp = newMaxHp;
-      p.currentHp = Math.min(p.maxHp, (p.fainted ? 0 : p.currentHp) + hpGain);
-      p.baseStats = { ...base, ...newStats };
-
-      log.push(`${p.name} grew to Lv.${lv}!`);
-
-      // Check learnset
-      const toLearn = getMovesLearnedAtLevel(p.speciesId, lv);
-      for (const moveId of toLearn) {
-        const currentMoves = p.moves ?? [];
-        if (currentMoves.some(m => (m.id ?? m) === moveId)) continue; // already known
-        const moveName = MOVE_NAMES[moveId] ?? moveId;
-        const slotRef = isBench ? `bench_${i}` : `active_${i}`;
-        if (currentMoves.length < 4) {
-          // Auto-learn
-          currentMoves.push({ id: moveId, name: moveName, type: "normal", category: "physical", power: null, pp: 20, currentPp: 20, priority: 0 });
-          p.moves = currentMoves;
-          log.push(`${p.name} learned ${moveName}!`);
-        } else {
-          // Queue a learn prompt — UI will handle replacement
-          learnPrompts.push({
-            slotRef,
-            pokemonName: p.name,
-            newMoveId: moveId,
-            newMoveName: moveName,
-            currentMoves: currentMoves.map(m => ({ id: m.id ?? m, name: m.name ?? MOVE_NAMES[m.id ?? m] ?? (m.id ?? m) })),
-          });
-          log.push(`${p.name} wants to learn ${moveName}!`);
-        }
-      }
-    }
-  }
-
-  return learnPrompts;
-}
-
 // ── Type chart ────────────────────────────────────────────────────────────────
 const TYPECHART = {
   normal:   { normal:1, fire:1,   water:1,   grass:1,   electric:1,   bug:1,   poison:1   },
@@ -183,10 +38,9 @@ function makeRng(seedStr) {
 // ── Damage formula ────────────────────────────────────────────────────────────
 function calcDamage(attacker, move, defender, rng) {
   if (!move.power) return { dmg: 0, typeEff: 1 };
-  // baseStats holds computed (level-scaled) stats after Gen 9 formula
   const lvl = attacker.level;
-  const atkStat = move.category === "physical" ? (attacker.baseStats.atk) : (attacker.baseStats.spa);
-  const defStat = move.category === "physical" ? (defender.baseStats.def) : (defender.baseStats.spd);
+  const atkStat = move.category === "physical" ? attacker.baseStats.atk : attacker.baseStats.spa;
+  const defStat = move.category === "physical" ? defender.baseStats.def : defender.baseStats.spd;
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const typeEff = effectiveness(move.type, defender.types);
   const roll = 0.85 + rng.next() * 0.15;
@@ -391,18 +245,13 @@ function extractPartyState(playerSide) {
   const allPokes = [...playerSide.active, ...playerSide.bench];
   return allPokes.filter(p => !!p).map(p => ({
     speciesId: p.speciesId,
-    instanceId: p.instanceId,
     name: p.name,
     level: p.level,
-    exp: p.exp ?? 0,
-    nature: p.nature ?? "Hardy",
-    ivs: p.ivs ?? {},
-    baseStats: p.baseStats ?? {},
     currentHP: p.currentHp,
     maxHP: p.maxHp,
     fainted: p.fainted,
     status: p.status ?? null,
-    moves: (p.moves ?? []).map(m => ({ id: m.id, name: m.name ?? m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp ?? m.ppMax ?? 20 })),
+    moves: p.moves.map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
   }));
 }
 
@@ -572,18 +421,6 @@ Deno.serve(async (req) => {
           log.push(`${faintLabel} fainted!`);
 
           if (side === "player") {
-            // ── XP Award ─────────────────────────────────────────────────────
-            // Track per-enemy-instance to avoid double-award
-            const enemyInstanceId = target.instanceId ?? `enemy_${effectiveTargetSlot}`;
-            if (!state.xpAwardedForFaints) state.xpAwardedForFaints = [];
-            if (!state.xpAwardedForFaints.includes(enemyInstanceId)) {
-              state.xpAwardedForFaints.push(enemyInstanceId);
-              const prompts = awardXpForFaint(state, target, run.modifiers, log);
-              if (prompts.length > 0) {
-                if (!state.pendingLearnPrompts) state.pendingLearnPrompts = [];
-                state.pendingLearnPrompts.push(...prompts);
-              }
-            }
             autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
           } else {
             const validBench = state.player.bench.filter(p => p && !p.fainted && p.currentHp > 0);
@@ -699,8 +536,7 @@ Deno.serve(async (req) => {
       ]);
     }
 
-    const pendingLearnPrompts = state.pendingLearnPrompts ?? [];
-    return Response.json({ state, turnNumber, winner, log, rngUsed, actionOrder, updatedInventory: inventory, pendingLearnPrompts });
+    return Response.json({ state, turnNumber, winner, log, rngUsed, actionOrder, updatedInventory: inventory });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }

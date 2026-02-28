@@ -11,7 +11,6 @@ import { ToastContainer, useToast } from "../components/ui/Toast";
 import { Swords, Bug, Package, Coins } from "lucide-react";
 import ReplacementPanel from "../components/battle/ReplacementPanel";
 import BagModal from "../components/battle/BagModal";
-import LearnMoveModal from "../components/battle/LearnMoveModal";
 
 export default function Battle() {
   const navigate = useNavigate();
@@ -32,8 +31,6 @@ export default function Battle() {
   const [choosing, setChoosing] = useState(false);
   const [showBag, setShowBag] = useState(false);
   const [run, setRun] = useState(null);
-  const [learnPrompts, setLearnPrompts] = useState([]);
-  const [applyingLearn, setApplyingLearn] = useState(false);
 
   // Load run for inventory/economy display + status guard
   useEffect(() => {
@@ -101,15 +98,10 @@ export default function Battle() {
         setRun(r => r ? { ...r, results: { ...(r.results ?? {}), progress: { ...(r.results?.progress ?? {}), inventory: data.updatedInventory } } } : r);
       }
 
-      // Collect any learn prompts returned from the server
-      if (data.pendingLearnPrompts?.length > 0) {
-        setLearnPrompts(data.pendingLearnPrompts);
-      }
-
       if (newWinner) {
-        setShowBag(false);
-        setLearnPrompts([]);
+        setShowBag(false); // auto-close bag/replacement modals on battle end
         toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
+        // Resolve the encounter — clears pendingEncounter on Run, marks node complete
         const outcome = newWinner === "player" ? "win" : "loss";
         await base44.functions.invoke("resolveEncounterFromBattle", { runId, battleId, outcome });
       }
@@ -151,28 +143,6 @@ export default function Battle() {
   const enemyActive  = state.enemy.active  ?? [];
   const enemyBench   = state.enemy.bench   ?? [];
   const pendingReplacement = state.pendingReplacement ?? null;
-  const currentLearnPrompt = learnPrompts[0] ?? null;
-
-  const handleLearnMove = async (replaceIndex) => {
-    if (!currentLearnPrompt) return;
-    setApplyingLearn(true);
-    try {
-      const res = await base44.functions.invoke("applyLearnMove", {
-        battleId, runId,
-        slotRef: currentLearnPrompt.slotRef,
-        newMoveId: currentLearnPrompt.newMoveId,
-        newMoveName: currentLearnPrompt.newMoveName,
-        replaceIndex,
-      });
-      const data = res.data;
-      if (data.state) setState(data.state);
-      setLearnPrompts(data.pendingLearnPrompts ?? []);
-    } catch (e) {
-      toast(e.response?.data?.error || e.message || "Failed to apply move", "error");
-    } finally {
-      setApplyingLearn(false);
-    }
-  };
 
   const handleChooseReplacement = async (benchIndex) => {
     setChoosing(true);
@@ -321,7 +291,7 @@ export default function Battle() {
               className="w-full mt-4"
               onClick={handleCommit}
               loading={committing}
-              disabled={committing || !!winner || !!pendingReplacement || learnPrompts.length > 0}
+              disabled={committing || !!winner || !!pendingReplacement}
             >
               <Swords className="w-4 h-4" />
               Commit Turn
@@ -387,14 +357,6 @@ export default function Battle() {
           party={allPartyForBag}
           onClose={() => setShowBag(false)}
           context="battle"
-        />
-      )}
-
-      {currentLearnPrompt && (
-        <LearnMoveModal
-          prompt={currentLearnPrompt}
-          onLearn={handleLearnMove}
-          disabled={applyingLearn}
         />
       )}
 

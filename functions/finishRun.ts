@@ -88,40 +88,24 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, resultsSummary: existingResults.resultsSummary, alreadyFinalized: true });
     }
 
-    // Award aether to player — robust version with confirmation
-    let aetherAwarded = false;
+    // Award aether to player — find by authUserId (Run.playerId = authUserId)
     let playerAetherAfter = null;
-    let aetherAwardError = null;
-    const aetherEarned = resultsSummary.aetherEarned;
-
-    if (aetherEarned > 0) {
-      const d = Number(aetherEarned);
+    if (resultsSummary.aetherEarned > 0) {
       const players = await base44.asServiceRole.entities.Player.filter({ authUserId: run.playerId });
-      const player = players?.[0];
-      if (!player) {
-        aetherAwardError = "player_not_found";
-      } else {
-        const current = Number.isNaN(Number(player.aether)) ? 0 : Number(player.aether ?? 0);
-        const newValue = current + d;
-        await base44.asServiceRole.entities.Player.update(player.id, { aether: newValue });
-        const confirm = await base44.asServiceRole.entities.Player.get(player.id);
-        const confirmedValue = Number.isNaN(Number(confirm?.aether)) ? newValue : Number(confirm?.aether ?? newValue);
-        playerAetherAfter = confirmedValue;
-        aetherAwarded = confirmedValue > 0;
+      const player = players[0];
+      if (player) {
+        playerAetherAfter = (player.aether ?? 0) + resultsSummary.aetherEarned;
+        await base44.asServiceRole.entities.Player.update(player.id, { aether: playerAetherAfter });
       }
-    } else {
-      // No aether to award — still mark as awarded so we don't retry
-      aetherAwarded = true;
     }
 
     const updatedResults = {
       ...existingResults,
       resultsSummary,
       finalizedAt: endedAt,
-      aetherAwarded,
-      aetherDelta: aetherEarned,
+      aetherAwarded: true,
+      aetherDelta: resultsSummary.aetherEarned,
       playerAetherAfter,
-      ...(aetherAwardError ? { aetherAwardError } : {}),
     };
 
     await base44.asServiceRole.entities.Run.update(runId, {
