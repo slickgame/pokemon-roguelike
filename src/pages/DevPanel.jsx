@@ -332,6 +332,18 @@ export default function DevPanel() {
           </GameButton>
         </GameCard>
 
+        {/* 7. Reconcile Aether Awards */}
+        <GameCard>
+          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+            <RefreshCw className="w-4 h-4 text-violet-400" />
+            7. Reconcile Aether Awards
+          </h3>
+          <p className="text-white/40 text-xs mb-3">Fixes runs where aetherAwarded=true but Player.aether was not updated (playerAetherAfter=0).</p>
+          <GameButton onClick={handleReconcileAether} disabled={loadingReconcile} loading={loadingReconcile} variant="primary">
+            Reconcile Aether Awards
+          </GameButton>
+        </GameCard>
+
         {/* Run Debug */}
         <RunDebugPanel runId={runId} onToast={showToast} />
       </div>
