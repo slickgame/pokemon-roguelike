@@ -336,9 +336,9 @@ export default function Battle() {
                 variant="primary"
                 size="md"
                 className="w-full"
-                onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
+                onClick={() => navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`))}
               >
-                Back to Run Map
+                View Summary
               </GameButton>
               {winner === "enemy" && (
                 <GameButton
