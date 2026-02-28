@@ -56,11 +56,13 @@ function buildPokemon(species, level, subSeed) {
   const abilityId = species.abilities[rngInt(rng, species.abilities.length)];
   const shiny = rngInt(rng, 1024) === 0;
 
-  const stab = MOVES_BY_TYPE[species.types[0]] ?? MOVES_BY_TYPE.normal;
-  const moves = [
-    { ...TACKLE, currentPp: TACKLE.pp },
-    { ...stab,   currentPp: stab.pp },
-  ];
+  const learnset = LEARNSETS[species.id] ?? { startMoves: ["tackle"], levelUp: [] };
+  const moves = learnset.startMoves
+    .map(id => ALL_MOVES[id])
+    .filter(Boolean)
+    .slice(0, 4)
+    .map(m => ({ ...m, currentPp: m.pp }));
+  if (moves.length === 0) moves.push({ ...ALL_MOVES.tackle, currentPp: ALL_MOVES.tackle.pp });
 
   const hp = Math.floor((2 * species.baseStats.hp * level) / 100) + level + 10;
 
