@@ -392,11 +392,15 @@ function extractPartyState(playerSide) {
     speciesId: p.speciesId,
     name: p.name,
     level: p.level,
+    exp: p.exp ?? 0,
+    nature: p.nature ?? "Hardy",
+    ivs: p.ivs ?? {},
+    baseStats: p.baseStats ?? {},
     currentHP: p.currentHp,
     maxHP: p.maxHp,
     fainted: p.fainted,
     status: p.status ?? null,
-    moves: p.moves.map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
+    moves: (p.moves ?? []).map(m => ({ id: m.id, name: m.name, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
   }));
 }
 
