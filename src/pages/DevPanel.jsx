@@ -140,6 +140,19 @@ export default function DevPanel() {
     }
   };
 
+  const handleReconcileAether = async () => {
+    setLoadingReconcile(true);
+    try {
+      const res = await base44.functions.invoke("reconcileAetherAwards", { limit: 50 });
+      const d = res.data;
+      showToast(`Reconciled: ${d.fixed} fixed, ${d.skipped} skipped${d.errors?.length ? `, ${d.errors.length} errors` : ""}`, d.fixed > 0 ? "success" : "info");
+    } catch (err) {
+      showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
+    } finally {
+      setLoadingReconcile(false);
+    }
+  };
+
   const handleFinishRun = async () => {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingFinish(true);
