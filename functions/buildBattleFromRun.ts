@@ -22,6 +22,72 @@ const TACKLE = { id: "tackle", name: "Tackle", type: "normal", category: "physic
 
 const NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
+// ── Gen 9 stat formula ────────────────────────────────────────────────────────
+const NATURE_TABLE_B = {
+  Hardy:{up:null,down:null},Lonely:{up:"atk",down:"def"},Brave:{up:"atk",down:"spe"},
+  Adamant:{up:"atk",down:"spa"},Naughty:{up:"atk",down:"spd"},Bold:{up:"def",down:"atk"},
+  Docile:{up:null,down:null},Relaxed:{up:"def",down:"spe"},Impish:{up:"def",down:"spa"},
+  Lax:{up:"def",down:"spd"},Timid:{up:"spe",down:"atk"},Hasty:{up:"spe",down:"def"},
+  Serious:{up:null,down:null},Jolly:{up:"spe",down:"spa"},Naive:{up:"spe",down:"spd"},
+  Modest:{up:"spa",down:"atk"},Mild:{up:"spa",down:"def"},Quiet:{up:"spa",down:"spe"},
+  Bashful:{up:null,down:null},Rash:{up:"spa",down:"spd"},Calm:{up:"spd",down:"atk"},
+  Gentle:{up:"spd",down:"def"},Sassy:{up:"spd",down:"spe"},Careful:{up:"spd",down:"spa"},
+  Quirky:{up:null,down:null},
+};
+function computeStatsB(baseStats, level, ivs = {}, nature = "Hardy") {
+  const nm = NATURE_TABLE_B[nature] ?? { up: null, down: null };
+  const out = {};
+  for (const stat of ["hp","atk","def","spa","spd","spe"]) {
+    const base = baseStats[stat] ?? 0;
+    const iv = ivs[stat] ?? 0;
+    if (stat === "hp") {
+      out[stat] = Math.floor((2 * base + iv) * level / 100 + level + 10);
+    } else {
+      let val = Math.floor((2 * base + iv) * level / 100) + 5;
+      if (nm.up === stat) val = Math.floor(val * 1.1);
+      if (nm.down === stat) val = Math.floor(val * 0.9);
+      out[stat] = val;
+    }
+  }
+  return out;
+}
+
+// Minimal learnsets for move assignment
+const LEARNSETS_B = {
+  1:  { startMoves: ["tackle","growl"], levelUp: [{level:7,moveId:"vine_whip"}] },
+  4:  { startMoves: ["scratch","growl"], levelUp: [{level:7,moveId:"ember"}] },
+  7:  { startMoves: ["tackle","tail_whip"], levelUp: [{level:7,moveId:"water_gun"}] },
+  10: { startMoves: ["tackle","string_shot"], levelUp: [] },
+  25: { startMoves: ["thunder_shock","growl"], levelUp: [{level:9,moveId:"quick_attack"}] },
+};
+const MOVE_DB_B = {
+  tackle:        { id:"tackle",        name:"Tackle",       type:"normal",   category:"physical", power:40,   pp:35 },
+  scratch:       { id:"scratch",       name:"Scratch",      type:"normal",   category:"physical", power:40,   pp:35 },
+  growl:         { id:"growl",         name:"Growl",        type:"normal",   category:"status",   power:null, pp:40 },
+  ember:         { id:"ember",         name:"Ember",        type:"fire",     category:"special",  power:40,   pp:25 },
+  vine_whip:     { id:"vine_whip",     name:"Vine Whip",    type:"grass",    category:"physical", power:45,   pp:25 },
+  water_gun:     { id:"water_gun",     name:"Water Gun",    type:"water",    category:"special",  power:40,   pp:25 },
+  thunder_shock: { id:"thunder_shock", name:"ThunderShock", type:"electric", category:"special",  power:40,   pp:30 },
+  quick_attack:  { id:"quick_attack",  name:"Quick Attack", type:"normal",   category:"physical", power:40,   pp:30, priority:1 },
+  string_shot:   { id:"string_shot",   name:"String Shot",  type:"bug",      category:"status",   power:null, pp:40 },
+  tail_whip:     { id:"tail_whip",     name:"Tail Whip",    type:"normal",   category:"status",   power:null, pp:30 },
+};
+
+function buildStartingMoves(speciesId, level) {
+  const ls = LEARNSETS_B[speciesId] ?? { startMoves: ["tackle"], levelUp: [] };
+  const moveIds = [...ls.startMoves];
+  // Add level-up moves already learned at current level
+  for (const entry of ls.levelUp) {
+    if (entry.level <= level && !moveIds.includes(entry.moveId)) {
+      moveIds.push(entry.moveId);
+    }
+  }
+  return moveIds.slice(0, 4).map(id => {
+    const m = MOVE_DB_B[id] ?? { id, name: id, type: "normal", category: "physical", power: null, pp: 20 };
+    return { ...m, currentPp: m.pp };
+  });
+}
+
 // ── Deterministic RNG ─────────────────────────────────────────────────────────
 function hashString(str) {
   let h = 2166136261;
