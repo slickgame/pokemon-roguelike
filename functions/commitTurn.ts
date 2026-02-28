@@ -511,6 +511,11 @@ Deno.serve(async (req) => {
     // Track which enemy slots already awarded XP this turn (persisted in state)
     if (!state.xpAwardedEnemyIds) state.xpAwardedEnemyIds = {};
 
+    // Clear justSwitchedIn flags from previous turn
+    for (const p of [...state.player.active, ...state.player.bench, ...state.enemy.active, ...state.enemy.bench]) {
+      if (p) p.justSwitchedIn = false;
+    }
+
     const allowEnemySwitch = !state.enemySwitchUsed;
     const actions = buildActions(playerCommands_, state, rng, allowEnemySwitch);
 
