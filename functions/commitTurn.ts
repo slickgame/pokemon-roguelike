@@ -633,7 +633,8 @@ Deno.serve(async (req) => {
           log.push(`${faintLabel} fainted!`);
 
           if (side === "player") {
-            autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
+            const replacement = autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
+            if (replacement) replacement.justSwitchedIn = true;
 
             // ── XP Award on enemy faint ────────────────────────────────────
             const enemyKey = `${effectiveTargetSlot}_${target.speciesId}_${target.level}`;
