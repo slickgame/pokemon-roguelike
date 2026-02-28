@@ -49,6 +49,20 @@ function makeRng(seedStr) {
 }
 function rngInt(rng, max) { return Math.floor(rng() * max); }
 
+// ── Stat computation ──────────────────────────────────────────────────────────
+function computeStats(baseStats, level) {
+  const cs = (b) => Math.floor((2 * b * level) / 100 + 5);
+  const chp = (b) => Math.floor((2 * b * level) / 100) + level + 10;
+  return {
+    hp:  chp(baseStats.hp),
+    atk: cs(baseStats.atk),
+    def: cs(baseStats.def),
+    spa: cs(baseStats.spa),
+    spd: cs(baseStats.spd),
+    spe: cs(baseStats.spe),
+  };
+}
+
 // ── Build a Pokémon object ────────────────────────────────────────────────────
 function buildPokemon(species, level, subSeed) {
   const rng = makeRng(subSeed);
@@ -64,7 +78,7 @@ function buildPokemon(species, level, subSeed) {
     .map(m => ({ ...m, currentPp: m.pp }));
   if (moves.length === 0) moves.push({ ...ALL_MOVES.tackle, currentPp: ALL_MOVES.tackle.pp });
 
-  const hp = Math.floor((2 * species.baseStats.hp * level) / 100) + level + 10;
+  const stats = computeStats(species.baseStats, level);
 
   return {
     speciesId: species.id,
@@ -77,8 +91,9 @@ function buildPokemon(species, level, subSeed) {
     shiny,
     ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
     baseStats: species.baseStats,
-    maxHp: hp,
-    currentHp: hp,
+    stats: { atk: stats.atk, def: stats.def, spa: stats.spa, spd: stats.spd, spe: stats.spe },
+    maxHp: stats.hp,
+    currentHp: stats.hp,
     status: null,
     statusTurns: 0,
     moves,
