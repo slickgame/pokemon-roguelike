@@ -67,17 +67,18 @@ export default function Shop() {
   };
 
   const handleLeave = async () => {
-    // Mark node complete and return to RunMap
-    if (nodeId) {
-      const existing = progress.completedNodeIds ?? [];
-      const updatedIds = existing.includes(nodeId) ? existing : [...existing, nodeId];
-      await base44.entities.Run.update(runId, {
-        results: {
-          ...(run?.results ?? {}),
-          progress: { ...progress, currentNodeId: nodeId, completedNodeIds: updatedIds, pendingEncounter: null },
-        },
-      });
-      await runApi.appendAction(runId, "node_completed", { nodeId, nodeType: "shop" });
+    // Resolve via canonical resolveNode then go to NodeComplete
+    if (nodeId && run) {
+      try {
+        await base44.functions.invoke("resolveNode", {
+          runId,
+          resolution: { type: "shop" },
+        });
+        navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId}`));
+        return;
+      } catch (e) {
+        // fallback: go back to map
+      }
     }
     navigate(createPageUrl(`RunMap?runId=${runId}`));
   };
