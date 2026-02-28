@@ -321,7 +321,7 @@ export default function Battle() {
               className="w-full mt-4"
               onClick={handleCommit}
               loading={committing}
-              disabled={committing || !!winner || !!pendingReplacement}
+              disabled={committing || !!winner || !!pendingReplacement || learnPrompts.length > 0}
             >
               <Swords className="w-4 h-4" />
               Commit Turn
