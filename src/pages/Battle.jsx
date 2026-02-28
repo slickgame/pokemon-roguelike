@@ -108,9 +108,15 @@ export default function Battle() {
         setLearnQueue([]); // clear learn prompts on battle end
         setShowBag(false); // auto-close bag/replacement modals on battle end
         toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
-        // Resolve the encounter — clears pendingEncounter on Run, marks node complete
-        const outcome = newWinner === "player" ? "win" : "loss";
-        await base44.functions.invoke("resolveEncounterFromBattle", { runId, battleId, outcome });
+        // Resolve via canonical resolveNode — marks node complete, clears pendingEncounter
+        const allPlayerPokes = [...(data.state?.player?.active ?? []), ...(data.state?.player?.bench ?? [])];
+        const faintCount = allPlayerPokes.filter(p => p?.fainted).length;
+        await base44.functions.invoke("resolveNode", {
+          runId,
+          resolution: { type: "battle", winner: newWinner, faintCount, battleId },
+        });
+        // Navigate to NodeComplete summary
+        navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
       }
     } catch (e) {
       toast(e.response?.data?.error || e.message || "Failed to commit turn", "error");
