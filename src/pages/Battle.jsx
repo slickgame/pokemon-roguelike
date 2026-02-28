@@ -151,6 +151,28 @@ export default function Battle() {
   const enemyActive  = state.enemy.active  ?? [];
   const enemyBench   = state.enemy.bench   ?? [];
   const pendingReplacement = state.pendingReplacement ?? null;
+  const currentLearnPrompt = learnPrompts[0] ?? null;
+
+  const handleLearnMove = async (replaceIndex) => {
+    if (!currentLearnPrompt) return;
+    setApplyingLearn(true);
+    try {
+      const res = await base44.functions.invoke("applyLearnMove", {
+        battleId, runId,
+        slotRef: currentLearnPrompt.slotRef,
+        newMoveId: currentLearnPrompt.newMoveId,
+        newMoveName: currentLearnPrompt.newMoveName,
+        replaceIndex,
+      });
+      const data = res.data;
+      if (data.state) setState(data.state);
+      setLearnPrompts(data.pendingLearnPrompts ?? []);
+    } catch (e) {
+      toast(e.response?.data?.error || e.message || "Failed to apply move", "error");
+    } finally {
+      setApplyingLearn(false);
+    }
+  };
 
   const handleChooseReplacement = async (benchIndex) => {
     setChoosing(true);
