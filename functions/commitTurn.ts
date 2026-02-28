@@ -435,7 +435,7 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
     if (!movePick) continue;
     const move = poke.moves.find(m => m.id === movePick.moveId);
     if (!move) continue;
-    actions.push({ side: "enemy", activeIdx: ei, poke, move, priority: move.priority ?? 0, speed: poke.baseStats.spe, isSwitch: false, isItem: false, playerTargetIdx: movePick.targetIdx });
+    actions.push({ side: "enemy", activeIdx: ei, poke, move, priority: move.priority ?? 0, speed: getStat(poke, "spe"), isSwitch: false, isItem: false, playerTargetIdx: movePick.targetIdx });
   }
 
   actions.sort((a, b) => {
