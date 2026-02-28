@@ -410,14 +410,14 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
     const poke = state.player.active[cmd.actorSlot];
     if (!poke || poke.fainted || poke.justSwitchedIn) continue;
     if (cmd.type === "switch") {
-      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: poke.baseStats.spe, isSwitch: true });
+      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: getStat(poke, "spe"), isSwitch: true });
     } else if (cmd.type === "item") {
-      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: 6, speed: poke.baseStats.spe, isItem: true });
+      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: 6, speed: getStat(poke, "spe"), isItem: true });
     } else {
       const move = poke.moves.find(m => m.id === cmd.moveId);
       if (!move) continue;
       const enemyTargetIdx = cmd.target?.slot ?? 0;
-      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, move, cmd, priority: move.priority ?? 0, speed: poke.baseStats.spe, isSwitch: false, isItem: false, enemyTargetIdx });
+      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, move, cmd, priority: move.priority ?? 0, speed: getStat(poke, "spe"), isSwitch: false, isItem: false, enemyTargetIdx });
     }
   }
 
