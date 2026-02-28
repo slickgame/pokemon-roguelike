@@ -628,7 +628,7 @@ Deno.serve(async (req) => {
               // Official formula: floor((a * b * L) / 7), a=1.5 trainer, b=baseExpYield, L=level
               const xpYield = calcXpYield(target.level ?? 5, target.speciesId, true);
 
-              // Award to active (alive or fainted-this-battle)
+              // Award to each eligible recipient (full XP each — no splitting)
               const allPlayerPokes = [...state.player.active, ...(xpShareBench ? state.player.bench : [])];
               for (const recipient of allPlayerPokes) {
                 if (!recipient) continue;
