@@ -3,9 +3,8 @@
  * All hooks are deterministic. Randomness uses seeded RNG passed in context.
  */
 
-import RELICS from "./relics_mvp.json";
-
-export const RELIC_REGISTRY = Object.fromEntries(RELICS.map(r => [r.id, r]));
+import RELICS, { RELIC_REGISTRY } from "./relicsData";
+export { RELIC_REGISTRY };
 
 // Unevolved species IDs (Gen 1 first-stage or non-evolving solo mons)
 const UNEVOLVED_SPECIES = new Set([
