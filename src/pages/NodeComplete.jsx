@@ -4,7 +4,7 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight } from "lucide-react";
+import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight, Sparkles } from "lucide-react";
 
 const NODE_ICONS = {
   trainer_weak: "⚔️",
@@ -56,6 +56,16 @@ export default function NodeComplete() {
         });
       }
     }).finally(() => setLoading(false));
+  }, [runId]);
+
+  const [relicCount, setRelicCount] = useState(null);
+
+  useEffect(() => {
+    if (!runId) return;
+    base44.entities.Run.filter({ id: runId }).then(rows => {
+      const r = rows[0];
+      if (r) setRelicCount((r.results?.progress?.relics ?? []).length);
+    });
   }, [runId]);
 
   const handleContinue = () => {
@@ -142,6 +152,14 @@ export default function NodeComplete() {
             )}
           </div>
         </GameCard>
+      )}
+
+      {/* Relic count footer */}
+      {relicCount !== null && relicCount > 0 && (
+        <div className="flex items-center justify-center gap-2 text-amber-400/60 text-xs">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{relicCount} relic{relicCount !== 1 ? "s" : ""} active this run</span>
+        </div>
       )}
 
       {/* Continue button */}
