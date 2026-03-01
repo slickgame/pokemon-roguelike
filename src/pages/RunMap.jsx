@@ -331,6 +331,14 @@ export default function RunMap() {
           <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-xl text-xs text-white/60">
             💊{inventory.potion ?? 0} · 💫{inventory.revive ?? 0}
           </div>
+          {(runProgress?.relics ?? []).length > 0 && (
+            <button
+              onClick={() => setShowRelics(v => !v)}
+              className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-xl text-amber-300 text-xs hover:bg-amber-500/20 transition-colors"
+            >
+              ✨ {(runProgress?.relics ?? []).length}
+            </button>
+          )}
           <button
             onClick={() => setShowBag(true)}
             className="flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/20 px-2.5 py-1.5 rounded-xl text-violet-300 text-xs hover:bg-violet-500/20 transition-colors"
