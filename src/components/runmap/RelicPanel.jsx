@@ -1,9 +1,7 @@
 import React from "react";
 import GameCard from "../ui/GameCard";
-import RELICS from "../engine/relics_mvp.json";
+import { RELIC_REGISTRY } from "../engine/relicsData";
 import { Sparkles, X } from "lucide-react";
-
-const RELIC_REGISTRY = Object.fromEntries(RELICS.map(r => [r.id, r]));
 
 const RARITY_BADGE = {
   common:    "bg-white/10 text-white/50 border-white/10",
