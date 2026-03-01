@@ -197,6 +197,29 @@ function enemyPickSwitch(activeIdx, sideState, playerActive) {
   return best.i;
 }
 
+// ── Relic helpers (inlined — no local imports) ────────────────────────────────
+const UNEVOLVED_SPECIES_SET = new Set([
+  1,4,7,10,13,16,19,21,23,25,27,29,32,35,37,39,41,43,46,48,50,52,54,56,58,
+  60,63,66,69,72,74,77,79,81,83,84,86,88,90,92,96,98,100,102,104,106,107,108,
+  109,111,113,114,115,116,118,120,122,123,124,125,126,127,128,129,131,132,
+  133,138,140,143,144,145,146,147,150,151
+]);
+function hasRelic(relics, id) {
+  return Array.isArray(relics) && relics.some(r => r.id === id);
+}
+function relicDamageMultiplier(relics, attacker, isFirstActionThisBattle) {
+  let mult = 1.0;
+  if (hasRelic(relics, "cracked_everstone") && attacker && UNEVOLVED_SPECIES_SET.has(attacker.speciesId)) mult *= 1.15;
+  if (hasRelic(relics, "ether_lens")) mult *= 1.05;
+  if (hasRelic(relics, "surge_battery") && isFirstActionThisBattle) mult *= 1.20;
+  return mult;
+}
+function relicDefenseMultiplier(relics, defender) {
+  let mult = 1.0;
+  if (hasRelic(relics, "cracked_everstone") && defender && UNEVOLVED_SPECIES_SET.has(defender.speciesId)) mult *= 0.90;
+  return mult;
+}
+
 // ── Item config ───────────────────────────────────────────────────────────────
 const ITEM_CONFIG = {
   potion: { healAmount: 20, canTargetFainted: false },
@@ -520,6 +543,7 @@ Deno.serve(async (req) => {
     const run = runs[0];
     if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
     const inventory = run.results?.progress?.inventory ?? { potion: 0, revive: 0 };
+    const runRelics = run.results?.progress?.relics ?? [];
 
     // XP share: xp_share_on is default; bench gets XP unless xp_share_off is explicitly set
     const modifiers = run.modifiers ?? {};
