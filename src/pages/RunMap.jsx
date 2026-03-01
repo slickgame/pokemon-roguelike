@@ -87,6 +87,7 @@ export default function RunMap() {
   const [resolving, setResolving] = useState(false);
   const [graph, setGraph] = useState(null);
   const [showBag, setShowBag] = useState(false);
+  const [showRelics, setShowRelics] = useState(false);
 
   // Reload run + actions
   const reload = useCallback(async () => {
