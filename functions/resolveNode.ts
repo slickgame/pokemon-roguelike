@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// ── Modifier registry (mirrors resolveEncounterFromBattle) ─────────────────────
+// ── Modifier registry ──────────────────────────────────────────────────────────
 const MODIFIER_REGISTRY = {
   xp_share_on:           { aetherPct: 0   },
   xp_share_off:          { aetherPct: 10  },
@@ -17,6 +17,16 @@ const MODIFIER_REGISTRY = {
   permadeath:            { aetherPct: 25  },
 };
 
+// ── Relic registry (inline — no local imports in Deno) ─────────────────────────
+const RELIC_IDS = [
+  "field_medic_patch","lucky_coin","ration_pack","scout_compass",
+  "band_of_resonance","cracked_everstone","ether_lens","gym_scout_contract",
+  "focus_charm","surge_battery","bargain_seal","relic_of_mastery",
+];
+function hasRelic(relics, id) {
+  return Array.isArray(relics) && relics.some(r => r.id === id);
+}
+
 async function awardAetherToPlayer(base44, authUserId, delta) {
   const d = Number(delta ?? 0);
   if (Number.isNaN(d) || d <= 0) return { ok: false, reason: 'invalid_delta' };
@@ -31,8 +41,8 @@ async function awardAetherToPlayer(base44, authUserId, delta) {
 async function computeAndFinalizeRun(base44, run, nowIso) {
   const actions = await base44.asServiceRole.entities.RunAction.filter({ runId: run.id });
   actions.sort((a, b) => a.idx - b.idx);
-  const battlesWon  = actions.filter(a => a.actionType === 'battle_end' && a.payload?.summary?.winner === 'player').length;
-  const battlesLost = actions.filter(a => a.actionType === 'battle_end' && a.payload?.summary?.winner === 'enemy').length;
+  const battlesWon   = actions.filter(a => a.actionType === 'battle_end' && a.payload?.summary?.winner === 'player').length;
+  const battlesLost  = actions.filter(a => a.actionType === 'battle_end' && a.payload?.summary?.winner === 'enemy').length;
   const gymsDefeated = actions.filter(a => a.actionType === 'gym_defeated').length;
   let faints = 0;
   for (const a of actions) {
@@ -41,16 +51,21 @@ async function computeAndFinalizeRun(base44, run, nowIso) {
   const startedAt  = run.startedAt ? new Date(run.startedAt).getTime() : null;
   const endedAt    = new Date(nowIso).getTime();
   const durationMs = startedAt ? endedAt - startedAt : null;
-  const baseAether = gymsDefeated >= 1 ? 100 : battlesWon * 10;
-  const activeIds = Object.keys(run.modifiers ?? {}).filter(id => run.modifiers[id]);
+  const baseAether  = gymsDefeated >= 1 ? 100 : battlesWon * 10;
+  const activeIds   = Object.keys(run.modifiers ?? {}).filter(id => run.modifiers[id]);
   let rawPct = 0;
   for (const id of activeIds) rawPct += (MODIFIER_REGISTRY[id]?.aetherPct ?? 0);
+
+  // relic_of_mastery: +10% aether
+  const relics = run.results?.progress?.relics ?? [];
+  if (hasRelic(relics, "relic_of_mastery")) rawPct += 10;
+
   const modifierTotalPct = Math.max(-90, Math.min(200, rawPct));
   const aetherEarned = Math.max(0, Math.floor(baseAether * (1 + modifierTotalPct / 100)));
-  return { baseAether, modifierTotalPct, aetherEarned, battlesWon, battlesLost, faints, durationMs, gymsDefeated, scoreVersion: 'm11_v1' };
+  return { baseAether, modifierTotalPct, aetherEarned, battlesWon, battlesLost, faints, durationMs, gymsDefeated, scoreVersion: 'm12_v1' };
 }
 
-// Deterministic RNG for reward drops
+// Deterministic RNG
 function hashString(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
@@ -66,7 +81,30 @@ function makeRng(seedStr) {
   };
 }
 
-const TIER_MONEY       = { weak: 50, avg: 80, skilled: 120, boss: 0 };
+// ── Relic effect helpers ───────────────────────────────────────────────────────
+function applyMoneyRelics(relics, baseMoney, nodeType) {
+  if (!relics || !baseMoney) return baseMoney ?? 0;
+  const isTrainer = typeof nodeType === "string" && nodeType.startsWith("trainer");
+  if (isTrainer && hasRelic(relics, "lucky_coin")) {
+    return Math.floor(baseMoney * 1.20);
+  }
+  return baseMoney;
+}
+
+function applyAfterBattleHeal(partyState, relics) {
+  if (!hasRelic(relics, "field_medic_patch") || !partyState) return partyState;
+  return partyState.map(p => {
+    if (!p || p.fainted) return p;
+    return { ...p, currentHP: Math.min(p.currentHP + 5, p.maxHP) };
+  });
+}
+
+function applyRationPack(relics, rng) {
+  if (!hasRelic(relics, "ration_pack") || !rng) return {};
+  return rng() < 0.25 ? { potion: 1 } : {};
+}
+
+const TIER_MONEY_BASE  = { weak: 50, avg: 80, skilled: 120, boss: 0 };
 const TIER_DROP_CHANCE = { weak: 0.60, avg: 0.70, skilled: 0.80 };
 
 const NODE_LABELS = {
@@ -80,6 +118,9 @@ const NODE_LABELS = {
   event:        "Event",
   event_item:   "Supply Find",
 };
+
+// Event relic drop chance (8%)
+const EVENT_RELIC_CHANCE = 0.08;
 
 Deno.serve(async (req) => {
   try {
@@ -99,7 +140,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
     if (run.status !== 'active') {
-      // If run is finished (e.g., gym battle loss), still return gracefully
       const existingProgress = run.results?.progress ?? {};
       return Response.json({ ok: true, alreadyFinished: true, nodeCompleteSummary: { nodeId: existingProgress.currentNodeId, nodeType: existingProgress.pendingEncounter?.nodeType } });
     }
@@ -107,7 +147,6 @@ Deno.serve(async (req) => {
     const existingProgress = run.results?.progress ?? {};
     const pending = existingProgress.pendingEncounter ?? null;
 
-    // If already resolved (idempotent), return last summary
     if (!pending || pending.status === 'resolved') {
       return Response.json({ ok: true, alreadyResolved: true, nodeCompleteSummary: pending?.lastSummary ?? null });
     }
@@ -115,6 +154,7 @@ Deno.serve(async (req) => {
     const { nodeId, nodeType } = pending;
     const nodeLabel = NODE_LABELS[nodeType] ?? nodeType ?? "Node";
     const partyState = existingProgress.partyState ?? null;
+    const relics     = existingProgress.relics ?? [];
 
     const completedNodeIds = [...(existingProgress.completedNodeIds ?? [])];
     if (!completedNodeIds.includes(nodeId)) completedNodeIds.push(nodeId);
@@ -122,7 +162,11 @@ Deno.serve(async (req) => {
     let updatedProgress;
     let nodeCompleteSummary;
     let shouldFinishRun = false;
-    let finishOutcome = null;
+    let finishOutcome   = null;
+    let nextScreen      = "node_complete"; // or "relic_reward"
+    let relicSource     = null;
+
+    const rewardRng = makeRng(`${run.seed}:reward:${nodeId}`);
 
     // ── Battle resolution ──────────────────────────────────────────────────────
     if (resolution.type === 'battle') {
@@ -130,14 +174,17 @@ Deno.serve(async (req) => {
       const outcome = winner === 'player' ? 'win' : 'loss';
 
       if (outcome === 'win') {
-        const tier = pending.tier ?? 'weak';
-        const moneyDelta = TIER_MONEY[tier] ?? 50;
+        const tier       = pending.tier ?? 'weak';
+        const baseMoney  = TIER_MONEY_BASE[tier] ?? 50;
+        const moneyDelta = applyMoneyRelics(relics, baseMoney, nodeType);
         const dropChance = TIER_DROP_CHANCE[tier] ?? 0.6;
-        const rewardRng = makeRng(`${run.seed}:reward:${nodeId}`);
         const dropsPotion = rewardRng() < dropChance ? 1 : 0;
-        const currentMoney = existingProgress.money ?? 0;
-        const currentInventory = existingProgress.inventory ?? { potion: 0, revive: 0 };
-        const newInventory = { ...currentInventory, potion: (currentInventory.potion ?? 0) + dropsPotion };
+        const currentMoney    = existingProgress.money ?? 0;
+        const currentInv      = existingProgress.inventory ?? { potion: 0, revive: 0 };
+        const newInventory    = { ...currentInv, potion: (currentInv.potion ?? 0) + dropsPotion };
+
+        // field_medic_patch: heal party after battle
+        const healedParty = applyAfterBattleHeal(partyState, relics);
 
         nodeCompleteSummary = {
           nodeId, nodeType, nodeLabel,
@@ -155,15 +202,18 @@ Deno.serve(async (req) => {
           pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
           money: currentMoney + moneyDelta,
           inventory: newInventory,
-          partyState,
+          partyState: healedParty ?? partyState,
         };
 
         if (nodeType === 'gym') {
+          // Gym win: log gym_defeated, offer relic reward BEFORE finishing run
           shouldFinishRun = true;
-          finishOutcome = 'player';
+          finishOutcome   = 'player';
+          nextScreen      = "relic_reward";
+          relicSource     = "gym";
         }
       } else {
-        // Loss — run ends
+        // Loss
         nodeCompleteSummary = {
           nodeId, nodeType, nodeLabel,
           outcome: 'loss',
@@ -175,12 +225,18 @@ Deno.serve(async (req) => {
           partyState,
         };
         shouldFinishRun = true;
-        finishOutcome = 'enemy';
+        finishOutcome   = 'enemy';
       }
     }
-    // ── Center resolution ──────────────────────────────────────────────────────
+    // ── Center ─────────────────────────────────────────────────────────────────
     else if (resolution.type === 'center') {
-      const healed = (partyState ?? []).map(p => ({ ...p, currentHP: p.maxHP, fainted: false, status: null, moves: p.moves.map(m => ({ ...m, pp: m.ppMax ?? m.pp })) }));
+      const healed = (partyState ?? []).map(p => ({
+        ...p,
+        currentHP: p.maxHP,
+        fainted: false,
+        status: null,
+        moves: p.moves.map(m => ({ ...m, pp: m.ppMax ?? m.pp })),
+      }));
       nodeCompleteSummary = { nodeId, nodeType, nodeLabel: 'Pokémon Center', outcome: 'healed', moneyDelta: 0, itemsDelta: {}, faintCount: 0 };
       updatedProgress = {
         ...existingProgress,
@@ -191,15 +247,27 @@ Deno.serve(async (req) => {
         partyState: healed,
       };
     }
-    // ── Event / Event Item resolution ──────────────────────────────────────────
+    // ── Event ──────────────────────────────────────────────────────────────────
     else if (resolution.type === 'event' || resolution.type === 'event_item') {
-      const itemsDelta = resolution.itemsDelta ?? { potion: 1 };
-      const currentInventory = existingProgress.inventory ?? { potion: 0, revive: 0 };
-      const newInventory = { ...currentInventory };
+      const itemsDelta   = resolution.itemsDelta ?? { potion: 1 };
+      const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0 };
+      const newInventory = { ...currentInv };
+
       for (const [item, qty] of Object.entries(itemsDelta)) {
         newInventory[item] = (newInventory[item] ?? 0) + (qty ?? 0);
       }
-      nodeCompleteSummary = { nodeId, nodeType, nodeLabel: NODE_LABELS[nodeType] ?? 'Event', outcome: 'collected', moneyDelta: 0, itemsDelta, faintCount: 0 };
+
+      // ration_pack: chance of +1 extra potion
+      const rationExtra = applyRationPack(relics, makeRng(`${run.seed}:ration:${nodeId}`));
+      for (const [item, qty] of Object.entries(rationExtra)) {
+        newInventory[item] = (newInventory[item] ?? 0) + qty;
+      }
+      const combinedDelta = { ...itemsDelta };
+      for (const [item, qty] of Object.entries(rationExtra)) {
+        combinedDelta[item] = (combinedDelta[item] ?? 0) + qty;
+      }
+
+      nodeCompleteSummary = { nodeId, nodeType, nodeLabel: NODE_LABELS[nodeType] ?? 'Event', outcome: 'collected', moneyDelta: 0, itemsDelta: combinedDelta, faintCount: 0 };
       updatedProgress = {
         ...existingProgress,
         routeId: existingProgress.routeId ?? 'route1',
@@ -209,8 +277,17 @@ Deno.serve(async (req) => {
         inventory: newInventory,
         partyState,
       };
+
+      // Roll relic chance for event nodes (8%)
+      const relicCap    = hasRelic(relics, "relic_of_mastery") ? 9 : 8;
+      const relicRng    = makeRng(`${run.seed}:relic_chance:${nodeId}`);
+      const rolledRelic = relicRng() < EVENT_RELIC_CHANCE && relics.length < relicCap;
+      if (rolledRelic) {
+        nextScreen  = "relic_reward";
+        relicSource = "event";
+      }
     }
-    // ── Shop resolution (stub) ────────────────────────────────────────────────
+    // ── Shop ───────────────────────────────────────────────────────────────────
     else if (resolution.type === 'shop') {
       nodeCompleteSummary = { nodeId, nodeType, nodeLabel: 'PokéMart', outcome: 'visited', moneyDelta: 0, itemsDelta: {}, faintCount: 0 };
       updatedProgress = {
@@ -235,12 +312,12 @@ Deno.serve(async (req) => {
       }),
       base44.entities.RunAction.create({
         runId, idx: nextIdx, actionType: 'node_resolved',
-        payload: { nodeId, nodeType, resolution: resolution.type, summary: nodeCompleteSummary },
+        payload: { nodeId, nodeType, resolution: resolution.type, summary: nodeCompleteSummary, nextScreen },
       }),
     ]);
     await base44.entities.Run.update(runId, { nextActionIdx: nextIdx });
 
-    // ── Finish run if needed ───────────────────────────────────────────────────
+    // ── Finish run if needed (gym win or battle loss) ─────────────────────────
     if (shouldFinishRun) {
       const nowIso = new Date().toISOString();
       const resultsSummary = await computeAndFinalizeRun(base44, run, nowIso);
@@ -277,7 +354,7 @@ Deno.serve(async (req) => {
       nodeCompleteSummary.runFinished = true;
     }
 
-    return Response.json({ ok: true, nodeCompleteSummary });
+    return Response.json({ ok: true, nodeCompleteSummary, nextScreen, relicSource });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
