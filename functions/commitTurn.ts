@@ -710,6 +710,12 @@ Deno.serve(async (req) => {
         if (mv) mv.currentPp = Math.max(0, (mv.currentPp ?? move.pp) - 1);
 
         if (target.currentHp === 0) {
+          // ── focus_charm: survive at 1 HP once per battle ─────────────────
+          if (side === "enemy" && hasRelic(runRelics, "focus_charm") && !state.focusCharmUsed) {
+            target.currentHp = 1;
+            state.focusCharmUsed = true;
+            log.push(`${target.name} held on with Focus Charm!`);
+          } else {
           target.fainted = true;
           const faintLabel = side === "player" ? `Rival's ${target.name}` : `Your ${target.name}`;
           log.push(`${faintLabel} fainted!`);
