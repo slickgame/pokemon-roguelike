@@ -12,6 +12,7 @@ import NextNodeCard from "../components/runmap/NextNodeCard";
 import NodeIcon from "../components/runmap/NodeIcon";
 import { MapPin, ShoppingBag, RefreshCw, Package, Coins } from "lucide-react";
 import BagModal from "../components/battle/BagModal";
+import RelicPanel from "../components/runmap/RelicPanel";
 
 const ROUTE_ID = "route1";
 
@@ -476,6 +477,13 @@ export default function RunMap() {
           onUse={handleBagUse}
           onClose={() => setShowBag(false)}
           context="map"
+        />
+      )}
+
+      {showRelics && (
+        <RelicPanel
+          relics={runProgress?.relics ?? []}
+          onClose={() => setShowRelics(false)}
         />
       )}
 
