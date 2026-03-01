@@ -720,6 +720,7 @@ Deno.serve(async (req) => {
           const faintLabel = side === "player" ? `Rival's ${target.name}` : `Your ${target.name}`;
           log.push(`${faintLabel} fainted!`);
 
+          } // end focus_charm else
           if (side === "player") {
             const replacement = autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
             if (replacement) replacement.justSwitchedIn = true;
