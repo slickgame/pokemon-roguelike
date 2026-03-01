@@ -691,7 +691,15 @@ Deno.serve(async (req) => {
       action.wasRetargeted = retargeted;
 
       if (move.power) {
-        const { dmg, typeEff } = calcDamage(poke, move, target, rng, log);
+        let { dmg, typeEff } = calcDamage(poke, move, target, rng, log);
+        // ── Relic damage modifiers (player attacker only) ─────────────────
+        if (side === "player") {
+          const isFirstAction = !state.surgeBatteryFired;
+          const offMult = relicDamageMultiplier(runRelics, poke, isFirstAction);
+          const defMult = relicDefenseMultiplier(runRelics, target);
+          dmg = Math.max(1, Math.floor(dmg * offMult * defMult));
+          if (isFirstAction && hasRelic(runRelics, "surge_battery")) state.surgeBatteryFired = true;
+        }
         target.currentHp = Math.max(0, target.currentHp - dmg);
         const effText = typeEff >= 2 ? " It's super effective!" : typeEff <= 0.5 ? " It's not very effective..." : "";
         const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
