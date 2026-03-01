@@ -26,11 +26,16 @@ export default function EventNode() {
   const handleCollect = async () => {
     setResolving(true);
     try {
-      await base44.functions.invoke("resolveNode", {
+      const res = await base44.functions.invoke("resolveNode", {
         runId,
         resolution: { type: "event_item", itemsDelta: { potion: 1 } },
       });
-      navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
+      const data = res.data ?? {};
+      if (data.nextScreen === "relic_reward" && data.relicSource) {
+        navigate(createPageUrl(`RelicReward?runId=${runId}&nodeId=${nodeId ?? ""}&source=${data.relicSource}`));
+      } else {
+        navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
+      }
     } finally {
       setResolving(false);
     }
