@@ -49,34 +49,36 @@
  */
 import Battle from './pages/Battle';
 import CarryoverRoster from './pages/CarryoverRoster';
+import Center from './pages/Center';
 import DevPanel from './pages/DevPanel';
+import EventNode from './pages/EventNode';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
+import NodeComplete from './pages/NodeComplete';
 import Results from './pages/Results';
 import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
 import Shop from './pages/Shop';
 import StarterSelect from './pages/StarterSelect';
-import NodeComplete from './pages/NodeComplete';
-import EventNode from './pages/EventNode';
-import Center from './pages/Center';
+import RelicReward from './pages/RelicReward';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Battle": Battle,
     "CarryoverRoster": CarryoverRoster,
+    "Center": Center,
     "DevPanel": DevPanel,
+    "EventNode": EventNode,
     "Home": Home,
     "Leaderboard": Leaderboard,
+    "NodeComplete": NodeComplete,
     "Results": Results,
     "RunMap": RunMap,
     "Seasons": Seasons,
     "Shop": Shop,
     "StarterSelect": StarterSelect,
-    "NodeComplete": NodeComplete,
-    "EventNode": EventNode,
-    "Center": Center,
+    "RelicReward": RelicReward,
 }
 
 export const pagesConfig = {
