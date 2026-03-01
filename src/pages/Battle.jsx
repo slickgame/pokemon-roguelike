@@ -111,12 +111,17 @@ export default function Battle() {
         // Resolve via canonical resolveNode — marks node complete, clears pendingEncounter
         const allPlayerPokes = [...(data.state?.player?.active ?? []), ...(data.state?.player?.bench ?? [])];
         const faintCount = allPlayerPokes.filter(p => p?.fainted).length;
-        await base44.functions.invoke("resolveNode", {
+        const resolveRes = await base44.functions.invoke("resolveNode", {
           runId,
           resolution: { type: "battle", winner: newWinner, faintCount, battleId },
         });
-        // Navigate to NodeComplete summary
-        navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
+        const resolveData = resolveRes.data ?? {};
+        // Gym win → relic reward, else node complete
+        if (resolveData.nextScreen === "relic_reward" && resolveData.relicSource) {
+          navigate(createPageUrl(`RelicReward?runId=${runId}&nodeId=${nodeId ?? ""}&source=${resolveData.relicSource}`));
+        } else {
+          navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
+        }
       }
     } catch (e) {
       toast(e.response?.data?.error || e.message || "Failed to commit turn", "error");
