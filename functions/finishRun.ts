@@ -128,12 +128,10 @@ Deno.serve(async (req) => {
         playerAetherAfter = award.after;
       } else {
         aetherAwardError = award.reason;
+        // Do NOT set aetherAwarded=true — leave it false so reconcile can retry
       }
-    } else {
-      // No aether to award, still mark done
-      aetherAwarded = true;
-      playerAetherAfter = null;
     }
+    // If aetherEarned===0, leave aetherAwarded=false (nothing to award)
 
     const updatedResults = {
       ...existingResults,
