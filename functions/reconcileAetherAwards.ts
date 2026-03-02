@@ -50,11 +50,11 @@ Deno.serve(async (req) => {
       const delta = Number(results.aetherDelta ?? 0);
       const afterStored = Number(results.playerAetherAfter ?? 0);
 
-      // Only reconcile if: aetherAwarded=true, delta>0, playerAetherAfter is 0 (i.e. award was recorded but player wasn't updated)
+      // Reconcile if: delta>0, playerAetherAfter is 0/missing, and not already reconciled
+      // Also catches runs where aetherAwarded=false due to a failed award attempt
       if (results.reconciled === true) { skipped++; continue; }
-      if (!results.aetherAwarded) { skipped++; continue; }
       if (delta <= 0) { skipped++; continue; }
-      if (afterStored > 0) { skipped++; continue; } // looks like it worked
+      if (afterStored > 0) { skipped++; continue; } // looks like it worked already
 
       // Attempt to award
       const award = await awardAetherToPlayer(base44, run.playerId, delta);
