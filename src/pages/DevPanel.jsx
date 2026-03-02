@@ -59,7 +59,14 @@ export default function DevPanel() {
         actionCount: actions.length,
         hasConfirm,
         pickedSpeciesIds: picks.map(a => a.payload?.speciesId).filter(Boolean),
+        isRanked: run?.isRanked ?? false,
       });
+      // Sync relic state
+      const relics = run?.results?.progress?.relics ?? [];
+      const devFlags = run?.results?.progress?.devFlags ?? {};
+      setCurrentRelics(relics);
+      setCurrentRunIsRanked(run?.isRanked ?? false);
+      setForceEventRelic(devFlags.forceNextEventRelic ?? false);
     } catch (err) {
       showToast(`Inspector error: ${err.message}`, "error");
     } finally {
