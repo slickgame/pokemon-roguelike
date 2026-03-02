@@ -24,6 +24,14 @@ export default function DevPanel() {
   const [runSummary, setRunSummary] = useState(null);
   const [toast, setToast] = useState(null);
   const [battleError, setBattleError] = useState(null);
+  // Relic dev tools
+  const [selectedRelicId, setSelectedRelicId] = useState(RELICS[0]?.id ?? "");
+  const [currentRelics, setCurrentRelics] = useState([]);
+  const [currentRunIsRanked, setCurrentRunIsRanked] = useState(false);
+  const [forceEventRelic, setForceEventRelic] = useState(false);
+  const [loadingGiveRelic, setLoadingGiveRelic] = useState(false);
+  const [loadingClearRelics, setLoadingClearRelics] = useState(false);
+  const [loadingForceEvent, setLoadingForceEvent] = useState(false);
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
