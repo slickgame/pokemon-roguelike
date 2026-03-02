@@ -278,13 +278,18 @@ Deno.serve(async (req) => {
         partyState,
       };
 
-      // Roll relic chance for event nodes (8%)
+      // Roll relic chance for event nodes (8%, or forced by devFlags)
       const relicCap    = hasRelic(relics, "relic_of_mastery") ? 9 : 8;
       const relicRng    = makeRng(`${run.seed}:relic_chance:${nodeId}`);
-      const rolledRelic = relicRng() < EVENT_RELIC_CHANCE && relics.length < relicCap;
+      const devForced   = existingProgress.devFlags?.forceNextEventRelic === true;
+      const rolledRelic = (devForced || relicRng() < EVENT_RELIC_CHANCE) && relics.length < relicCap;
       if (rolledRelic) {
         nextScreen  = "relic_reward";
         relicSource = "event";
+        // Clear the one-time dev flag
+        if (devForced) {
+          updatedProgress.devFlags = { ...(updatedProgress.devFlags ?? existingProgress.devFlags ?? {}), forceNextEventRelic: false };
+        }
       }
     }
     // ── Shop ───────────────────────────────────────────────────────────────────
