@@ -191,10 +191,10 @@ Deno.serve(async (req) => {
             playerAetherAfter = award.after;
           } else {
             aetherAwardError = award.reason;
+            // Do NOT set aetherAwarded=true — leave false so reconcile can retry
           }
-        } else {
-          aetherAwarded = true;
         }
+        // If aetherEarned===0, leave aetherAwarded=false
 
         const finishIdx = gymIdx + 1;
         await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary, aetherAwarded, playerAetherAfter } });
