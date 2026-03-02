@@ -55,12 +55,12 @@ import EventNode from './pages/EventNode';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import NodeComplete from './pages/NodeComplete';
+import RelicReward from './pages/RelicReward';
 import Results from './pages/Results';
 import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
 import Shop from './pages/Shop';
 import StarterSelect from './pages/StarterSelect';
-import RelicReward from './pages/RelicReward';
 import __Layout from './Layout.jsx';
 
 
@@ -73,12 +73,12 @@ export const PAGES = {
     "Home": Home,
     "Leaderboard": Leaderboard,
     "NodeComplete": NodeComplete,
+    "RelicReward": RelicReward,
     "Results": Results,
     "RunMap": RunMap,
     "Seasons": Seasons,
     "Shop": Shop,
     "StarterSelect": StarterSelect,
-    "RelicReward": RelicReward,
 }
 
 export const pagesConfig = {

@@ -4,9 +4,10 @@ import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import RunDebugPanel from "../components/dev/RunDebugPanel";
 import DbVersionCard from "../components/dev/DbVersionCard";
+import RELICS from "../components/engine/relicsData";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Beaker, PlayCircle, Plus, CheckCircle, Swords, Search, Zap, ExternalLink, RefreshCw } from "lucide-react";
+import { Beaker, PlayCircle, Plus, CheckCircle, Swords, Search, Zap, ExternalLink, RefreshCw, Sparkles, Trash2, AlertTriangle } from "lucide-react";
 
 export default function DevPanel() {
   const navigate = useNavigate();
