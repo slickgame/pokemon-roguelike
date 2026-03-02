@@ -169,6 +169,50 @@ export default function DevPanel() {
     }
   };
 
+  const handleGiveRelic = async () => {
+    if (!runId) { showToast("Enter a runId first", "error"); return; }
+    setLoadingGiveRelic(true);
+    try {
+      const res = await base44.functions.invoke("devGiveRelic", { runId, relicId: selectedRelicId });
+      setCurrentRelics(res.data.relics ?? []);
+      showToast(`Granted: ${selectedRelicId}`, "success");
+    } catch (err) {
+      showToast(err.response?.data?.error || err.message, "error");
+    } finally {
+      setLoadingGiveRelic(false);
+    }
+  };
+
+  const handleClearRelics = async () => {
+    if (!runId) { showToast("Enter a runId first", "error"); return; }
+    setLoadingClearRelics(true);
+    try {
+      await base44.functions.invoke("devClearRelics", { runId });
+      setCurrentRelics([]);
+      setForceEventRelic(false);
+      showToast("All relics cleared", "success");
+    } catch (err) {
+      showToast(err.response?.data?.error || err.message, "error");
+    } finally {
+      setLoadingClearRelics(false);
+    }
+  };
+
+  const handleToggleForceEvent = async () => {
+    if (!runId) { showToast("Enter a runId first", "error"); return; }
+    const next = !forceEventRelic;
+    setLoadingForceEvent(true);
+    try {
+      const res = await base44.functions.invoke("devForceNextEventRelic", { runId, enabled: next });
+      setForceEventRelic(res.data.forceNextEventRelic);
+      showToast(next ? "Force event relic: ON (one-time)" : "Force event relic: OFF", next ? "success" : "info");
+    } catch (err) {
+      showToast(err.response?.data?.error || err.message, "error");
+    } finally {
+      setLoadingForceEvent(false);
+    }
+  };
+
   const handleFinishRun = async () => {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingFinish(true);
