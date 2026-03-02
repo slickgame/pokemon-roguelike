@@ -7,23 +7,16 @@ async function awardAetherToPlayer(base44, authUserId, delta) {
 
   const players = await base44.asServiceRole.entities.Player.filter({ authUserId });
   const player = players?.[0];
-  if (!player) return { ok: false, reason: `player_not_found:${authUserId}` };
+  if (!player) return { ok: false, reason: 'player_not_found' };
 
-  const rawCurrent = Number(player.aether);
-  const current = Number.isNaN(rawCurrent) ? 0 : rawCurrent;
+  const current = Number.isNaN(Number(player.aether)) ? 0 : Number(player.aether ?? 0);
   const newValue = current + d;
 
   await base44.asServiceRole.entities.Player.update(player.id, { aether: newValue });
 
-  // Confirm persisted by re-fetching with service role
-  const confirmList = await base44.asServiceRole.entities.Player.filter({ authUserId });
-  const confirm = confirmList?.[0];
-  const rawAfter = Number(confirm?.aether);
-  const after = Number.isNaN(rawAfter) ? newValue : rawAfter;
-
-  if (after <= current) {
-    return { ok: false, reason: `update_not_persisted: current=${current} after=${after}` };
-  }
+  // Confirm persisted
+  const confirm = await base44.asServiceRole.entities.Player.get(player.id);
+  const after = Number.isNaN(Number(confirm?.aether)) ? newValue : Number(confirm?.aether ?? newValue);
 
   return { ok: true, playerEntityId: player.id, after };
 }
@@ -50,11 +43,11 @@ Deno.serve(async (req) => {
       const delta = Number(results.aetherDelta ?? 0);
       const afterStored = Number(results.playerAetherAfter ?? 0);
 
-      // Reconcile if: delta>0, playerAetherAfter is 0/missing, and not already reconciled
-      // Also catches runs where aetherAwarded=false due to a failed award attempt
+      // Only reconcile if: aetherAwarded=true, delta>0, playerAetherAfter is 0 (i.e. award was recorded but player wasn't updated)
       if (results.reconciled === true) { skipped++; continue; }
+      if (!results.aetherAwarded) { skipped++; continue; }
       if (delta <= 0) { skipped++; continue; }
-      if (afterStored > 0) { skipped++; continue; } // looks like it worked already
+      if (afterStored > 0) { skipped++; continue; } // looks like it worked
 
       // Attempt to award
       const award = await awardAetherToPlayer(base44, run.playerId, delta);

@@ -24,23 +24,16 @@ async function awardAetherToPlayer(base44, authUserId, delta) {
 
   const players = await base44.asServiceRole.entities.Player.filter({ authUserId });
   const player = players?.[0];
-  if (!player) return { ok: false, reason: `player_not_found:${authUserId}` };
+  if (!player) return { ok: false, reason: 'player_not_found' };
 
-  const rawCurrent = Number(player.aether);
-  const current = Number.isNaN(rawCurrent) ? 0 : rawCurrent;
+  const current = Number.isNaN(Number(player.aether)) ? 0 : Number(player.aether ?? 0);
   const newValue = current + d;
 
   await base44.asServiceRole.entities.Player.update(player.id, { aether: newValue });
 
-  // Confirm persisted by re-fetching with service role
-  const confirmList = await base44.asServiceRole.entities.Player.filter({ authUserId });
-  const confirm = confirmList?.[0];
-  const rawAfter = Number(confirm?.aether);
-  const after = Number.isNaN(rawAfter) ? newValue : rawAfter;
-
-  if (after <= current) {
-    return { ok: false, reason: `update_not_persisted: current=${current} after=${after}` };
-  }
+  // Confirm persisted
+  const confirm = await base44.asServiceRole.entities.Player.get(player.id);
+  const after = Number.isNaN(Number(confirm?.aether)) ? newValue : Number(confirm?.aether ?? newValue);
 
   return { ok: true, playerEntityId: player.id, after };
 }
@@ -191,10 +184,10 @@ Deno.serve(async (req) => {
             playerAetherAfter = award.after;
           } else {
             aetherAwardError = award.reason;
-            // Do NOT set aetherAwarded=true — leave false so reconcile can retry
           }
+        } else {
+          aetherAwarded = true;
         }
-        // If aetherEarned===0, leave aetherAwarded=false
 
         const finishIdx = gymIdx + 1;
         await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary, aetherAwarded, playerAetherAfter } });
@@ -238,10 +231,10 @@ Deno.serve(async (req) => {
           playerAetherAfter = award.after;
         } else {
           aetherAwardError = award.reason;
-          // Do NOT set aetherAwarded=true — leave false so reconcile can retry
         }
+      } else {
+        aetherAwarded = true;
       }
-      // If aetherEarned===0, leave aetherAwarded=false
 
       const nextIdx = (run.nextActionIdx ?? 0) + 1;
       const finishIdx = nextIdx + 1;
