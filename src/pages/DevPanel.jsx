@@ -404,6 +404,78 @@ export default function DevPanel() {
           </GameButton>
         </GameCard>
 
+        {/* Relic Dev Tools */}
+        <GameCard>
+          <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            8. Relic Dev Tools
+          </h3>
+          {!runId && <p className="text-white/30 text-xs mb-3">Set a runId first.</p>}
+          {runId && currentRunIsRanked && (
+            <div className="flex items-center gap-2 mb-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+              Dev tools disabled on ranked runs
+            </div>
+          )}
+
+          {/* Current Relics */}
+          <div className="mb-4">
+            <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Current Relics ({currentRelics.length}/8)</p>
+            {currentRelics.length === 0
+              ? <p className="text-white/20 text-xs italic">None</p>
+              : (
+                <div className="flex flex-wrap gap-1.5">
+                  {currentRelics.map(r => {
+                    const relic = RELICS.find(x => x.id === r.id);
+                    const colors = { common: "bg-white/10 text-white/60", uncommon: "bg-emerald-500/20 text-emerald-300", rare: "bg-violet-500/20 text-violet-300", legendary: "bg-amber-500/20 text-amber-300" };
+                    return (
+                      <span key={r.id} className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colors[relic?.rarity ?? "common"]}`}>
+                        {relic?.name ?? r.id}
+                        {r.acquiredFrom === "dev" && <span className="opacity-50 ml-1">(dev)</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              )
+            }
+          </div>
+
+          {/* Give Relic */}
+          <div className="flex gap-2 mb-3 flex-wrap">
+            <select
+              value={selectedRelicId}
+              onChange={e => setSelectedRelicId(e.target.value)}
+              disabled={currentRunIsRanked}
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-xs font-mono focus:outline-none focus:border-violet-500/50 disabled:opacity-40"
+            >
+              {RELICS.map(r => (
+                <option key={r.id} value={r.id} style={{ background: "#111" }}>
+                  [{r.rarity}] {r.name}
+                </option>
+              ))}
+            </select>
+            <GameButton onClick={handleGiveRelic} loading={loadingGiveRelic} disabled={loadingGiveRelic || !runId || currentRunIsRanked} variant="amber" size="sm">
+              <Sparkles className="w-3 h-3" /> Give Relic
+            </GameButton>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            <GameButton onClick={handleClearRelics} loading={loadingClearRelics} disabled={loadingClearRelics || !runId || currentRunIsRanked} variant="secondary" size="sm">
+              <Trash2 className="w-3 h-3" /> Clear Relics
+            </GameButton>
+            <GameButton
+              onClick={handleToggleForceEvent}
+              loading={loadingForceEvent}
+              disabled={loadingForceEvent || !runId || currentRunIsRanked}
+              variant={forceEventRelic ? "primary" : "secondary"}
+              size="sm"
+            >
+              <Zap className="w-3 h-3" />
+              {forceEventRelic ? "Force Event Relic: ON" : "Force Event Relic: OFF"}
+            </GameButton>
+          </div>
+        </GameCard>
+
         {/* Run Debug */}
         <RunDebugPanel runId={runId} onToast={showToast} />
       </div>
