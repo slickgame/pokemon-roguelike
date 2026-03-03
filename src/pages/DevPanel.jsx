@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { invokeWithRetry } from "@/api/invokeWithRetry";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import RunDebugPanel from "../components/dev/RunDebugPanel";
@@ -33,6 +34,8 @@ export default function DevPanel() {
   const [loadingGiveRelic, setLoadingGiveRelic] = useState(false);
   const [loadingClearRelics, setLoadingClearRelics] = useState(false);
   const [loadingForceEvent, setLoadingForceEvent] = useState(false);
+  const [probingFunctions, setProbingFunctions] = useState(false);
+  const [functionProbeResults, setFunctionProbeResults] = useState([]);
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
@@ -47,8 +50,8 @@ export default function DevPanel() {
     setRunSummary(null);
     try {
       const [runRes, actionsRes] = await Promise.all([
-        base44.functions.invoke("getRun", { runId: rid }),
-        base44.functions.invoke("listRunActions", { runId: rid }),
+        invokeWithRetry(base44, "getRun", { runId: rid }),
+        invokeWithRetry(base44, "listRunActions", { runId: rid }),
       ]);
       const run = runRes.data?.run ?? runRes.data;
       const actions = actionsRes.data?.actions ?? actionsRes.data ?? [];
@@ -79,7 +82,7 @@ export default function DevPanel() {
   const handleStartRun = async () => {
     setLoadingStart(true);
     try {
-      const res = await base44.functions.invoke("startRun", { isRanked: false, modifierIds: [] });
+      const res = await invokeWithRetry(base44, "startRun", { isRanked: false, modifierIds: [] });
       setRunData(res.data);
       setRunId(res.data.runId);
       showToast("Run started!", "success");
@@ -111,7 +114,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingAutoConfirm(true);
     try {
-      const res = await base44.functions.invoke("devAutoConfirmStarters", { runId });
+      const res = await invokeWithRetry(base44, "devAutoConfirmStarters", { runId });
       const d = res.data;
       if (d.alreadyConfirmed) showToast("Starters already confirmed!", "info");
       else showToast(`Auto-confirmed! Species: ${d.picks.join(", ")}`, "success");
@@ -128,7 +131,7 @@ export default function DevPanel() {
     setBattleError(null);
     setLoadingBattle(true);
     try {
-      const res = await base44.functions.invoke("buildBattleFromRun", { runId });
+      const res = await invokeWithRetry(base44, "buildBattleFromRun", { runId });
       const { battleId } = res.data;
       showToast(`Battle created!`, "success");
       setTimeout(() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${battleId}`)), 600);
@@ -148,7 +151,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingAppend(true);
     try {
-      const res = await base44.functions.invoke("appendRunAction", { runId, actionType: "dev_test", payload: { note: "hello", t: Date.now() } });
+      const res = await invokeWithRetry(base44, "appendRunAction", { runId, actionType: "dev_test", payload: { note: "hello", t: Date.now() } });
       showToast(`Action appended! idx=${res.data.idx}`, "success");
     } catch (err) {
       showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
@@ -171,7 +174,7 @@ export default function DevPanel() {
   const handleReconcileAether = async () => {
     setLoadingReconcile(true);
     try {
-      const res = await base44.functions.invoke("reconcileAetherAwards", { limit: 50 });
+      const res = await invokeWithRetry(base44, "reconcileAetherAwards", { limit: 50 });
       const d = res.data;
       showToast(`Reconciled: ${d.fixed} fixed, ${d.skipped} skipped${d.errors?.length ? `, ${d.errors.length} errors` : ""}`, d.fixed > 0 ? "success" : "info");
     } catch (err) {
@@ -185,7 +188,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingGiveRelic(true);
     try {
-      const res = await base44.functions.invoke("devGiveRelic", { runId, relicId: selectedRelicId });
+      const res = await invokeWithRetry(base44, "devGiveRelic", { runId, relicId: selectedRelicId });
       setCurrentRelics(res.data.relics ?? []);
       showToast(`Granted: ${selectedRelicId}`, "success");
     } catch (err) {
@@ -199,7 +202,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingClearRelics(true);
     try {
-      await base44.functions.invoke("devClearRelics", { runId });
+      await invokeWithRetry(base44, "devClearRelics", { runId });
       setCurrentRelics([]);
       setForceEventRelic(false);
       showToast("All relics cleared", "success");
@@ -215,7 +218,7 @@ export default function DevPanel() {
     const next = !forceEventRelic;
     setLoadingForceEvent(true);
     try {
-      const res = await base44.functions.invoke("devForceNextEventRelic", { runId, enabled: next });
+      const res = await invokeWithRetry(base44, "devForceNextEventRelic", { runId, enabled: next });
       setForceEventRelic(res.data.forceNextEventRelic);
       showToast(next ? "Force event relic: ON (one-time)" : "Force event relic: OFF", next ? "success" : "info");
     } catch (err) {
@@ -225,11 +228,42 @@ export default function DevPanel() {
     }
   };
 
+
+
+  const handleProbeFunctionDeployments = async () => {
+    setProbingFunctions(true);
+    setFunctionProbeResults([]);
+    const targets = ["commitTurn", "committurn", "startRun"];
+    try {
+      const results = await Promise.all(targets.map(async (fnName) => {
+        try {
+          await base44.functions.invoke(fnName, {});
+          return { fnName, ok: true, status: 200, detail: "Invoked successfully" };
+        } catch (err) {
+          const status = err?.response?.status ?? null;
+          const body = err?.response?.data;
+          const detail = body?.error || (typeof body === "string" ? body : body ? JSON.stringify(body) : err?.message || "Unknown error");
+          return { fnName, ok: false, status, detail };
+        }
+      }));
+      setFunctionProbeResults(results);
+      const commit = results.find(r => r.fnName === "commitTurn");
+      const alias = results.find(r => r.fnName === "committurn");
+      if ((commit?.status === 404) && (alias?.status === 404)) {
+        showToast("commitTurn + committurn both 404: backend deployment missing in this Base44 app", "error");
+      } else {
+        showToast("Function probe complete", "info");
+      }
+    } finally {
+      setProbingFunctions(false);
+    }
+  };
+
   const handleFinishRun = async () => {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingFinish(true);
     try {
-      await base44.functions.invoke("finishRun", { runId, summary: { reason: "dev_test_finish" } });
+      await invokeWithRetry(base44, "finishRun", { runId, summary: { reason: "dev_test_finish" } });
       showToast("Run finished!", "success");
     } catch (err) {
       showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
@@ -427,6 +461,32 @@ export default function DevPanel() {
             Clear Cache &amp; Reload
           </GameButton>
         </GameCard>
+
+
+
+        <GameCard>
+          <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+            <Search className="w-4 h-4 text-cyan-400" />
+            Function Deployment Probe
+          </h3>
+          <p className="text-white/40 text-xs mb-3">
+            Calls functions with empty payload to verify whether the deployment exists (404) vs exists-but-validates-input (400).
+          </p>
+          <GameButton onClick={handleProbeFunctionDeployments} disabled={probingFunctions} loading={probingFunctions} variant="secondary">
+            Probe commitTurn / committurn / startRun
+          </GameButton>
+          {functionProbeResults.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {functionProbeResults.map((r) => (
+                <div key={r.fnName} className="text-xs rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <div className="font-mono text-white/80">{r.fnName} → status {r.status ?? "?"}</div>
+                  <div className="text-white/50 break-all">{r.detail}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </GameCard>
+
 
         {/* Relic Dev Tools */}
         <GameCard>
