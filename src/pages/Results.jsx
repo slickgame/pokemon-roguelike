@@ -44,6 +44,12 @@ export default function Results() {
     load().catch(e => toast(e.message, "error")).finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!loading && run && run.status !== "finished") {
+      navigate(createPageUrl(`RunMap?runId=${runId}`));
+    }
+  }, [loading, run?.status, runId]);
+
   const summary = run?.results?.resultsSummary ?? null;
   const isRanked = run?.isRanked ?? false;
   const alreadySubmitted = run?.results?.submitted ?? false;

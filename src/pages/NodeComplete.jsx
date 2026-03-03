@@ -96,6 +96,7 @@ export default function NodeComplete() {
   const hasMoney = summary.moneyDelta && summary.moneyDelta > 0;
   const isBattleLoss = outcome === "loss";
   const isRunFinished = summary.runFinished;
+  const routeAdvancedTo = summary.routeAdvancedTo ?? null;
 
   return (
     <div className="max-w-md mx-auto px-4 py-12 space-y-4">
@@ -115,6 +116,9 @@ export default function NodeComplete() {
         )}
         {isRunFinished && !isBattleLoss && (
           <p className="text-emerald-300/80 text-sm mt-1">Run complete!</p>
+        )}
+        {routeAdvancedTo && (
+          <p className="text-cyan-300/80 text-sm mt-1">Gym cleared! Proceed to Route {routeAdvancedTo.routeIndex}.</p>
         )}
       </GameCard>
 
@@ -169,7 +173,9 @@ export default function NodeComplete() {
         className="w-full"
         onClick={handleContinue}
       >
-        {isBattleLoss || isRunFinished ? "View Results" : (
+        {isBattleLoss || isRunFinished ? "View Results" : routeAdvancedTo ? (
+          <>Proceed to Route {routeAdvancedTo.routeIndex} <ArrowRight className="w-4 h-4" /></>
+        ) : (
           <>Continue <ArrowRight className="w-4 h-4" /></>
         )}
       </GameButton>

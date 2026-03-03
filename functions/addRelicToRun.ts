@@ -6,6 +6,19 @@ const VALID_RELIC_IDS = new Set([
   "focus_charm","surge_battery","bargain_seal","relic_of_mastery",
 ]);
 
+function postGymHealParty(partyState) {
+  if (!Array.isArray(partyState)) return partyState;
+  return partyState.map((p) => {
+    if (!p) return p;
+    const healedHp = Math.min(p.maxHP ?? p.currentHP ?? 0, (p.currentHP ?? 0) + Math.ceil((p.maxHP ?? 0) * 0.5));
+    return {
+      ...p,
+      currentHP: healedHp,
+      fainted: healedHp <= 0 ? !!p.fainted : false,
+    };
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -42,17 +55,56 @@ Deno.serve(async (req) => {
     };
     relics.push(newRelic);
 
-    const updatedProgress = { ...progress, relics };
-    const nextIdx = (run.nextActionIdx ?? 0) + 1;
+    let updatedProgress = { ...progress, relics };
+    const runActionsToCreate = [];
+    let nextIdx = run.nextActionIdx ?? 0;
+
+    if (progress.pendingRouteAdvance) {
+      const advance = progress.pendingRouteAdvance;
+      const fromRouteId = advance.fromRouteId ?? progress.routeId ?? 'route1';
+      const toRouteIndex = advance.toRouteIndex ?? ((progress.routeIndex ?? 1) + 1);
+      const toRouteId = advance.toRouteId ?? `route${toRouteIndex}`;
+
+      updatedProgress = {
+        ...updatedProgress,
+        routeIndex: toRouteIndex,
+        routeId: toRouteId,
+        routeGraph: null,
+        currentNodeId: null,
+        completedNodeIds: [],
+        pendingEncounter: null,
+        pendingRouteAdvance: null,
+        pendingRewards: null,
+        routeCompleted: false,
+        partyState: advance.applyPostBossHeal ? postGymHealParty(updatedProgress.partyState) : updatedProgress.partyState,
+      };
+
+      nextIdx += 1;
+      runActionsToCreate.push({
+        runId,
+        idx: nextIdx,
+        actionType: 'route_advanced',
+        payload: {
+          from: { routeId: fromRouteId, routeIndex: toRouteIndex - 1 },
+          to: { routeId: toRouteId, routeIndex: toRouteIndex },
+          reason: 'gym_cleared',
+        },
+      });
+    }
+
+    nextIdx += 1;
+    runActionsToCreate.push({
+      runId,
+      idx: nextIdx,
+      actionType: 'relic_taken',
+      payload: { relicId, source: source ?? "unknown", nodeId: nodeId ?? null },
+    });
 
     await Promise.all([
       base44.entities.Run.update(runId, {
         results: { ...(run.results ?? {}), progress: updatedProgress },
       }),
-      base44.entities.RunAction.create({
-        runId, idx: nextIdx, actionType: 'relic_taken',
-        payload: { relicId, source: source ?? "unknown", nodeId: nodeId ?? null },
-      }),
+      ...runActionsToCreate.map((action) => base44.entities.RunAction.create(action)),
       base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: nextIdx }),
     ]);
 
