@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
+import { invokeWithRetry } from "@/api/invokeWithRetry";
 import { runApi } from "../components/api/runApi";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
@@ -87,7 +88,7 @@ export default function Battle() {
     if (cmds.length === 0) return;
     setCommitting(true);
     try {
-      const res = await base44.functions.invoke("commitTurn", {
+      const res = await invokeWithRetry(base44, "commitTurn", {
         runId, battleId, playerCommands: cmds,
       });
       const data = res.data;
@@ -111,7 +112,7 @@ export default function Battle() {
         // Resolve via canonical resolveNode — marks node complete, clears pendingEncounter
         const allPlayerPokes = [...(data.state?.player?.active ?? []), ...(data.state?.player?.bench ?? [])];
         const faintCount = allPlayerPokes.filter(p => p?.fainted).length;
-        const resolveRes = await base44.functions.invoke("resolveNode", {
+        const resolveRes = await invokeWithRetry(base44, "resolveNode", {
           runId,
           resolution: { type: "battle", winner: newWinner, faintCount, battleId },
         });
@@ -165,7 +166,7 @@ export default function Battle() {
   const handleChooseReplacement = async (benchIndex) => {
     setChoosing(true);
     try {
-      const res = await base44.functions.invoke("chooseReplacement", {
+      const res = await invokeWithRetry(base44, "chooseReplacement", {
         runId, battleId, slot: pendingReplacement.slot, benchIndex,
       });
       const data = res.data;
