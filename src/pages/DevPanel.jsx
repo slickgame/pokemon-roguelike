@@ -34,6 +34,8 @@ export default function DevPanel() {
   const [loadingGiveRelic, setLoadingGiveRelic] = useState(false);
   const [loadingClearRelics, setLoadingClearRelics] = useState(false);
   const [loadingForceEvent, setLoadingForceEvent] = useState(false);
+  const [probingFunctions, setProbingFunctions] = useState(false);
+  const [functionProbeResults, setFunctionProbeResults] = useState([]);
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
@@ -223,6 +225,37 @@ export default function DevPanel() {
       showToast(err.response?.data?.error || err.message, "error");
     } finally {
       setLoadingForceEvent(false);
+    }
+  };
+
+
+
+  const handleProbeFunctionDeployments = async () => {
+    setProbingFunctions(true);
+    setFunctionProbeResults([]);
+    const targets = ["commitTurn", "committurn", "startRun"];
+    try {
+      const results = await Promise.all(targets.map(async (fnName) => {
+        try {
+          await base44.functions.invoke(fnName, {});
+          return { fnName, ok: true, status: 200, detail: "Invoked successfully" };
+        } catch (err) {
+          const status = err?.response?.status ?? null;
+          const body = err?.response?.data;
+          const detail = body?.error || (typeof body === "string" ? body : body ? JSON.stringify(body) : err?.message || "Unknown error");
+          return { fnName, ok: false, status, detail };
+        }
+      }));
+      setFunctionProbeResults(results);
+      const commit = results.find(r => r.fnName === "commitTurn");
+      const alias = results.find(r => r.fnName === "committurn");
+      if ((commit?.status === 404) && (alias?.status === 404)) {
+        showToast("commitTurn + committurn both 404: backend deployment missing in this Base44 app", "error");
+      } else {
+        showToast("Function probe complete", "info");
+      }
+    } finally {
+      setProbingFunctions(false);
     }
   };
 
@@ -428,6 +461,32 @@ export default function DevPanel() {
             Clear Cache &amp; Reload
           </GameButton>
         </GameCard>
+
+
+
+        <GameCard>
+          <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+            <Search className="w-4 h-4 text-cyan-400" />
+            Function Deployment Probe
+          </h3>
+          <p className="text-white/40 text-xs mb-3">
+            Calls functions with empty payload to verify whether the deployment exists (404) vs exists-but-validates-input (400).
+          </p>
+          <GameButton onClick={handleProbeFunctionDeployments} disabled={probingFunctions} loading={probingFunctions} variant="secondary">
+            Probe commitTurn / committurn / startRun
+          </GameButton>
+          {functionProbeResults.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {functionProbeResults.map((r) => (
+                <div key={r.fnName} className="text-xs rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <div className="font-mono text-white/80">{r.fnName} → status {r.status ?? "?"}</div>
+                  <div className="text-white/50 break-all">{r.detail}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </GameCard>
+
 
         {/* Relic Dev Tools */}
         <GameCard>
