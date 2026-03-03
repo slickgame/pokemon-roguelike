@@ -285,6 +285,7 @@ Deno.serve(async (req) => {
     let nodeCompleteSummary;
     let shouldFinishRun = false;
     let finishOutcome   = null;
+    let routeAdvancePayload = null;
     let nextScreen      = "node_complete"; // or "relic_reward"
     let relicSource     = null;
 
