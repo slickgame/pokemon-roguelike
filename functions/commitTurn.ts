@@ -805,7 +805,7 @@ Deno.serve(async (req) => {
     state.pendingLearnPrompts = pendingLearnPrompts;
 
     const newStatus = winner ? "finished" : "active";
-    const updatePayload = { state, turnNumber, status: newStatus };
+    const updatePayload: Record<string, unknown> = { state, turnNumber, status: newStatus };
     if (winner) updatePayload.endedAt = new Date().toISOString();
 
     // ── Extract partyState for persistence (now includes exp/level) ───────────
