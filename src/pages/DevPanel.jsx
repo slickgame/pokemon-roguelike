@@ -416,6 +416,18 @@ export default function DevPanel() {
           </GameButton>
         </GameCard>
 
+        {/* Clear Cached Params */}
+        <GameCard>
+          <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
+            <RefreshCw className="w-4 h-4 text-red-400" />
+            Clear Cached Base44 Params (fix 404)
+          </h3>
+          <p className="text-white/40 text-xs mb-3">Clears stale functions_version / token cache then reloads. Use when commitTurn or other functions 404 after a new deployment.</p>
+          <GameButton onClick={handleClearCachedParams} variant="secondary">
+            Clear Cache &amp; Reload
+          </GameButton>
+        </GameCard>
+
         {/* Relic Dev Tools */}
         <GameCard>
           <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
