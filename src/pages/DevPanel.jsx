@@ -34,6 +34,8 @@ export default function DevPanel() {
   const [loadingGiveRelic, setLoadingGiveRelic] = useState(false);
   const [loadingClearRelics, setLoadingClearRelics] = useState(false);
   const [loadingForceEvent, setLoadingForceEvent] = useState(false);
+  const [loadingJumpGym, setLoadingJumpGym] = useState(false);
+  const [loadingForceGymWin, setLoadingForceGymWin] = useState(false);
   const [probingFunctions, setProbingFunctions] = useState(false);
   const [functionProbeResults, setFunctionProbeResults] = useState([]);
 
@@ -144,6 +146,41 @@ export default function DevPanel() {
       }
     } finally {
       setLoadingBattle(false);
+    }
+  };
+
+
+
+  const handleJumpToGymNode = async () => {
+    if (!runId) { showToast("Enter a runId first", "error"); return; }
+    if (currentRunIsRanked) { showToast("Dev tools disabled on ranked runs", "error"); return; }
+    setLoadingJumpGym(true);
+    try {
+      const res = await invokeWithRetry(base44, "devJumpToGymNode", { runId });
+      const d = res.data ?? {};
+      showToast(`Jumped to gym node ${d.gymNodeId} (${d.routeId})`, "success");
+      await loadRunSummary(runId);
+      navigate(createPageUrl(`RunMap?runId=${runId}`));
+    } catch (err) {
+      showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
+    } finally {
+      setLoadingJumpGym(false);
+    }
+  };
+
+  const handleForceGymWin = async () => {
+    if (!runId) { showToast("Enter a runId first", "error"); return; }
+    if (currentRunIsRanked) { showToast("Dev tools disabled on ranked runs", "error"); return; }
+    setLoadingForceGymWin(true);
+    try {
+      await invokeWithRetry(base44, "devForceGymWin", { runId });
+      showToast("Forced gym win resolved via resolveNode", "success");
+      await loadRunSummary(runId);
+      navigate(createPageUrl(`NodeComplete?runId=${runId}`));
+    } catch (err) {
+      showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
+    } finally {
+      setLoadingForceGymWin(false);
     }
   };
 
@@ -424,6 +461,44 @@ export default function DevPanel() {
               </div>
             </div>
           )}
+        </GameCard>
+
+
+
+        {/* 4.5 M13 Route/Gym Shortcuts */}
+        <GameCard>
+          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-cyan-400" />
+            M13 Route/Gym Shortcuts (Unranked only)
+          </h3>
+          {currentRunIsRanked && (
+            <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
+              Dev tools disabled on ranked runs
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <GameButton
+              onClick={handleJumpToGymNode}
+              disabled={loadingJumpGym || !runId || currentRunIsRanked}
+              loading={loadingJumpGym}
+              variant="secondary"
+              size="sm"
+            >
+              Jump to Gym Node
+            </GameButton>
+            <GameButton
+              onClick={handleForceGymWin}
+              disabled={loadingForceGymWin || !runId || currentRunIsRanked}
+              loading={loadingForceGymWin}
+              variant="amber"
+              size="sm"
+            >
+              Force Gym Win (debug)
+            </GameButton>
+          </div>
+          <p className="text-white/40 text-xs mt-3">
+            Workflow: Start run → Jump to Gym Node → enter gym battle → Force Gym Win (or play it) → relic reward → Route 2.
+          </p>
         </GameCard>
 
         {/* 5. Append Test Action */}
