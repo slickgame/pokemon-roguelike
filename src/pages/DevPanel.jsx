@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { invokeWithRetry } from "@/api/invokeWithRetry";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import RunDebugPanel from "../components/dev/RunDebugPanel";
@@ -47,8 +48,8 @@ export default function DevPanel() {
     setRunSummary(null);
     try {
       const [runRes, actionsRes] = await Promise.all([
-        base44.functions.invoke("getRun", { runId: rid }),
-        base44.functions.invoke("listRunActions", { runId: rid }),
+        invokeWithRetry(base44, "getRun", { runId: rid }),
+        invokeWithRetry(base44, "listRunActions", { runId: rid }),
       ]);
       const run = runRes.data?.run ?? runRes.data;
       const actions = actionsRes.data?.actions ?? actionsRes.data ?? [];
@@ -79,7 +80,7 @@ export default function DevPanel() {
   const handleStartRun = async () => {
     setLoadingStart(true);
     try {
-      const res = await base44.functions.invoke("startRun", { isRanked: false, modifierIds: [] });
+      const res = await invokeWithRetry(base44, "startRun", { isRanked: false, modifierIds: [] });
       setRunData(res.data);
       setRunId(res.data.runId);
       showToast("Run started!", "success");
@@ -111,7 +112,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingAutoConfirm(true);
     try {
-      const res = await base44.functions.invoke("devAutoConfirmStarters", { runId });
+      const res = await invokeWithRetry(base44, "devAutoConfirmStarters", { runId });
       const d = res.data;
       if (d.alreadyConfirmed) showToast("Starters already confirmed!", "info");
       else showToast(`Auto-confirmed! Species: ${d.picks.join(", ")}`, "success");
@@ -128,7 +129,7 @@ export default function DevPanel() {
     setBattleError(null);
     setLoadingBattle(true);
     try {
-      const res = await base44.functions.invoke("buildBattleFromRun", { runId });
+      const res = await invokeWithRetry(base44, "buildBattleFromRun", { runId });
       const { battleId } = res.data;
       showToast(`Battle created!`, "success");
       setTimeout(() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${battleId}`)), 600);
@@ -148,7 +149,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingAppend(true);
     try {
-      const res = await base44.functions.invoke("appendRunAction", { runId, actionType: "dev_test", payload: { note: "hello", t: Date.now() } });
+      const res = await invokeWithRetry(base44, "appendRunAction", { runId, actionType: "dev_test", payload: { note: "hello", t: Date.now() } });
       showToast(`Action appended! idx=${res.data.idx}`, "success");
     } catch (err) {
       showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
@@ -171,7 +172,7 @@ export default function DevPanel() {
   const handleReconcileAether = async () => {
     setLoadingReconcile(true);
     try {
-      const res = await base44.functions.invoke("reconcileAetherAwards", { limit: 50 });
+      const res = await invokeWithRetry(base44, "reconcileAetherAwards", { limit: 50 });
       const d = res.data;
       showToast(`Reconciled: ${d.fixed} fixed, ${d.skipped} skipped${d.errors?.length ? `, ${d.errors.length} errors` : ""}`, d.fixed > 0 ? "success" : "info");
     } catch (err) {
@@ -185,7 +186,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingGiveRelic(true);
     try {
-      const res = await base44.functions.invoke("devGiveRelic", { runId, relicId: selectedRelicId });
+      const res = await invokeWithRetry(base44, "devGiveRelic", { runId, relicId: selectedRelicId });
       setCurrentRelics(res.data.relics ?? []);
       showToast(`Granted: ${selectedRelicId}`, "success");
     } catch (err) {
@@ -199,7 +200,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingClearRelics(true);
     try {
-      await base44.functions.invoke("devClearRelics", { runId });
+      await invokeWithRetry(base44, "devClearRelics", { runId });
       setCurrentRelics([]);
       setForceEventRelic(false);
       showToast("All relics cleared", "success");
@@ -215,7 +216,7 @@ export default function DevPanel() {
     const next = !forceEventRelic;
     setLoadingForceEvent(true);
     try {
-      const res = await base44.functions.invoke("devForceNextEventRelic", { runId, enabled: next });
+      const res = await invokeWithRetry(base44, "devForceNextEventRelic", { runId, enabled: next });
       setForceEventRelic(res.data.forceNextEventRelic);
       showToast(next ? "Force event relic: ON (one-time)" : "Force event relic: OFF", next ? "success" : "info");
     } catch (err) {
@@ -229,7 +230,7 @@ export default function DevPanel() {
     if (!runId) { showToast("Enter a runId first", "error"); return; }
     setLoadingFinish(true);
     try {
-      await base44.functions.invoke("finishRun", { runId, summary: { reason: "dev_test_finish" } });
+      await invokeWithRetry(base44, "finishRun", { runId, summary: { reason: "dev_test_finish" } });
       showToast("Run finished!", "success");
     } catch (err) {
       showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
