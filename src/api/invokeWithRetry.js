@@ -13,7 +13,10 @@ export async function invokeWithRetry(base44, fnName, payload, { retries = 2, de
       }
 
       if (status === 404) {
-        throw new Error(`[${fnName}] status=404 ${fnName} not found. Check Base44 Functions deployment and naming.`);
+        if (typeof window !== "undefined" && window?.localStorage?.getItem("base44_functions_version")) {
+          window.localStorage.removeItem("base44_functions_version");
+        }
+        throw new Error(`[${fnName}] status=404 ${fnName} not found. Cleared cached functions version; reload and retry.`);
       }
 
       throw new Error(`[${fnName}] status=${status ?? "?"} ${msg}`);
