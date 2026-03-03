@@ -157,6 +157,17 @@ export default function DevPanel() {
     }
   };
 
+  const handleClearCachedParams = () => {
+    [
+      "base44_functions_version",
+      "base44_app_id",
+      "base44_app_base_url",
+      "base44_token",
+      "base44_access_token",
+    ].forEach(k => localStorage.removeItem(k));
+    window.location.reload();
+  };
+
   const handleReconcileAether = async () => {
     setLoadingReconcile(true);
     try {

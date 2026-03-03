@@ -18,6 +18,15 @@ const NAV_LINKS = [
 export default function AppShell({ children, currentPageName }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Strip functions_version from URL so it doesn't pin the app to a stale deployment
+  React.useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("functions_version")) {
+      url.searchParams.delete("functions_version");
+      history.replaceState(null, "", url.toString());
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white flex flex-col">
       {/* Header */}
