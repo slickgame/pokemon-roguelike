@@ -230,6 +230,8 @@ export default function DevPanel() {
 
 
 
+  const isFunctionDeployedStatus = (status) => [200, 400, 401, 403].includes(status);
+
   const handleProbeFunctionDeployments = async () => {
     setProbingFunctions(true);
     setFunctionProbeResults([]);
@@ -249,10 +251,18 @@ export default function DevPanel() {
       setFunctionProbeResults(results);
       const commit = results.find(r => r.fnName === "commitTurn");
       const alias = results.find(r => r.fnName === "committurn");
+      const startRun = results.find(r => r.fnName === "startRun");
+
       if ((commit?.status === 404) && (alias?.status === 404)) {
         showToast("commitTurn + committurn both 404: backend deployment missing in this Base44 app", "error");
+      } else if (isFunctionDeployedStatus(commit?.status)) {
+        if (startRun?.status === 502) {
+          showToast("commitTurn is deployed (400 expected with empty payload). startRun 502 is transient backend timeout.", "info");
+        } else {
+          showToast("commitTurn deployment looks healthy (400/401/403 means function exists).", "success");
+        }
       } else {
-        showToast("Function probe complete", "info");
+        showToast("Function probe complete. Review statuses below.", "info");
       }
     } finally {
       setProbingFunctions(false);
@@ -480,6 +490,9 @@ export default function DevPanel() {
               {functionProbeResults.map((r) => (
                 <div key={r.fnName} className="text-xs rounded-lg border border-white/10 bg-white/5 px-3 py-2">
                   <div className="font-mono text-white/80">{r.fnName} → status {r.status ?? "?"}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-white/40 mb-1">
+                    {[200, 400, 401, 403].includes(r.status) ? "deployment exists" : r.status === 404 ? "deployment missing" : "runtime/infrastructure issue"}
+                  </div>
                   <div className="text-white/50 break-all">{r.detail}</div>
                 </div>
               ))}
