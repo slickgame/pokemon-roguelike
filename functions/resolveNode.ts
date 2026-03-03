@@ -330,39 +330,30 @@ Deno.serve(async (req) => {
 
         if (nodeType === 'gym') {
           const fromRouteIndex = existingProgress.routeIndex ?? 1;
-          const postGymParty = postGymHealParty(healedParty ?? partyState);
+          const fromRouteId = existingProgress.routeId ?? `route${fromRouteIndex}`;
+          const toRouteIndex = fromRouteIndex + 1;
+          const toRouteId = `route${toRouteIndex}`;
+
           nodeCompleteSummary.gymCleared = true;
-
-          if (fromRouteIndex >= 2) {
-            // Run-end gate: gym wins must NOT finish the run.
-            // Only losses (all party fainted), explicit dev finish, or future champion victory can end a run.
-            updatedProgress = {
-              ...updatedProgress,
-              routeCompleted: true,
-              pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
-              partyState: postGymParty ?? partyState,
-            };
-          } else {
-            const toRouteIndex = fromRouteIndex + 1;
-            const toRouteId = `route${toRouteIndex}`;
-            const nextRouteGraph = generateRouteGraph(run.seed, toRouteIndex);
-            nodeCompleteSummary.routeAdvancedFrom = { routeIndex: fromRouteIndex, routeId: existingProgress.routeId ?? `route${fromRouteIndex}` };
+          nodeCompleteSummary.routeAdvancedFrom = { routeIndex: fromRouteIndex, routeId: fromRouteId };
+          if (fromRouteIndex < 2) {
             nodeCompleteSummary.routeAdvancedTo = { routeIndex: toRouteIndex, routeId: toRouteId };
-
-            updatedProgress = {
-              ...updatedProgress,
-              routeCompleted: false,
-              routeIndex: toRouteIndex,
-              routeId: toRouteId,
-              routeGraph: nextRouteGraph,
-              currentNodeId: null,
-              completedNodeIds: [],
-              pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
-              partyState: postGymParty ?? partyState,
-            };
-
-            routeAdvancePayload = { from: { routeIndex: fromRouteIndex, routeId: existingProgress.routeId ?? `route${fromRouteIndex}` }, to: { routeIndex: toRouteIndex, routeId: toRouteId } };
           }
+
+          // Defer route transition until relic is taken so relic choice is never skipped.
+          updatedProgress = {
+            ...updatedProgress,
+            routeCompleted: fromRouteIndex >= 2,
+            pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
+            pendingRewards: { relicSource: 'gym', nodeId },
+            pendingRouteAdvance: fromRouteIndex >= 2 ? null : {
+              fromRouteId,
+              toRouteId,
+              toRouteIndex,
+              applyPostBossHeal: true,
+            },
+          };
+
           nextScreen = "relic_reward";
           relicSource = "gym";
         }
@@ -474,11 +465,12 @@ Deno.serve(async (req) => {
     let finalActionIdx = nextIdx;
     if (nodeType === 'gym' && resolution.type === 'battle' && resolution.winner === 'player') {
       finalActionIdx += 1;
-      runActionsToCreate.push({ runId, idx: finalActionIdx, actionType: 'gym_defeated', payload: { routeId: routeAdvancePayload?.from?.routeId ?? (existingProgress.routeId ?? 'route1'), nodeId } });
-    }
-    if (routeAdvancePayload) {
-      finalActionIdx += 1;
-      runActionsToCreate.push({ runId, idx: finalActionIdx, actionType: 'route_advanced', payload: routeAdvancePayload });
+      runActionsToCreate.push({
+        runId,
+        idx: finalActionIdx,
+        actionType: 'gym_defeated',
+        payload: { routeId: nodeCompleteSummary?.routeAdvancedFrom?.routeId ?? (existingProgress.routeId ?? 'route1'), nodeId },
+      });
     }
 
     await Promise.all([

@@ -173,10 +173,15 @@ export default function DevPanel() {
     if (currentRunIsRanked) { showToast("Dev tools disabled on ranked runs", "error"); return; }
     setLoadingForceGymWin(true);
     try {
-      await invokeWithRetry(base44, "devForceGymWin", { runId });
+      const res = await invokeWithRetry(base44, "devForceGymWin", { runId });
+      const resolveData = res.data?.resolve ?? {};
       showToast("Forced gym win resolved via resolveNode", "success");
       await loadRunSummary(runId);
-      navigate(createPageUrl(`NodeComplete?runId=${runId}`));
+      if (resolveData.nextScreen === "relic_reward" && resolveData.relicSource) {
+        navigate(createPageUrl(`RelicReward?runId=${runId}&source=${resolveData.relicSource}`));
+      } else {
+        navigate(createPageUrl(`NodeComplete?runId=${runId}`));
+      }
     } catch (err) {
       showToast(`Error: ${err.response?.data?.error || err.message}`, "error");
     } finally {
