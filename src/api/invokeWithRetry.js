@@ -1,6 +1,12 @@
 import { createClient } from "@base44/sdk";
 import { appParams } from "@/lib/app-params";
 
+
+
+const FUNCTION_ALIASES = {
+  commitTurn: ["committurn"],
+};
+
 function createUnpinnedClient() {
   const token = appParams.token ?? (typeof window !== "undefined" ? window?.localStorage?.getItem("base44_access_token") : null);
   return createClient({
@@ -33,6 +39,19 @@ export async function invokeWithRetry(base44, fnName, payload, { retries = 2, de
           window?.localStorage?.removeItem("base44_functions_version");
         }
 
+        const aliases = FUNCTION_ALIASES[fnName] ?? [];
+        for (const alias of aliases) {
+          try {
+            return await base44.functions.invoke(alias, payload);
+          } catch (aliasError) {
+            if (aliasError?.response?.status !== 404) {
+              const aliasBody = aliasError?.response?.data;
+              const aliasMsg = aliasBody?.error || (typeof aliasBody === "string" ? aliasBody : aliasBody ? JSON.stringify(aliasBody) : aliasError?.message || "Unknown error");
+              throw new Error(`[${fnName}] 404, alias '${alias}' failed with status=${aliasError?.response?.status ?? "?"}. ${aliasMsg}`);
+            }
+          }
+        }
+
         if (!attemptedUnpinnedFallback) {
           attemptedUnpinnedFallback = true;
           try {
@@ -42,7 +61,7 @@ export async function invokeWithRetry(base44, fnName, payload, { retries = 2, de
             const fallbackStatus = fallbackError?.response?.status;
             const fallbackBody = fallbackError?.response?.data;
             const fallbackMsg = fallbackBody?.error || (typeof fallbackBody === "string" ? fallbackBody : fallbackBody ? JSON.stringify(fallbackBody) : fallbackError?.message || "Unknown error");
-            throw new Error(`[${fnName}] status=404 on pinned and fallback (status=${fallbackStatus ?? "?"}). Verify function is deployed in the current Base44 app. Details: ${fallbackMsg}`);
+            throw new Error(`[${fnName}] status=404 on pinned, alias, and fallback (status=${fallbackStatus ?? "?"}). Verify function deployment. Details: ${fallbackMsg}`);
           }
         }
       }
