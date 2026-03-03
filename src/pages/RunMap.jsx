@@ -14,19 +14,16 @@ import { MapPin, ShoppingBag, RefreshCw, Package, Coins } from "lucide-react";
 import BagModal from "../components/battle/BagModal";
 import RelicPanel from "../components/runmap/RelicPanel";
 
-const ROUTE_ID = "route1";
-
 // ── Derive progression state from RunActions + Run.results.progress ──────────
 function deriveProgress(actions, runProgress) {
   let currentNodeId = runProgress?.currentNodeId ?? null;
   const completedNodeIds = runProgress?.completedNodeIds ? [...runProgress.completedNodeIds] : [];
-  let graphPayload = null;
-  let gymDefeated = false;
+  let graphPayload = runProgress?.routeGraph ?? null;
   let potions = 0;
 
   for (const a of actions) {
-    if (a.actionType === "route_generated" && a.payload?.routeId === ROUTE_ID) {
-      graphPayload = a.payload.graph;
+    if (!graphPayload && a.actionType === "route_generated") {
+      graphPayload = a.payload?.graph ?? null;
     }
     // Only fall back to action-derived node tracking if no run progress stored yet
     if (!runProgress) {
@@ -49,12 +46,9 @@ function deriveProgress(actions, runProgress) {
     if (a.actionType === "shop_visited" || a.actionType === "event_resolved") {
       potions += 1;
     }
-    if (a.actionType === "gym_defeated") {
-      gymDefeated = true;
-    }
   }
 
-  return { currentNodeId, completedNodeIds, graphPayload, gymDefeated, potions };
+  return { currentNodeId, completedNodeIds, graphPayload, potions };
 }
 
 // ── Compute which nodes are currently available to visit ──────────────────────
@@ -72,8 +66,8 @@ function computeAvailableNodes(graph, currentNodeId, completedNodeIds, startNode
     return current.nextIds.filter(nid => !completed.has(nid));
   }
 
-  // Current node not yet completed — it's the one we're "in"
-  return [];
+  // Current node not yet completed — allow selecting/entering this node.
+  return completed.has(currentNodeId) ? [] : [currentNodeId];
 }
 
 export default function RunMap() {
@@ -110,10 +104,13 @@ export default function RunMap() {
 
   // Derive progress — prefer Run.results.progress as source of truth, fall back to actions
   const runProgress = run?.results?.progress ?? null;
-  const { currentNodeId, completedNodeIds, graphPayload, gymDefeated, potions } = useMemo(
+  const { currentNodeId, completedNodeIds, graphPayload, potions } = useMemo(
     () => deriveProgress(actions, runProgress),
     [actions, runProgress]
   );
+
+  const routeIndex = runProgress?.routeIndex ?? 1;
+  const routeId = runProgress?.routeId ?? `route${routeIndex}`;
 
   // pendingEncounter — only block if status is "pending" (not resolved)
   const rawPending = runProgress?.pendingEncounter ?? null;
@@ -127,15 +124,32 @@ export default function RunMap() {
       return;
     }
     // Generate fresh graph
-    const g = generateRouteGraph({ seed: run.seed, routeId: ROUTE_ID });
+    const g = generateRouteGraph({ seed: run.seed, routeId, routeIndex });
     setGraph(g);
+    const existingProgress = run.results?.progress ?? {};
+    base44.entities.Run.update(runId, {
+      results: {
+        ...(run.results ?? {}),
+        progress: {
+          ...existingProgress,
+          routeIndex,
+          routeId,
+          routeGraph: g,
+          routeCompleted: false,
+          currentNodeId: existingProgress.currentNodeId ?? null,
+          completedNodeIds: existingProgress.completedNodeIds ?? [],
+        },
+      },
+    }).catch(() => {});
+
     // Log it (fire and forget)
     runApi.appendAction(runId, "route_generated", {
-      routeId: ROUTE_ID,
+      routeId,
+      routeIndex,
       graphSummaryHash: hashGraph(g),
       graph: serializeGraph(g),
     }).catch(() => {});
-  }, [run, graphPayload]);
+  }, [run, graphPayload, routeId, routeIndex]);
 
   // Compute state
   const startNodeId = graph?.startNodeId ?? null;
@@ -167,7 +181,8 @@ export default function RunMap() {
     try {
       // Log node_chosen
       await runApi.appendAction(runId, "node_chosen", {
-        routeId: ROUTE_ID,
+        routeId,
+        routeIndex,
         fromNodeId: currentNodeId ?? startNodeId,
         toNodeId: node.id,
       });
@@ -186,26 +201,44 @@ export default function RunMap() {
 
     if (type === "trainer" || type === "gym") {
       const resolvedTier = tier ?? (type === "gym" ? "boss" : "weak");
+      const gymPending = type === "gym" ? {
+        trainerType: "gym",
+        trainerId: routeIndex >= 2 ? "gym2" : "gym1",
+        trainerName: routeIndex >= 2 ? "Leader Misty" : "Leader Brock",
+        aiTier: "boss",
+      } : null;
       const res = await base44.functions.invoke("startNodeBattle", {
-        runId, nodeId, nodeType: type, tier: resolvedTier, routeId: ROUTE_ID,
+        runId,
+        nodeId,
+        nodeType: type,
+        tier: resolvedTier,
+        routeId,
+        pendingEncounter: {
+          nodeId,
+          nodeType: type,
+          tier: resolvedTier,
+          routeId,
+          ...(gymPending ?? {}),
+        },
       });
-      const { battleId } = res.data;
+      const { battleId, pendingEncounter } = res.data;
 
-      // Persist pendingEncounter with canonical status field
+      // Persist pendingEncounter with canonical status field (includes gym identity when provided)
       const existingProgress = run?.results?.progress ?? {};
       await base44.entities.Run.update(runId, {
         results: {
           ...(run?.results ?? {}),
           progress: {
             ...existingProgress,
-            routeId: ROUTE_ID,
+            routeId,
+            routeIndex,
             currentNodeId: nodeId,
-            pendingEncounter: { nodeId, nodeType: type, tier: resolvedTier, battleId, status: "pending", createdAt: new Date().toISOString() },
+            pendingEncounter: pendingEncounter ?? { nodeId, nodeType: type, tier: resolvedTier, battleId, routeId, status: "pending", createdAt: new Date().toISOString() },
           },
         },
       });
 
-      navigate(createPageUrl(`Battle?runId=${runId}&battleId=${battleId}&nodeId=${nodeId}&routeId=${ROUTE_ID}`));
+      navigate(createPageUrl(`Battle?runId=${runId}&battleId=${battleId}&nodeId=${nodeId}&routeId=${routeId}`));
       return;
     }
 
@@ -215,10 +248,10 @@ export default function RunMap() {
     await base44.entities.Run.update(runId, {
       results: {
         ...(run?.results ?? {}),
-        progress: { ...existingProgress, routeId: ROUTE_ID, currentNodeId: nodeId, pendingEncounter: pendingPayload },
+        progress: { ...existingProgress, routeIndex, routeId, routeGraph: graph ?? existingProgress.routeGraph, routeCompleted: false, currentNodeId: nodeId, pendingEncounter: pendingPayload },
       },
     });
-    await runApi.appendAction(runId, "node_selected", { routeId: ROUTE_ID, nodeId, nodeType: type });
+    await runApi.appendAction(runId, "node_selected", { routeId, routeIndex, nodeId, nodeType: type });
 
     if (type === "center") {
       navigate(createPageUrl(`Center?runId=${runId}&nodeId=${nodeId}`));
@@ -318,7 +351,7 @@ export default function RunMap() {
             <MapPin className="w-5 h-5 text-violet-400" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-white">Route 1</h1>
+            <h1 className="text-xl font-black text-white">Route {routeIndex}</h1>
             <p className="text-white/40 text-xs">
               {completedNodeIds.length} nodes completed · {battlesWon} battles won
             </p>
@@ -413,7 +446,7 @@ export default function RunMap() {
               <GameButton
                 variant="secondary"
                 size="sm"
-                onClick={() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${pendingEncounter.battleId}&nodeId=${pendingEncounter.nodeId}&routeId=${ROUTE_ID}`))}
+                onClick={() => navigate(createPageUrl(`Battle?runId=${runId}&battleId=${pendingEncounter.battleId}&nodeId=${pendingEncounter.nodeId}&routeId=${routeId}`))}
               >
                 Return to Battle
               </GameButton>
@@ -451,10 +484,8 @@ export default function RunMap() {
 
         {availableNodes.length === 0 && !isInUncompletedNode && !loading && (
           <div className="text-center py-6 text-white/30 text-sm space-y-3">
-            <p>All nodes completed!</p>
-            <GameButton variant="primary" size="sm" onClick={() => navigate(createPageUrl(`Results?runId=${runId}`))}>
-              View Results
-            </GameButton>
+            <p>No available nodes right now.</p>
+            <p className="text-xs text-white/20">Runs only end on party wipe, explicit dev end, or future champion victory.</p>
           </div>
         )}
       </GameCard>
