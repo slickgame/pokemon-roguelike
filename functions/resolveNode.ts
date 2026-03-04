@@ -262,11 +262,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
     if (run.status !== 'active') {
-      const existingProgress = run.results?.progress ?? {};
+      const rawProgress = run.results?.progress ?? {};
+    const existingProgress = {
+      ...rawProgress,
+      pendingReward: rawProgress.pendingReward ?? null,
+      pendingRouteAdvance: rawProgress.pendingRouteAdvance ?? null,
+    };
       return Response.json({ ok: true, alreadyFinished: true, nodeCompleteSummary: { nodeId: existingProgress.currentNodeId, nodeType: existingProgress.pendingEncounter?.nodeType } });
     }
 
-    const existingProgress = run.results?.progress ?? {};
+    const rawProgress = run.results?.progress ?? {};
+    const existingProgress = {
+      ...rawProgress,
+      pendingReward: rawProgress.pendingReward ?? null,
+      pendingRouteAdvance: rawProgress.pendingRouteAdvance ?? null,
+    };
     const pending = existingProgress.pendingEncounter ?? null;
 
     if (!pending || pending.status === 'resolved') {
@@ -326,6 +336,7 @@ Deno.serve(async (req) => {
           money: currentMoney + moneyDelta,
           inventory: newInventory,
           partyState: healedParty ?? partyState,
+          pendingReward: null,
         };
 
         if (nodeType === 'gym') {
@@ -345,11 +356,10 @@ Deno.serve(async (req) => {
             ...updatedProgress,
             routeCompleted: fromRouteIndex >= 2,
             pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
-            pendingRewards: { relicSource: 'gym', nodeId },
+            pendingReward: { type: 'relic', source: 'gym', nodeId },
             pendingRouteAdvance: fromRouteIndex >= 2 ? null : {
               fromRouteId,
               toRouteId,
-              toRouteIndex,
               applyPostBossHeal: true,
             },
           };
@@ -390,6 +400,7 @@ Deno.serve(async (req) => {
         completedNodeIds,
         pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
         partyState: healed,
+        pendingReward: null,
       };
     }
     // ── Event ──────────────────────────────────────────────────────────────────
@@ -421,6 +432,7 @@ Deno.serve(async (req) => {
         pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
         inventory: newInventory,
         partyState,
+        pendingReward: null,
       };
 
       // Roll relic chance for event nodes (8%, or forced by devFlags)
@@ -431,6 +443,7 @@ Deno.serve(async (req) => {
       if (rolledRelic) {
         nextScreen  = "relic_reward";
         relicSource = "event";
+        updatedProgress.pendingReward = { type: 'relic', source: 'event', nodeId };
         // Clear the one-time dev flag
         if (devForced) {
           updatedProgress.devFlags = { ...(updatedProgress.devFlags ?? existingProgress.devFlags ?? {}), forceNextEventRelic: false };
@@ -447,6 +460,7 @@ Deno.serve(async (req) => {
         completedNodeIds,
         pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
         partyState,
+        pendingReward: null,
       };
     }
     else {

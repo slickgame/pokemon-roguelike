@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
+import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight, Sparkles } from "lucide-react";
@@ -29,7 +31,8 @@ const OUTCOME_CONFIG = {
 export default function NodeComplete() {
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);
-  const runId = params.get("runId");
+  const { toasts, toast, dismiss } = useToast();
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "NodeComplete", toast });
   const nodeId = params.get("nodeId");
 
   const [summary, setSummary] = useState(null);
@@ -39,7 +42,7 @@ export default function NodeComplete() {
     if (!runId) { setLoading(false); return; }
     base44.entities.Run.filter({ id: runId }).then(rows => {
       const run = rows[0];
-      if (!run) { setLoading(false); return; }
+      if (!run) { handleInvalidRun(); setLoading(false); return; }
       const pending = run.results?.progress?.pendingEncounter ?? null;
       if (pending?.lastSummary) {
         setSummary(pending.lastSummary);
@@ -55,7 +58,7 @@ export default function NodeComplete() {
           faintCount: 0,
         });
       }
-    }).finally(() => setLoading(false));
+    }).catch(() => handleInvalidRun()).finally(() => setLoading(false));
   }, [runId]);
 
   const [relicCount, setRelicCount] = useState(null);
@@ -65,15 +68,23 @@ export default function NodeComplete() {
     base44.entities.Run.filter({ id: runId }).then(rows => {
       const r = rows[0];
       if (r) setRelicCount((r.results?.progress?.relics ?? []).length);
+      else handleInvalidRun();
     });
   }, [runId]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (summary?.runFinished || summary?.outcome === "loss") {
       navigate(createPageUrl(`Results?runId=${runId}`));
-    } else {
-      navigate(createPageUrl(`RunMap?runId=${runId}`));
+      return;
     }
+
+    try {
+      await base44.functions.invoke("advanceRouteIfPending", { runId });
+    } catch (_) {
+      // Non-blocking fallback: if this call fails, return to map without advancing.
+    }
+
+    navigate(createPageUrl(`RunMap?runId=${runId}`));
   };
 
   if (loading) return (
@@ -179,6 +190,7 @@ export default function NodeComplete() {
           <>Continue <ArrowRight className="w-4 h-4" /></>
         )}
       </GameButton>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }

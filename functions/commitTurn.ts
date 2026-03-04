@@ -813,10 +813,16 @@ Deno.serve(async (req) => {
 
     // ── Persist battle + run (inventory + partyState) ─────────────────────────
     const existingProgress = run.results?.progress ?? {};
+    const pendingEncounter = existingProgress.pendingEncounter ?? null;
     const updatedProgress = {
       ...existingProgress,
       inventory: { ...(existingProgress.inventory ?? {}), ...inventory },
+      money: existingProgress.money ?? 0,
       partyState,
+      // Keep encounter pending during battle; resolution happens in resolveNode/resolveEncounterFromBattle.
+      pendingEncounter: winner
+        ? pendingEncounter
+        : (pendingEncounter ? { ...pendingEncounter, status: "pending" } : pendingEncounter),
     };
 
     await Promise.all([

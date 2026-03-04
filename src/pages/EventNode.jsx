@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
+import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import { Star, Package } from "lucide-react";
@@ -9,7 +11,8 @@ import { Star, Package } from "lucide-react";
 export default function EventNode() {
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);
-  const runId = params.get("runId");
+  const { toasts, toast, dismiss } = useToast();
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "EventNode", toast });
   const nodeId = params.get("nodeId");
 
   const [resolving, setResolving] = useState(false);
@@ -19,8 +22,8 @@ export default function EventNode() {
   useEffect(() => {
     if (!runId) { setLoading(false); return; }
     base44.entities.Run.filter({ id: runId })
-      .then(rows => { if (rows[0]) setRun(rows[0]); })
-      .finally(() => setLoading(false));
+      .then(rows => { if (rows[0]) setRun(rows[0]); else handleInvalidRun(); })
+      .catch(() => handleInvalidRun()).finally(() => setLoading(false));
   }, [runId]);
 
   const handleCollect = async () => {
@@ -77,6 +80,7 @@ export default function EventNode() {
         <Star className="w-4 h-4" />
         Take Items
       </GameButton>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }

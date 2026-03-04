@@ -178,7 +178,8 @@ export default function DevPanel() {
       showToast("Forced gym win resolved via resolveNode", "success");
       await loadRunSummary(runId);
       if (resolveData.nextScreen === "relic_reward" && resolveData.relicSource) {
-        navigate(createPageUrl(`RelicReward?runId=${runId}&source=${resolveData.relicSource}`));
+        const rewardNodeId = resolveData.nodeCompleteSummary?.nodeId ?? "";
+        navigate(createPageUrl(`RelicReward?runId=${runId}&nodeId=${rewardNodeId}&source=${resolveData.relicSource}`));
       } else {
         navigate(createPageUrl(`NodeComplete?runId=${runId}`));
       }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
 import { runApi } from "../components/api/runApi";
 import { generateRouteGraph, serializeGraph, hashGraph } from "../components/engine/routeGen";
@@ -73,8 +74,7 @@ function computeAvailableNodes(graph, currentNodeId, completedNodeIds, startNode
 export default function RunMap() {
   const navigate = useNavigate();
   const { toasts, toast, dismiss } = useToast();
-  const params = new URLSearchParams(window.location.search);
-  const runId = params.get("runId");
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "RunMap", toast });
 
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
@@ -87,19 +87,24 @@ export default function RunMap() {
   // Reload run + actions
   const reload = useCallback(async () => {
     if (!runId) return;
-    const [r, acts] = await Promise.all([
-      runApi.getRun(runId),
-      runApi.listRunActions(runId),
-    ]);
-    acts.sort((a, b) => a.idx - b.idx);
-    setRun(r);
-    setActions(acts);
-    return { run: r, actions: acts };
+    try {
+      const [r, acts] = await Promise.all([
+        runApi.getRun(runId),
+        runApi.listRunActions(runId),
+      ]);
+      acts.sort((a, b) => a.idx - b.idx);
+      setRun(r);
+      setActions(acts);
+      return { run: r, actions: acts };
+    } catch (e) {
+      handleInvalidRun();
+      throw e;
+    }
   }, [runId]);
 
   useEffect(() => {
     if (!runId) { setLoading(false); return; }
-    reload().finally(() => setLoading(false));
+    reload().catch(() => {}).finally(() => setLoading(false));
   }, [runId]);
 
   // Derive progress — prefer Run.results.progress as source of truth, fall back to actions
