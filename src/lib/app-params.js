@@ -34,16 +34,44 @@ const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl =
 	return null;
 }
 
+const getFunctionsVersion = () => {
+	if (isNode) {
+		return import.meta.env.VITE_BASE44_FUNCTIONS_VERSION ?? null;
+	}
+
+	const urlParams = new URLSearchParams(window.location.search);
+	const fromUrl = urlParams.get('functions_version');
+	if (fromUrl) {
+		storage.setItem('base44_functions_version', fromUrl);
+		urlParams.delete('functions_version');
+		const newUrl = `${window.location.pathname}${urlParams.toString() ? `?${urlParams.toString()}` : ''}${window.location.hash}`;
+		window.history.replaceState({}, document.title, newUrl);
+		return fromUrl;
+	}
+
+	const fromEnv = import.meta.env.VITE_BASE44_FUNCTIONS_VERSION;
+	if (fromEnv) {
+		storage.setItem('base44_functions_version', fromEnv);
+		return fromEnv;
+	}
+
+	// Do not keep using an old cached functions version when there is no
+	// explicit version from URL/env, because stale pinning can 404 newer functions.
+	storage.removeItem('base44_functions_version');
+	return null;
+}
+
 const getAppParams = () => {
 	if (getAppParamValue("clear_access_token") === 'true') {
 		storage.removeItem('base44_access_token');
+		storage.removeItem('base44_token');
 		storage.removeItem('token');
 	}
 	return {
 		appId: getAppParamValue("app_id", { defaultValue: import.meta.env.VITE_BASE44_APP_ID }),
 		token: getAppParamValue("access_token", { removeFromUrl: true }),
 		fromUrl: getAppParamValue("from_url", { defaultValue: window.location.href }),
-		functionsVersion: getAppParamValue("functions_version", { defaultValue: import.meta.env.VITE_BASE44_FUNCTIONS_VERSION }),
+		functionsVersion: getFunctionsVersion(),
 		appBaseUrl: getAppParamValue("app_base_url", { defaultValue: import.meta.env.VITE_BASE44_APP_BASE_URL }),
 	}
 }

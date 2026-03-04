@@ -29,9 +29,9 @@ Deno.serve(async (req) => {
     }
 
     await base44.entities.Run.update(runId, {
-      status: "abandoned",
+      status: "finished",
       endedAt: new Date().toISOString(),
-      results: { reason },
+      results: { ...(run.results ?? {}), reason: "surrender", surrenderReason: reason, progress: { ...(run.results?.progress ?? {}), pendingEncounter: null } },
     });
 
     return Response.json({ ok: true });
