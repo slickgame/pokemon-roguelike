@@ -188,6 +188,7 @@ export default function Home() {
       }
     } finally {
       setLoading(false);
+      setShowStartBlockedModal(false);
     }
   };
 
@@ -196,51 +197,7 @@ export default function Home() {
     resumeActiveRun({ base44, navigate, toast });
   };
 
-  const handleSurrenderRun = async () => {
-    if (!activeRun?.id) return;
-    setLoading(true);
-    try {
-      await runApi.surrenderRun(activeRun.id, "home_surrender");
-      clearActiveRunId();
-      toast("Run surrendered.", "success");
-      setActiveRun(null);
-      await loadActiveRun();
-    } catch (err) {
-      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
-    } finally {
-      setLoading(false);
-      setShowStartBlockedModal(false);
-    }
-  };
-
-  const handleContinueRun = () => {
-    if (!activeRun) return;
-    resumeActiveRun({ base44, navigate, toast });
-  };
-
-  const handleSurrenderRun = async () => {
-    if (!activeRun?.id) return;
-    setLoading(true);
-    try {
-      await runApi.surrenderRun(activeRun.id, "home_surrender");
-      clearActiveRunId();
-      toast("Run surrendered.", "success");
-      setActiveRun(null);
-      await loadActiveRun();
-    } catch (err) {
-      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
-    } finally {
-      setLoading(false);
-      setShowStartBlockedModal(false);
-    }
-  };
-
-  const handleContinueRun = () => {
-    if (!activeRun) return;
-    resumeActiveRun({ base44, navigate, toast });
-  };
-
-  const handleSurrenderRun = async () => {
+  const handleSurrenderActiveRun = async () => {
     if (!activeRun?.id) return;
     setLoading(true);
     try {
@@ -404,7 +361,7 @@ export default function Home() {
                     size="md"
                     variant="ghost"
                     className="w-full border border-red-500/30 text-red-300 hover:bg-red-500/10"
-                    onClick={handleSurrenderRun}
+                    onClick={handleSurrenderActiveRun}
                   >
                     <Flag className="w-4 h-4" />
                     Surrender Run
@@ -544,7 +501,7 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <GameButton variant="secondary" size="md" onClick={() => setShowStartBlockedModal(false)} className="sm:col-span-1">Close</GameButton>
               <GameButton variant="primary" size="md" onClick={() => { setShowStartBlockedModal(false); handleContinueActiveRun(); }} className="sm:col-span-1">Continue</GameButton>
-              <GameButton variant="ghost" size="md" className="sm:col-span-1 border border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleSurrenderRun}>Surrender</GameButton>
+              <GameButton variant="ghost" size="md" className="sm:col-span-1 border border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleSurrenderActiveRun}>Surrender</GameButton>
             </div>
           </div>
         </div>
