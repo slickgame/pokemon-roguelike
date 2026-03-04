@@ -191,14 +191,17 @@ Deno.serve(async (req) => {
     );
 
     // State uses separate active/bench arrays (indices 0-2 map to active/bench arrays directly)
+    const sanitizedPlayer = sanitizeActives(playerActive, playerBench);
+    const sanitizedEnemy = sanitizeActives(enemyActive, enemyBench);
+
     const battleState = {
       player: {
-        active: playerActive,   // array of 3 active Pokémon objects
-        bench:  playerBench,    // array of 3 bench Pokémon objects
+        active: sanitizedPlayer.active,   // array of 3 active Pokémon objects
+        bench:  sanitizedPlayer.bench,    // array of 3 bench Pokémon objects
       },
       enemy: {
-        active: enemyActive,
-        bench:  enemyBench,
+        active: sanitizedEnemy.active,
+        bench:  sanitizedEnemy.bench,
       },
       turnLog: [],
       rngCallCount: 0,

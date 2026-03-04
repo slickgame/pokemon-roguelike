@@ -160,10 +160,6 @@ export default function Home() {
     if (!player) return;
     loadActiveRun();
   }, [player?.id]);
-  useEffect(() => {
-    if (!player) return;
-    resumeActiveRun({ base44, navigate }).catch(() => {});
-  }, [player?.id]);
 
   const handleStartRun = async () => {
     if (!player) return;
@@ -192,6 +188,28 @@ export default function Home() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleContinueRun = () => {
+    if (!activeRun) return;
+    resumeActiveRun({ base44, navigate, toast });
+  };
+
+  const handleSurrenderRun = async () => {
+    if (!activeRun?.id) return;
+    setLoading(true);
+    try {
+      await runApi.surrenderRun(activeRun.id, "home_surrender");
+      clearActiveRunId();
+      toast("Run surrendered.", "success");
+      setActiveRun(null);
+      await loadActiveRun();
+    } catch (err) {
+      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
+    } finally {
+      setLoading(false);
+      setShowStartBlockedModal(false);
     }
   };
 
@@ -394,6 +412,7 @@ export default function Home() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </GameButton>
             <p className="text-white/25 text-xs">{runMeta}</p>
+            {activeRun && <p className="text-amber-300/80 text-xs">You already have an active run. Resume or surrender first.</p>}
           </div>
 
           {/* Feature grid */}

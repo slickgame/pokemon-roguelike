@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Swords, Trophy, Home, Menu, X, Users, ChevronRight, Beaker, Play } from "lucide-react";
+import { Swords, Trophy, Home, Menu, X, ChevronRight, Beaker, Play } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { runApi } from "@/components/api/runApi";
 import { resumeActiveRun } from "@/lib/resumeRun";
@@ -10,8 +10,7 @@ import { clearActiveRunId, setActiveRunId } from "@/lib/activeRun";
 const STATIC_LINKS = [
   { label: "Home", page: "Home", icon: Home },
   { label: "Leaderboard", page: "Leaderboard", icon: Trophy },
-  { label: "Carryover Roster", page: "CarryoverRoster", icon: Users },
-  { label: "Seasons", page: "Seasons", icon: Trophy },
+  { label: "Dev", page: "DevPanel", icon: Beaker },
 ];
 
 export default function AppShell({ children, currentPageName }) {
@@ -54,7 +53,6 @@ export default function AppShell({ children, currentPageName }) {
     setHasActiveRun(true);
   };
 
-  const showDev = !!import.meta.env.DEV;
 
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white flex flex-col">
@@ -87,12 +85,7 @@ export default function AppShell({ children, currentPageName }) {
                 Continue Run
               </button>
             )}
-            {showDev && (
-              <Link to={createPageUrl("DevPanel")} className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${currentPageName === "DevPanel" ? "bg-emerald-500/20 text-emerald-300" : "text-white/50 hover:text-emerald-300/70 hover:bg-white/5"}`}>
-                <Beaker className="w-3.5 h-3.5" />
-                Dev
-              </Link>
-            )}
+            
             <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-all">
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -126,12 +119,7 @@ export default function AppShell({ children, currentPageName }) {
                 <ChevronRight className="w-4 h-4 opacity-40" />
               </button>
             )}
-            {showDev && (
-              <Link to={createPageUrl("DevPanel")} onClick={() => setMobileOpen(false)} className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all text-white/60 hover:text-white hover:bg-white/5">
-                <div className="flex items-center gap-3"><Beaker className="w-4 h-4" />Dev Panel</div>
-                <ChevronRight className="w-4 h-4 opacity-40" />
-              </Link>
-            )}
+            
           </nav>
         </div>
       )}

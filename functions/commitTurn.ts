@@ -149,7 +149,7 @@ function chooseSmartTarget(state, attacker, move, originalTargetSide) {
 
 // ── Auto-replace fainted slot from bench ─────────────────────────────────────
 function autoReplace(sideState, activeIdx, label, log) {
-  const benchIdx = sideState.bench.findIndex(p => !p.fainted);
+  const benchIdx = sideState.bench.findIndex(p => p && !p.fainted && (p.currentHp ?? 0) > 0);
   if (benchIdx === -1) return null;
   const incoming = sideState.bench[benchIdx];
   const fainted = sideState.active[activeIdx];
@@ -159,6 +159,22 @@ function autoReplace(sideState, activeIdx, label, log) {
   return incoming;
 }
 
+
+function normalizeTeam(sideState) {
+  if (!sideState?.active || !sideState?.bench) return;
+  for (let i = 0; i < sideState.active.length; i++) {
+    const p = sideState.active[i];
+    if (p && !p.fainted && (p.currentHp ?? 0) > 0) continue;
+    const benchIdx = sideState.bench.findIndex((b) => b && !b.fainted && (b.currentHp ?? 0) > 0);
+    if (benchIdx === -1) {
+      sideState.active[i] = null;
+      continue;
+    }
+    const incoming = sideState.bench[benchIdx];
+    sideState.bench[benchIdx] = sideState.active[i] ?? null;
+    sideState.active[i] = { ...incoming, justSwitchedIn: true };
+  }
+}
 // ── Enemy AI ──────────────────────────────────────────────────────────────────
 function enemyPickMove(poke, playerActive) {
   const targets = playerActive.filter(p => isAlive(p));
@@ -575,6 +591,9 @@ Deno.serve(async (req) => {
     // Track which enemy slots already awarded XP this turn (persisted in state)
     if (!state.xpAwardedEnemyIds) state.xpAwardedEnemyIds = {};
 
+    normalizeTeam(state.player);
+    normalizeTeam(state.enemy);
+
     // Clear justSwitchedIn flags from previous turn
     for (const p of [...state.player.active, ...state.player.bench, ...state.enemy.active, ...state.enemy.bench]) {
       if (p) p.justSwitchedIn = false;
@@ -601,7 +620,7 @@ Deno.serve(async (req) => {
         if (side === "player") {
           const benchIdx = action.cmd.target.slot;
           const bench = state.player.bench[benchIdx];
-          if (bench && !bench.fainted) {
+          if (bench && !bench.fainted && (bench.currentHp ?? 0) > 0) {
             state.player.active[activeIdx] = bench;
             state.player.bench[benchIdx] = poke;
             log.push(`${poke.name} was recalled. Go, ${bench.name}!`);
@@ -609,7 +628,7 @@ Deno.serve(async (req) => {
         } else {
           const benchIdx = action.benchIdx;
           const bench = state.enemy.bench[benchIdx];
-          if (bench && !bench.fainted) {
+          if (bench && !bench.fainted && (bench.currentHp ?? 0) > 0) {
             state.enemy.active[activeIdx] = bench;
             state.enemy.bench[benchIdx] = poke;
             log.push(`Rival recalled ${poke.name} and sent out ${bench.name}!`);

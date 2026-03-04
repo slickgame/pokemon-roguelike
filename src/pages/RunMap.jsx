@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { useRequiredRunId } from "@/hooks/useRequiredRunId";
+import { clearActiveRunId, getActiveRunId, setActiveRunId } from "@/lib/activeRun";
 import { base44 } from "@/api/base44Client";
 import { runApi } from "../components/api/runApi";
 import { generateRouteGraph, serializeGraph, hashGraph } from "../components/engine/routeGen";
@@ -83,6 +83,36 @@ export default function RunMap() {
   const [graph, setGraph] = useState(null);
   const [showBag, setShowBag] = useState(false);
   const [showRelics, setShowRelics] = useState(false);
+  const [noActiveRun, setNoActiveRun] = useState(false);
+
+
+  useEffect(() => {
+    if (runId) {
+      setActiveRunId(runId);
+      return;
+    }
+
+    const cached = getActiveRunId();
+    if (cached) {
+      navigate(createPageUrl(`RunMap?runId=${cached}`));
+      return;
+    }
+
+    runApi.getMyActiveRun()
+      .then((activeRun) => {
+        if (activeRun?.id) {
+          setActiveRunId(activeRun.id);
+          navigate(createPageUrl(`RunMap?runId=${activeRun.id}`));
+          return;
+        }
+        setNoActiveRun(true);
+        setLoading(false);
+      })
+      .catch(() => {
+        setNoActiveRun(true);
+        setLoading(false);
+      });
+  }, [runId]);
 
   // Reload run + actions
   const reload = useCallback(async () => {
@@ -97,7 +127,9 @@ export default function RunMap() {
       setActions(acts);
       return { run: r, actions: acts };
     } catch (e) {
-      handleInvalidRun();
+      clearActiveRunId();
+      toast("Run not found or expired.", "error");
+      navigate(createPageUrl("Home"));
       throw e;
     }
   }, [runId]);
@@ -282,9 +314,19 @@ export default function RunMap() {
     </div>
   );
 
+  if (noActiveRun) return (
+    <div className="max-w-lg mx-auto px-4 py-12 text-center">
+      <GameCard className="space-y-4 py-8">
+        <p className="text-white/60">No active run found.</p>
+        <GameButton variant="primary" size="md" onClick={() => navigate(createPageUrl("Home"))}>Back Home</GameButton>
+      </GameCard>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
+    </div>
+  );
+
   if (!run) return (
     <div className="max-w-lg mx-auto px-4 py-12 text-center">
-      <GameCard><p className="text-red-400">Run not found. Check URL params.</p></GameCard>
+      <GameCard className="space-y-4 py-8"><p className="text-red-400">Run not found or expired.</p><GameButton variant="primary" size="md" onClick={() => navigate(createPageUrl("Home"))}>Back Home</GameButton></GameCard>
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
@@ -308,6 +350,19 @@ export default function RunMap() {
   const money = runProgress?.money ?? 0;
   const inventory = runProgress?.inventory ?? { potion: 0, revive: 0 };
   const partyForBag = (runProgress?.partyState ?? []);
+
+  const handleSurrenderRun = async () => {
+    if (!runId) return;
+    if (!window.confirm("Surrender this run?")) return;
+    try {
+      await runApi.abandonRun(runId, "surrender");
+      clearActiveRunId();
+      toast("Run surrendered.", "success");
+      navigate(createPageUrl("Home"));
+    } catch (e) {
+      toast(e.response?.data?.error || e.message || "Failed to surrender run", "error");
+    }
+  };
 
   const handleBagUse = async (itemId, partyIndex) => {
     const party = runProgress?.partyState ?? [];
@@ -393,7 +448,9 @@ export default function RunMap() {
       {graph && (
         <GameCard className="mb-4">
           <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-2">Route Overview</p>
-          <RouteMapView
+          <div className="mb-3 flex justify-end"><GameButton variant="ghost" size="sm" className="border border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleSurrenderRun}>Surrender</GameButton></div>
+
+      <RouteMapView
             graph={graph}
             currentNodeId={currentNodeId}
             completedNodeIds={completedNodeIds}

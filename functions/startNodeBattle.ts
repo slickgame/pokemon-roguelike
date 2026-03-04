@@ -353,9 +353,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    const sanitizedPlayer = sanitizeActives(playerActive, playerBench);
+    const sanitizedEnemy = sanitizeActives(enemyActive, enemyBench);
+
     const battleState = {
-      player: { active: playerActive, bench: playerBench },
-      enemy:  { active: enemyActive,  bench: enemyBench, trainerName: gymProfile?.trainerName ?? trainerName, trainerType: gymProfile?.trainerType ?? "trainer", trainerId: gymProfile?.trainerId ?? null, aiTier: gymProfile?.aiTier ?? resolvedTier },
+      player: { active: sanitizedPlayer.active, bench: sanitizedPlayer.bench },
+      enemy:  { active: sanitizedEnemy.active,  bench: sanitizedEnemy.bench, trainerName: gymProfile?.trainerName ?? trainerName, trainerType: gymProfile?.trainerType ?? "trainer", trainerId: gymProfile?.trainerId ?? null, aiTier: gymProfile?.aiTier ?? resolvedTier },
       turnLog: [], rngCallCount: 0, winner: null, enemySwitchUsed: false,
       nodeId, routeId: routeId ?? "route1",
     };

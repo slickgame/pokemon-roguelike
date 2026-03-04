@@ -5,7 +5,8 @@ function pendingType(encounter) {
   return encounter?.type ?? encounter?.nodeType ?? null;
 }
 
-export async function resumeActiveRun({ base44, navigate, toast } = {}) {
+export async function resumeActiveRun(args) {
+  const { base44, navigate, toast } = args ?? {};
   try {
     const res = await base44.functions.invoke("getMyActiveRun", {});
     const run = res.data?.run ?? null;
