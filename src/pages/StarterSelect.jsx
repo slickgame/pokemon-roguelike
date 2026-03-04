@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { runApi } from "../components/api/runApi";
 import { loadDbBundle } from "../components/db/dbLoader";
 import { generatePool, buildEligibleSpecies, getStarterConfig } from "../components/engine/starterGen";
@@ -17,8 +17,7 @@ const STEP_LABELS = ["A", "B", "C"];
 export default function StarterSelect() {
   const navigate = useNavigate();
   const { toasts, toast, dismiss } = useToast();
-  const urlParams = new URLSearchParams(window.location.search);
-  const runId = urlParams.get("runId");
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "StarterSelect", toast });
 
   const [run, setRun] = useState(null);
   const [loadingRun, setLoadingRun] = useState(true);
@@ -40,7 +39,7 @@ export default function StarterSelect() {
     if (!runId) { setLoadError("No runId in URL."); setLoadingRun(false); return; }
     runApi.getRun(runId)
       .then(r => setRun(r))
-      .catch(e => setLoadError(e.message))
+      .catch(e => { setLoadError(e.message); handleInvalidRun(); })
       .finally(() => setLoadingRun(false));
   }, [runId]);
 

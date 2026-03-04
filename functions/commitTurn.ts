@@ -331,13 +331,6 @@ function calcXpYield(enemyLevel, enemySpeciesId, isTrainerOwned = true) {
   return Math.max(1, Math.floor(Math.floor((a * b * enemyLevel) / 7) * XP_MULT_3V3));
 }
 
-function computeStatValue(statName, base, level, iv, ev, nature) {
-  const evContrib = Math.floor((ev ?? 0) / 4);
-  const inner = Math.floor((2 * base + (iv ?? 0) + evContrib) * level / 100);
-  if (statName === "hp") return inner + level + 10;
-  return Math.floor((inner + 5) * 1); // neutral nature MVP
-}
-
 function recomputeStats(poke) {
   return computeAllStats(poke);
 }
@@ -812,7 +805,7 @@ Deno.serve(async (req) => {
     state.pendingLearnPrompts = pendingLearnPrompts;
 
     const newStatus = winner ? "finished" : "active";
-    const updatePayload = { state, turnNumber, status: newStatus };
+    const updatePayload: Record<string, unknown> = { state, turnNumber, status: newStatus };
     if (winner) updatePayload.endedAt = new Date().toISOString();
 
     // ── Extract partyState for persistence (now includes exp/level) ───────────
@@ -820,10 +813,16 @@ Deno.serve(async (req) => {
 
     // ── Persist battle + run (inventory + partyState) ─────────────────────────
     const existingProgress = run.results?.progress ?? {};
+    const pendingEncounter = existingProgress.pendingEncounter ?? null;
     const updatedProgress = {
       ...existingProgress,
       inventory: { ...(existingProgress.inventory ?? {}), ...inventory },
+      money: existingProgress.money ?? 0,
       partyState,
+      // Keep encounter pending during battle; resolution happens in resolveNode/resolveEncounterFromBattle.
+      pendingEncounter: winner
+        ? pendingEncounter
+        : (pendingEncounter ? { ...pendingEncounter, status: "pending" } : pendingEncounter),
     };
 
     await Promise.all([
