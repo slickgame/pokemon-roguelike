@@ -195,7 +195,33 @@ function initPartyState(pickedIds, benchSpecies, seed) {
 
 const TIER_LEVEL        = { weak: 5, avg: 6, skilled: 7, boss: 9 };
 const TIER_ACTIVE_COUNT = { weak: 1, avg: 2, skilled: 3, boss: 3 };
-const TIER_TRAINER_NAME = { weak: "Youngster", avg: "Camper", skilled: "Ace Trainer", boss: "Gym Leader Brock" };
+const TIER_TRAINER_NAME = { weak: "Youngster", avg: "Camper", skilled: "Ace Trainer", boss: "Gym Leader" };
+
+
+const GYM_LEADERS = {
+  gym1: {
+    trainerType: "gym",
+    trainerId: "gym1",
+    trainerName: "Leader Brock",
+    aiTier: "boss",
+    roster: [
+      { speciesId: 7, level: 9, moves: ["tackle", "tail_whip", "water_gun"] },
+      { speciesId: 1, level: 9, moves: ["tackle", "growl", "vine_whip"] },
+      { speciesId: 4, level: 9, moves: ["scratch", "growl", "ember"] },
+    ],
+  },
+  gym2: {
+    trainerType: "gym",
+    trainerId: "gym2",
+    trainerName: "Leader Misty",
+    aiTier: "boss",
+    roster: [
+      { speciesId: 7, level: 10, moves: ["tackle", "tail_whip", "water_gun"] },
+      { speciesId: 25, level: 10, moves: ["thunder_shock", "growl", "quick_attack"] },
+      { speciesId: 1, level: 10, moves: ["tackle", "growl", "vine_whip"] },
+    ],
+  },
+};
 
 Deno.serve(async (req) => {
   try {
@@ -203,7 +229,7 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { runId, nodeId, nodeType, tier, routeId } = await req.json();
+    const { runId, nodeId, nodeType, tier, routeId, pendingEncounter } = await req.json();
     if (!runId || !nodeId) return Response.json({ error: "runId and nodeId required" }, { status: 400 });
 
     const runs = await base44.entities.Run.filter({ id: runId });
@@ -233,6 +259,21 @@ Deno.serve(async (req) => {
     const activeCount = TIER_ACTIVE_COUNT[resolvedTier] ?? 1;
     const benchCount = Math.min(activeCount, 2);
     const trainerName = TIER_TRAINER_NAME[resolvedTier] ?? "Trainer";
+    const routeIndex = Number((run.results?.progress?.routeIndex ?? 1));
+    const defaultGymId = routeIndex >= 2 ? "gym2" : "gym1";
+    const gymProfile = isGym
+      ? (pendingEncounter?.trainerType === "gym" && pendingEncounter?.trainerId
+        ? {
+            trainerType: "gym",
+            trainerId: pendingEncounter.trainerId,
+            trainerName: pendingEncounter.trainerName ?? GYM_LEADERS[pendingEncounter.trainerId]?.trainerName ?? "Gym Leader",
+            aiTier: pendingEncounter.aiTier ?? "boss",
+            roster: Array.isArray(pendingEncounter.roster) && pendingEncounter.roster.length > 0
+              ? pendingEncounter.roster
+              : (GYM_LEADERS[pendingEncounter.trainerId]?.roster ?? GYM_LEADERS[defaultGymId].roster),
+          }
+        : GYM_LEADERS[defaultGymId])
+      : null;
 
     // ── Player team: hydrate from partyState or init fresh ──────────────────
     const existingProgress = run.results?.progress ?? {};
@@ -279,24 +320,45 @@ Deno.serve(async (req) => {
     // ── Enemy team ───────────────────────────────────────────────────────────
     const enemySeed = `${run.seed}:${routeId ?? "route1"}:${nodeId}:enemy`;
     const enemyRng  = makeRng(enemySeed);
-    const enemyPool = deterministicShuffle(
-      allowedSpecies.filter(s => !pickedIds.includes(s.id)),
-      enemyRng
-    );
-    const fullPool = enemyPool.length >= activeCount + benchCount
-      ? enemyPool
-      : deterministicShuffle([...allowedSpecies], makeRng(`${enemySeed}:fallback`));
 
-    const enemyActive = fullPool.slice(0, activeCount).map((sp, i) =>
-      buildFreshPokemon(sp, level, `${enemySeed}:active:${i}:${sp.id}`)
-    );
-    const enemyBench = fullPool.slice(activeCount, activeCount + benchCount).map((sp, i) =>
-      buildFreshPokemon(sp, level, `${enemySeed}:bench:${i}:${sp.id}`)
-    );
+    let enemyActive;
+    let enemyBench;
+    if (gymProfile) {
+      const roster = gymProfile.roster.slice(0, 3);
+      enemyActive = roster.map((slot, i) => {
+        const sp = getSpeciesById(Number(slot.speciesId));
+        if (!sp) return null;
+        const poke = buildFreshPokemon(sp, slot.level ?? level, `${enemySeed}:gym:${i}:${sp.id}`);
+        const forcedMoves = (slot.moves ?? []).map(id => getMoveById(id)).filter(Boolean).slice(0, 4);
+        if (forcedMoves.length > 0) {
+          poke.moves = forcedMoves.map(m => ({ ...m, currentPp: m.pp }));
+        }
+        return poke;
+      }).filter(Boolean);
+      enemyBench = [];
+    } else {
+      const enemyPool = deterministicShuffle(
+        allowedSpecies.filter(s => !pickedIds.includes(s.id)),
+        enemyRng
+      );
+      const fullPool = enemyPool.length >= activeCount + benchCount
+        ? enemyPool
+        : deterministicShuffle([...allowedSpecies], makeRng(`${enemySeed}:fallback`));
+
+      enemyActive = fullPool.slice(0, activeCount).map((sp, i) =>
+        buildFreshPokemon(sp, level, `${enemySeed}:active:${i}:${sp.id}`)
+      );
+      enemyBench = fullPool.slice(activeCount, activeCount + benchCount).map((sp, i) =>
+        buildFreshPokemon(sp, level, `${enemySeed}:bench:${i}:${sp.id}`)
+      );
+    }
+
+    const sanitizedPlayer = sanitizeActives(playerActive, playerBench);
+    const sanitizedEnemy = sanitizeActives(enemyActive, enemyBench);
 
     const battleState = {
-      player: { active: playerActive, bench: playerBench },
-      enemy:  { active: enemyActive,  bench: enemyBench, trainerName },
+      player: { active: sanitizedPlayer.active, bench: sanitizedPlayer.bench },
+      enemy:  { active: sanitizedEnemy.active,  bench: sanitizedEnemy.bench, trainerName: gymProfile?.trainerName ?? trainerName, trainerType: gymProfile?.trainerType ?? "trainer", trainerId: gymProfile?.trainerId ?? null, aiTier: gymProfile?.aiTier ?? resolvedTier },
       turnLog: [], rngCallCount: 0, winner: null, enemySwitchUsed: false,
       nodeId, routeId: routeId ?? "route1",
     };
@@ -306,36 +368,51 @@ Deno.serve(async (req) => {
       state: battleState, startedAt: new Date().toISOString(),
     });
 
-    // Persist partyState: either the freshly-initialized one, or the
-    // re-ordered one (active slots swapped due to sanitization).
-    if (newPartyState || (existingPartyState && existingPartyState.length >= 3)) {
-      // Rebuild partyState snapshots from the (possibly sanitized) hydrated mons
-      // so that activeIdxs order is reflected in the stored array (indices 0-2 = active)
-      const allHydratedForPersist = [...playerActive, ...playerBench].filter(Boolean);
-      const updatedPartyState = newPartyState ?? allHydratedForPersist.map(poke => ({
-        speciesId: poke.speciesId,
-        name: poke.name,
-        level: poke.level ?? 5,
-        exp: poke.exp ?? 0,
-        currentHP: poke.currentHp ?? 0,
-        maxHP: poke.maxHp ?? 1,
-        fainted: poke.fainted ?? false,
-        status: poke.status ?? null,
-        moves: (poke.moves ?? []).map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
-      }));
+    let canonicalPending = {
+      nodeId,
+      nodeType: nodeType ?? "trainer",
+      tier: resolvedTier,
+      battleId: battle.id,
+      routeId: routeId ?? "route1",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      ...(gymProfile ? {
+        trainerType: gymProfile.trainerType,
+        trainerId: gymProfile.trainerId,
+        trainerName: gymProfile.trainerName,
+        roster: gymProfile.roster,
+        aiTier: gymProfile.aiTier,
+      } : {}),
+    };
 
-      await base44.asServiceRole.entities.Run.update(runId, {
-        results: {
-          ...(run.results ?? {}),
-          progress: {
-            ...existingProgress,
-            partyState: updatedPartyState,
-            money: existingProgress.money ?? 0,
-            inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
-          },
+    // Persist partyState + pending encounter for this node.
+    const allHydratedForPersist = [...playerActive, ...playerBench].filter(Boolean);
+    const updatedPartyState = newPartyState ?? (allHydratedForPersist.length > 0
+      ? allHydratedForPersist.map(poke => ({
+          speciesId: poke.speciesId,
+          name: poke.name,
+          level: poke.level ?? 5,
+          exp: poke.exp ?? 0,
+          currentHP: poke.currentHp ?? 0,
+          maxHP: poke.maxHp ?? 1,
+          fainted: poke.fainted ?? false,
+          status: poke.status ?? null,
+          moves: (poke.moves ?? []).map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
+        }))
+      : (existingProgress.partyState ?? []));
+
+    await base44.asServiceRole.entities.Run.update(runId, {
+      results: {
+        ...(run.results ?? {}),
+        progress: {
+          ...existingProgress,
+          partyState: updatedPartyState,
+          money: existingProgress.money ?? 0,
+          inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
+          pendingEncounter: canonicalPending,
         },
-      });
-    }
+      },
+    });
 
     // Log node_enter action
     const currentRun = (await base44.asServiceRole.entities.Run.filter({ id: runId }))[0];
@@ -349,7 +426,7 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: nextIdx }),
     ]);
 
-    return Response.json({ battleId: battle.id, state: battleState });
+    return Response.json({ battleId: battle.id, state: battleState, pendingEncounter: canonicalPending, gymProfile });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }

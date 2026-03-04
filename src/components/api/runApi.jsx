@@ -4,6 +4,12 @@ export const runApi = {
   startRun: (isRanked = false, modifierIds = []) =>
     base44.functions.invoke("startRun", { isRanked, modifierIds }).then(r => r.data),
 
+  getMyActiveRun: () =>
+    base44.functions.invoke("getMyActiveRun", {}).then(r => r.data.run ?? null),
+
+  surrenderRun: (runId, reason = "user_surrender") =>
+    base44.functions.invoke("surrenderRun", { runId, reason }).then(r => r.data),
+
   appendAction: (runId, actionType, payload = {}) =>
     base44.functions.invoke("appendRunAction", { runId, actionType, payload }).then(r => r.data),
 
