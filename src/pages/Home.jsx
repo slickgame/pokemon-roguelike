@@ -188,6 +188,7 @@ export default function Home() {
       }
     } finally {
       setLoading(false);
+      setShowStartBlockedModal(false);
     }
   };
 
