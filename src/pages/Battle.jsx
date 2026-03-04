@@ -35,6 +35,7 @@ export default function Battle() {
   const [run, setRun] = useState(null);
   const [learnQueue, setLearnQueue] = useState([]); // queued learn prompts
   const [restoredDraftNotice, setRestoredDraftNotice] = useState(false);
+  const [lastCommitError, setLastCommitError] = useState(null);
 
   const draftKey = runId && battleId ? `battleDraft:${runId}:${battleId}` : null;
 
@@ -128,8 +129,31 @@ export default function Battle() {
   }, [commands, draftKey, winner]);
 
   const handleCommit = async () => {
-    const cmds = Object.values(commands);
-    if (cmds.length === 0) return;
+    setLastCommitError(null);
+    if (committing) {
+      setLastCommitError("Already committing…");
+      return;
+    }
+    if (winner) {
+      setLastCommitError("Battle already ended.");
+      return;
+    }
+    if (pendingReplacement) {
+      setLastCommitError("Choose a replacement first.");
+      return;
+    }
+    if (learnQueue.length > 0) {
+      setLastCommitError("Resolve the move learning prompt first.");
+      return;
+    }
+
+    const cmds = Object.values(commands ?? {}).filter(Boolean);
+    if (cmds.length === 0) {
+      setLastCommitError("No actions selected. Choose moves/switch/items first.");
+      toast("No actions selected.", "error");
+      return;
+    }
+
     setCommitting(true);
     try {
       const res = await invokeWithRetry(base44, "commitTurn", {
@@ -171,7 +195,10 @@ export default function Battle() {
         }
       }
     } catch (e) {
-      toast(e.response?.data?.error || e.message || "Failed to commit turn", "error");
+      const msg = e?.response?.data?.error || e?.message || "Failed to commit turn";
+      setLastCommitError(msg);
+      toast(msg, "error");
+      console.error("commitTurn failed:", e);
     } finally {
       setCommitting(false);
     }
@@ -208,6 +235,13 @@ export default function Battle() {
   const enemyActive  = state.enemy.active  ?? [];
   const enemyBench   = state.enemy.bench   ?? [];
   const pendingReplacement = state.pendingReplacement ?? null;
+  const commitDisabledReason = pendingReplacement
+    ? "Replacement required"
+    : learnQueue.length > 0
+      ? "Move learn prompt pending"
+      : committing
+        ? "Submitting turn…"
+        : null;
 
   const handleChooseReplacement = async (benchIndex) => {
     setChoosing(true);
@@ -369,6 +403,12 @@ export default function Battle() {
               <Swords className="w-4 h-4" />
               Commit Turn
             </GameButton>
+            {commitDisabledReason && (
+              <p className="text-xs text-amber-300/80 mt-2">{commitDisabledReason}</p>
+            )}
+            {lastCommitError && (
+              <p className="text-xs text-red-400/80 mt-2">{lastCommitError}</p>
+            )}
           </GameCard>
         )}
 
