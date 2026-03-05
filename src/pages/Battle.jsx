@@ -130,6 +130,8 @@ export default function Battle() {
     } catch (_) {}
   }, [commandsBySlot, draftKey, winner]);
 
+  const pendingReplacement = state?.pendingReplacement ?? null;
+
   const handleCommit = async () => {
     setLastCommitError(null);
     if (committing) {
@@ -163,7 +165,7 @@ export default function Battle() {
     setCommitting(true);
     try {
       const res = await invokeWithRetry(base44, "commitTurn", {
-        runId, battleId, commands: cmds, playerCommands: cmds,
+        runId, battleId, playerCommands: cmds,
       });
       const data = res.data;
       if (draftKey) localStorage.removeItem(draftKey);
@@ -239,7 +241,6 @@ export default function Battle() {
   const playerBench  = state.player.bench  ?? [];
   const enemyActive  = state.enemy.active  ?? [];
   const enemyBench   = state.enemy.bench   ?? [];
-  const pendingReplacement = state.pendingReplacement ?? null;
   const commitDisabledReason = pendingReplacement
     ? "Replacement required"
     : learnQueue.length > 0
