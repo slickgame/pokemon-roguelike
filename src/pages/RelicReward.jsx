@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
+import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import { RELIC_REGISTRY } from "../components/engine/relicsData";
@@ -25,7 +27,8 @@ const TAG_ICONS = {
 export default function RelicReward() {
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);
-  const runId  = params.get("runId");
+  const { toasts, toast, dismiss } = useToast();
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "RelicReward", toast });
   const nodeId = params.get("nodeId");
   const source = params.get("source") ?? "gym";
 
@@ -43,7 +46,7 @@ export default function RelicReward() {
         setChoices(data.choices ?? []);
         setReason(data.reason ?? null);
       })
-      .finally(() => setLoading(false));
+      .catch(() => handleInvalidRun()).finally(() => setLoading(false));
   }, [runId]);
 
   const handleTake = async () => {
@@ -143,6 +146,7 @@ export default function RelicReward() {
           Skip (take nothing)
         </button>
       </div>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }

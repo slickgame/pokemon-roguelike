@@ -22,7 +22,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const progress = run.results?.progress ?? {};
+    const rawProgress = run.results?.progress ?? {};
+    const progress = {
+      ...rawProgress,
+      pendingReward: rawProgress.pendingReward ?? null,
+      pendingRouteAdvance: rawProgress.pendingRouteAdvance ?? null,
+    };
+
     const relics = [...(progress.relics ?? [])];
     const hasMastery = relics.some(r => r.id === "relic_of_mastery");
     const cap = hasMastery ? 9 : 8;
@@ -42,7 +48,14 @@ Deno.serve(async (req) => {
     };
     relics.push(newRelic);
 
-    const updatedProgress = { ...progress, relics };
+    const updatedProgress = {
+      ...progress,
+      relics,
+      pendingReward: null,
+      // Intentionally keep pendingRouteAdvance for NodeComplete -> Continue pipeline.
+      routeAdvanceReady: progress.pendingRouteAdvance ? true : (progress.routeAdvanceReady ?? false),
+    };
+
     const nextIdx = (run.nextActionIdx ?? 0) + 1;
 
     await Promise.all([
@@ -50,13 +63,15 @@ Deno.serve(async (req) => {
         results: { ...(run.results ?? {}), progress: updatedProgress },
       }),
       base44.entities.RunAction.create({
-        runId, idx: nextIdx, actionType: 'relic_taken',
+        runId,
+        idx: nextIdx,
+        actionType: 'relic_taken',
         payload: { relicId, source: source ?? "unknown", nodeId: nodeId ?? null },
       }),
       base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: nextIdx }),
     ]);
 
-    return Response.json({ ok: true, relic: newRelic, totalRelics: relics.length });
+    return Response.json({ ok: true, relic: newRelic, totalRelics: relics.length, nextScreen: 'node_complete' });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }

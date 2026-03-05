@@ -24,7 +24,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return Response.json({ run });
+
+    const rawProgress = run.results?.progress ?? {};
+    const normalizedProgress = {
+      ...rawProgress,
+      pendingReward: rawProgress.pendingReward ?? null,
+      pendingRouteAdvance: rawProgress.pendingRouteAdvance ?? null,
+    };
+    const normalizedRun = {
+      ...run,
+      results: {
+        ...(run.results ?? {}),
+        progress: normalizedProgress,
+      },
+    };
+
+    return Response.json({ run: normalizedRun });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

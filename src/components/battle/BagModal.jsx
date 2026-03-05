@@ -91,7 +91,7 @@ export default function BagModal({ inventory, party, onUse, onClose, context = "
           <>
             <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-2">Choose Target</p>
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {party.map((rawPoke, i) => {
+              {party.filter(Boolean).map((rawPoke, i) => {
                 const poke = normalize(rawPoke);
                 const eligible = canTarget(selectedItem, poke);
                 const hpPct = poke.maxHp > 0 ? poke.currentHp / poke.maxHp : 0;
