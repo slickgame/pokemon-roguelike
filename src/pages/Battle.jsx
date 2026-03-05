@@ -28,13 +28,12 @@ export default function Battle() {
   const [winner, setWinner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [committing, setCommitting] = useState(false);
-  const [commands, setCommands] = useState({});
+  const [commandsBySlot, setCommandsBySlot] = useState({});
   const [showDebug, setShowDebug] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const [showBag, setShowBag] = useState(false);
   const [run, setRun] = useState(null);
   const [learnQueue, setLearnQueue] = useState([]); // queued learn prompts
-  const [restoredDraftNotice, setRestoredDraftNotice] = useState(false);
   const [lastCommitError, setLastCommitError] = useState(null);
 
   const draftKey = runId && battleId ? `battleDraft:${runId}:${battleId}` : null;
@@ -95,8 +94,7 @@ export default function Battle() {
         try {
           const draft = JSON.parse(draftRaw);
           if (draft && typeof draft === "object") {
-            setCommands(draft);
-            setRestoredDraftNotice(true);
+            setCommandsBySlot(draft);
             return;
           }
         } catch (_) {
@@ -117,16 +115,20 @@ export default function Battle() {
         target: { side: "enemy", slot: aliveEnemyTargets[0]?.i ?? 0 },
       };
     }
-    setCommands(defaults);
+    setCommandsBySlot(defaults);
   }, [turnNumber, !!state, draftKey]);
 
+  const setCommand = (slotIdx, commandObj) => {
+    setLastCommitError(null);
+    setCommandsBySlot(prev => ({ ...prev, [slotIdx]: commandObj }));
+  };
 
   useEffect(() => {
     if (!draftKey || winner) return;
     try {
-      localStorage.setItem(draftKey, JSON.stringify(commands ?? {}));
+      localStorage.setItem(draftKey, JSON.stringify(commandsBySlot ?? {}));
     } catch (_) {}
-  }, [commands, draftKey, winner]);
+  }, [commandsBySlot, draftKey, winner]);
 
   const handleCommit = async () => {
     setLastCommitError(null);
@@ -147,7 +149,11 @@ export default function Battle() {
       return;
     }
 
-    const cmds = Object.values(commands ?? {}).filter(Boolean);
+    const cmds = [];
+    for (let slot = 0; slot <= 2; slot++) {
+      const cmd = commandsBySlot?.[slot];
+      if (cmd) cmds.push(cmd);
+    }
     if (cmds.length === 0) {
       setLastCommitError("No actions selected. Choose moves/switch/items first.");
       toast("No actions selected.", "error");
@@ -157,11 +163,10 @@ export default function Battle() {
     setCommitting(true);
     try {
       const res = await invokeWithRetry(base44, "commitTurn", {
-        runId, battleId, playerCommands: cmds,
+        runId, battleId, commands: cmds, playerCommands: cmds,
       });
       const data = res.data;
       if (draftKey) localStorage.removeItem(draftKey);
-      setRestoredDraftNotice(false);
       setState(data.state);
       setTurnNumber(data.turnNumber);
       const newWinner = data.winner ?? null;
@@ -251,7 +256,6 @@ export default function Battle() {
       });
       const data = res.data;
       if (draftKey) localStorage.removeItem(draftKey);
-      setRestoredDraftNotice(false);
       setState(data.state);
       setTurnNumber(data.turnNumber ?? turnNumber);
     } catch (e) {
@@ -387,8 +391,8 @@ export default function Battle() {
             <CommandBuilder
               playerActive={playerActive}
               playerBench={playerBench}
-              commands={commands}
-              onChange={(slot, cmd) => { setRestoredDraftNotice(false); setCommands(prev => ({ ...prev, [slot]: cmd })); }}
+              commands={commandsBySlot}
+              onChange={setCommand}
               enemyActive={enemyActive}
               inventory={inventory}
             />
