@@ -6,6 +6,19 @@ const VALID_RELIC_IDS = new Set([
   "focus_charm","surge_battery","bargain_seal","relic_of_mastery",
 ]);
 
+function postGymHealParty(partyState) {
+  if (!Array.isArray(partyState)) return partyState;
+  return partyState.map((p) => {
+    if (!p) return p;
+    const healedHp = Math.min(p.maxHP ?? p.currentHP ?? 0, (p.currentHP ?? 0) + Math.ceil((p.maxHP ?? 0) * 0.5));
+    return {
+      ...p,
+      currentHP: healedHp,
+      fainted: healedHp <= 0 ? !!p.fainted : false,
+    };
+  });
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
