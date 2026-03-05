@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
 import { runApi } from "../components/api/runApi";
 import GameCard from "../components/ui/GameCard";
@@ -18,8 +19,7 @@ function msToTime(ms) {
 export default function Results() {
   const navigate = useNavigate();
   const { toasts, toast, dismiss } = useToast();
-  const params = new URLSearchParams(window.location.search);
-  const runId = params.get("runId");
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "Results", toast });
 
   const [run, setRun] = useState(null);
   const [player, setPlayer] = useState(null);
@@ -29,20 +29,31 @@ export default function Results() {
 
   const load = useCallback(async () => {
     if (!runId) { setLoading(false); return; }
-    const [r, me] = await Promise.all([
-      runApi.getRun(runId),
-      base44.auth.me().catch(() => null),
-    ]);
-    setRun(r);
-    if (me?.id) {
-      const players = await base44.entities.Player.filter({ id: me.id }).catch(() => []);
-      setPlayer(players[0] ?? null);
+    try {
+      const [r, me] = await Promise.all([
+        runApi.getRun(runId),
+        base44.auth.me().catch(() => null),
+      ]);
+      setRun(r);
+      if (me?.id) {
+        const players = await base44.entities.Player.filter({ id: me.id }).catch(() => []);
+        setPlayer(players[0] ?? null);
+      }
+    } catch (e) {
+      handleInvalidRun();
+      throw e;
     }
   }, [runId]);
 
   useEffect(() => {
     load().catch(e => toast(e.message, "error")).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!loading && run && run.status !== "finished") {
+      navigate(createPageUrl(`RunMap?runId=${runId}`));
+    }
+  }, [loading, run?.status, runId]);
 
   const summary = run?.results?.resultsSummary ?? null;
   const isRanked = run?.isRanked ?? false;

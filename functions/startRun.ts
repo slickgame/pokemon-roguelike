@@ -8,6 +8,17 @@ const MANIFEST = {
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
+
+async function getNewestActiveRun(base44, playerId) {
+  const runs = await base44.entities.Run.filter({ playerId, status: "active" });
+  if (!runs?.length) return null;
+  return [...runs].sort((a, b) => {
+    const at = new Date(a.startedAt ?? a.created_date ?? 0).getTime();
+    const bt = new Date(b.startedAt ?? b.created_date ?? 0).getTime();
+    return bt - at;
+  })[0];
+}
+
 function generateSeed() {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
@@ -24,6 +35,11 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { isRanked = false, modifierIds = [] } = body;
+
+    const existingActiveRun = await getNewestActiveRun(base44, user.id);
+    if (existingActiveRun) {
+      return Response.json({ error: "ACTIVE_RUN_EXISTS", runId: existingActiveRun.id }, { status: 409 });
+    }
 
     const seed = generateSeed();
     const modifiers = modifierIds.reduce((acc, id) => ({ ...acc, [id]: true }), {});
