@@ -95,7 +95,7 @@ export default function Battle() {
       if (draftRaw) {
         try {
           const draft = JSON.parse(draftRaw);
-          if (draft && typeof draft === "object") {
+          if (draft && typeof draft === "object" && Object.keys(draft).length > 0) {
             setCommandsBySlot(draft);
             setRestoredDraftNotice(true);
             return;
@@ -135,6 +135,18 @@ export default function Battle() {
 
   const pendingReplacement = state?.pendingReplacement ?? null;
 
+  const buildDefaultCommandForSlot = (battleState, slot) => {
+    const actor = battleState?.player?.active?.[slot];
+    if (!actor || actor.fainted) return null;
+    const firstAliveEnemySlot = (battleState?.enemy?.active ?? []).findIndex((p) => p && !p.fainted);
+    return {
+      actorSlot: slot,
+      type: "move",
+      moveId: actor.moves?.[0]?.id,
+      target: { side: "enemy", slot: firstAliveEnemySlot >= 0 ? firstAliveEnemySlot : 0 },
+    };
+  };
+
   const handleCommit = async () => {
     setLastCommitError(null);
     setRestoredDraftNotice(false);
@@ -156,8 +168,11 @@ export default function Battle() {
     }
 
     const cmds = [];
-    for (let slot = 0; slot <= 2; slot++) {
-      const cmd = commandsBySlot?.[slot];
+    const activeSlots = state?.player?.active ?? [];
+    for (let slot = 0; slot < activeSlots.length; slot++) {
+      const actor = activeSlots[slot];
+      if (!actor || actor.fainted) continue;
+      const cmd = commandsBySlot?.[slot] ?? buildDefaultCommandForSlot(state, slot);
       if (cmd) cmds.push(cmd);
     }
     if (cmds.length === 0) {
