@@ -344,7 +344,7 @@ export default function Home() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium mb-4">
               <Zap className="w-3 h-3" />
-              v0.0.1 · M4 Modifiers
+              v0.0.1 · M13.5 Modifiers
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2">
               Poké<span className="text-violet-400">Rogue</span>
