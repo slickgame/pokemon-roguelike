@@ -35,6 +35,7 @@ export default function Battle() {
   const [run, setRun] = useState(null);
   const [learnQueue, setLearnQueue] = useState([]); // queued learn prompts
   const [lastCommitError, setLastCommitError] = useState(null);
+  const [restoredDraftNotice, setRestoredDraftNotice] = useState(false);
 
   const draftKey = runId && battleId ? `battleDraft:${runId}:${battleId}` : null;
 
@@ -88,6 +89,7 @@ export default function Battle() {
   useEffect(() => {
     if (!state) return;
 
+    setRestoredDraftNotice(false);
     if (draftKey) {
       const draftRaw = localStorage.getItem(draftKey);
       if (draftRaw) {
@@ -95,6 +97,7 @@ export default function Battle() {
           const draft = JSON.parse(draftRaw);
           if (draft && typeof draft === "object") {
             setCommandsBySlot(draft);
+            setRestoredDraftNotice(true);
             return;
           }
         } catch (_) {
@@ -134,6 +137,7 @@ export default function Battle() {
 
   const handleCommit = async () => {
     setLastCommitError(null);
+    setRestoredDraftNotice(false);
     if (committing) {
       setLastCommitError("Already committing…");
       return;
