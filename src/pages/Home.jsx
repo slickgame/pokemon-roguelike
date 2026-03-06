@@ -258,6 +258,28 @@ export default function Home() {
     }
   };
 
+  const handleContinueHomeActiveRun = () => {
+    if (!activeRun) return;
+    resumeActiveRun({ base44, navigate, toast });
+  };
+
+  const handleSurrenderHomeActiveRun = async () => {
+    if (!activeRun?.id) return;
+    setLoading(true);
+    try {
+      await runApi.surrenderRun(activeRun.id, "home_surrender");
+      clearActiveRunId();
+      toast("Run surrendered.", "success");
+      setActiveRun(null);
+      await loadActiveRun();
+    } catch (err) {
+      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
+    } finally {
+      setLoading(false);
+      setShowStartBlockedModal(false);
+    }
+  };
+
   const handleLogin = () => {
     base44.auth.redirectToLogin(window.location.href);
   };
@@ -396,7 +418,7 @@ export default function Home() {
                     size="md"
                     variant="primary"
                     className="w-full"
-                    onClick={handleContinueActiveRun}
+                    onClick={handleContinueHomeActiveRun}
                   >
                     <Play className="w-4 h-4" />
                     Continue Run
@@ -405,7 +427,7 @@ export default function Home() {
                     size="md"
                     variant="ghost"
                     className="w-full border border-red-500/30 text-red-300 hover:bg-red-500/10"
-                    onClick={handleSurrenderActiveRun}
+                    onClick={handleSurrenderHomeActiveRun}
                   >
                     <Flag className="w-4 h-4" />
                     Surrender Run
@@ -544,8 +566,8 @@ export default function Home() {
             <p className="text-sm text-white/60">Continue your run or surrender it before starting a new one.</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <GameButton variant="secondary" size="md" onClick={() => setShowStartBlockedModal(false)} className="sm:col-span-1">Close</GameButton>
-              <GameButton variant="primary" size="md" onClick={() => { setShowStartBlockedModal(false); handleContinueActiveRun(); }} className="sm:col-span-1">Continue</GameButton>
-              <GameButton variant="ghost" size="md" className="sm:col-span-1 border border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleSurrenderActiveRun}>Surrender</GameButton>
+              <GameButton variant="primary" size="md" onClick={() => { setShowStartBlockedModal(false); handleContinueHomeActiveRun(); }} className="sm:col-span-1">Continue</GameButton>
+              <GameButton variant="ghost" size="md" className="sm:col-span-1 border border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleSurrenderHomeActiveRun}>Surrender</GameButton>
             </div>
           </div>
         </div>
