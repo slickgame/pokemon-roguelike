@@ -188,6 +188,73 @@ export default function Home() {
       }
     } finally {
       setLoading(false);
+      setShowStartBlockedModal(false);
+    }
+  };
+
+  const handleContinueActiveRun = () => {
+    if (!activeRun) return;
+    resumeActiveRun({ base44, navigate, toast });
+  };
+
+  const handleSurrenderActiveRun = async () => {
+    if (!activeRun?.id) return;
+    setLoading(true);
+    try {
+      await runApi.surrenderRun(activeRun.id, "home_surrender");
+      clearActiveRunId();
+      toast("Run surrendered.", "success");
+      setActiveRun(null);
+      await loadActiveRun();
+    } catch (err) {
+      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
+    } finally {
+      setLoading(false);
+      setShowStartBlockedModal(false);
+    }
+  };
+
+  const handleContinueActiveRun = () => {
+    if (!activeRun) return;
+    resumeActiveRun({ base44, navigate, toast });
+  };
+
+  const handleSurrenderActiveRun = async () => {
+    if (!activeRun?.id) return;
+    setLoading(true);
+    try {
+      await runApi.surrenderRun(activeRun.id, "home_surrender");
+      clearActiveRunId();
+      toast("Run surrendered.", "success");
+      setActiveRun(null);
+      await loadActiveRun();
+    } catch (err) {
+      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
+    } finally {
+      setLoading(false);
+      setShowStartBlockedModal(false);
+    }
+  };
+
+  const handleContinueActiveRun = () => {
+    if (!activeRun) return;
+    resumeActiveRun({ base44, navigate, toast });
+  };
+
+  const handleSurrenderActiveRun = async () => {
+    if (!activeRun?.id) return;
+    setLoading(true);
+    try {
+      await runApi.surrenderRun(activeRun.id, "home_surrender");
+      clearActiveRunId();
+      toast("Run surrendered.", "success");
+      setActiveRun(null);
+      await loadActiveRun();
+    } catch (err) {
+      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
+    } finally {
+      setLoading(false);
+      setShowStartBlockedModal(false);
     }
   };
 

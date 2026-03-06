@@ -318,6 +318,12 @@ export default function Battle() {
         </div>
       </div>
 
+      {restoredDraftNotice && !winner && (
+        <div className="mb-3 px-3 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-xs">
+          Restored your planned actions.
+        </div>
+      )}
+
       {/* Debug panel */}
       {showDebug && (
         <GameCard className="mb-4 font-mono text-xs text-white/50 space-y-1">

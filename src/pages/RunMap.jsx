@@ -74,8 +74,7 @@ function computeAvailableNodes(graph, currentNodeId, completedNodeIds, startNode
 export default function RunMap() {
   const navigate = useNavigate();
   const { toasts, toast, dismiss } = useToast();
-  const params = new URLSearchParams(window.location.search);
-  const runId = params.get("runId");
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "RunMap", toast });
 
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
