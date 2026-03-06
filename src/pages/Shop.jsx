@@ -18,6 +18,7 @@ export default function Shop() {
   const params = new URLSearchParams(window.location.search);
   const { runId, handleInvalidRun } = useRequiredRunId({ page: "Shop", toast });
   const nodeId = params.get("nodeId");
+  const shopNodeKey = nodeId || "unknown_shop_node";
 
   const [run, setRun] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,13 +27,49 @@ export default function Shop() {
   const [startingMoney, setStartingMoney] = useState(0);
   const [purchasesMade, setPurchasesMade] = useState(0);
 
+  const buildEmptyShopVisitSummary = useCallback(() => ({
+    nodeId: shopNodeKey,
+    itemsBought: [],
+    itemsSold: [],
+    moneySpent: 0,
+    moneyEarned: 0,
+  }), [shopNodeKey]);
+
+  const mergeShopVisitItem = useCallback((items, itemId, valueKey, amount) => {
+    const idx = items.findIndex((entry) => entry.itemId === itemId);
+    if (idx === -1) {
+      return [...items, { itemId, qty: 1, [valueKey]: amount }];
+    }
+    return items.map((entry, i) => (i === idx
+      ? { ...entry, qty: (entry.qty ?? 0) + 1, [valueKey]: (entry[valueKey] ?? 0) + amount }
+      : entry));
+  }, []);
+
   const load = useCallback(async () => {
     if (!runId) return;
     const r = await runApi.getRun(runId);
-    setRun(r);
-    setStartingMoney(r?.results?.progress?.money ?? 0);
+    const baseProgress = r?.results?.progress ?? {};
+    const currentSummary = baseProgress.shopVisitSummary;
+    const needsSummaryInit = !currentSummary || currentSummary.nodeId !== shopNodeKey;
+
+    if (needsSummaryInit) {
+      const nextProgress = {
+        ...baseProgress,
+        shopVisitSummary: buildEmptyShopVisitSummary(),
+      };
+      await base44.entities.Run.update(runId, {
+        results: { ...(r.results ?? {}), progress: nextProgress },
+      });
+      const updatedRun = { ...r, results: { ...(r.results ?? {}), progress: nextProgress } };
+      setRun(updatedRun);
+      setStartingMoney(nextProgress.money ?? 0);
+    } else {
+      setRun(r);
+      setStartingMoney(baseProgress.money ?? 0);
+    }
+
     setPurchasesMade(0);
-  }, [runId]);
+  }, [runId, shopNodeKey, buildEmptyShopVisitSummary]);
 
   useEffect(() => {
     if (!runId) { setLoading(false); return; }
@@ -44,8 +81,8 @@ export default function Shop() {
   const inventory = progress.inventory ?? { potion: 0, revive: 0 };
   const relics = progress.relics ?? [];
   const shopState = progress.shopState ?? {};
-  const shopNodeKey = nodeId || "unknown_shop_node";
   const currentShopState = shopState[shopNodeKey] ?? { firstPurchaseDiscountUsed: false };
+  const shopVisitSummary = progress.shopVisitSummary ?? buildEmptyShopVisitSummary();
   const discountAvailable = onShopBuy({
     relics,
     cost: 100,
@@ -93,6 +130,16 @@ export default function Shop() {
         money: newMoney,
         inventory: newInventory,
         shopState: nextShopState,
+        shopVisitSummary: {
+          ...shopVisitSummary,
+          itemsBought: mergeShopVisitItem(
+            shopVisitSummary.itemsBought ?? [],
+            item.id,
+            "totalCost",
+            finalCost,
+          ),
+          moneySpent: (shopVisitSummary.moneySpent ?? 0) + finalCost,
+        },
       };
 
       await persistProgress(updatedProgress);
@@ -132,7 +179,21 @@ export default function Shop() {
     try {
       const newMoney = money + item.sellPrice;
       const newInventory = { ...inventory, [item.id]: Math.max(0, currentQty - 1) };
-      const updatedProgress = { ...progress, money: newMoney, inventory: newInventory };
+      const updatedProgress = {
+        ...progress,
+        money: newMoney,
+        inventory: newInventory,
+        shopVisitSummary: {
+          ...shopVisitSummary,
+          itemsSold: mergeShopVisitItem(
+            shopVisitSummary.itemsSold ?? [],
+            item.id,
+            "totalRevenue",
+            item.sellPrice,
+          ),
+          moneyEarned: (shopVisitSummary.moneyEarned ?? 0) + item.sellPrice,
+        },
+      };
 
       await persistProgress(updatedProgress);
       await runApi.appendAction(runId, "shop_sell", {
@@ -155,14 +216,37 @@ export default function Shop() {
     // Resolve via canonical resolveNode then go to NodeComplete
     if (nodeId && run) {
       try {
+        const visitSummary = progress.shopVisitSummary ?? buildEmptyShopVisitSummary();
+        const moneySpentValue = visitSummary.moneySpent ?? 0;
+        const moneyEarnedValue = visitSummary.moneyEarned ?? 0;
+        const nodeSummary = {
+          nodeType: "shop",
+          itemsBought: visitSummary.itemsBought ?? [],
+          itemsSold: visitSummary.itemsSold ?? [],
+          moneySpent: moneySpentValue,
+          moneyEarned: moneyEarnedValue,
+          netMoneyChange: moneyEarnedValue - moneySpentValue,
+        };
+
         await base44.functions.invoke("resolveNode", {
           runId,
           resolution: {
             type: "shop",
             purchasesMade,
             moneySpent,
+            ...nodeSummary,
           },
         });
+
+        const latestRun = await runApi.getRun(runId);
+        const latestProgress = latestRun?.results?.progress ?? {};
+        await base44.entities.Run.update(runId, {
+          results: {
+            ...(latestRun?.results ?? {}),
+            progress: { ...latestProgress, shopVisitSummary: null },
+          },
+        });
+
         navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId}`));
         return;
       } catch (e) {
