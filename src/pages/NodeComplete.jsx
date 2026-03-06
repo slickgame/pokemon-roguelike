@@ -219,7 +219,7 @@ export default function NodeComplete() {
                 <span className="text-violet-400 font-bold text-sm">+{qty}</span>
               </div>
             ))}
-            {summary.faintCount > (
+            {summary.faintCount > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-white/70">
                   <Frown className="w-4 h-4 text-red-400" />
