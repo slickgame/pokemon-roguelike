@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
+import { runApi } from "../components/api/runApi";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
@@ -41,40 +42,76 @@ export default function NodeComplete() {
 
   useEffect(() => {
     if (!runId) { setLoading(false); return; }
-    base44.entities.Run.filter({ id: runId }).then(rows => {
-      const run = rows[0];
-      if (!run) { handleInvalidRun(); setLoading(false); return; }
-      const pending = run.results?.progress?.pendingEncounter ?? null;
-      if (pending?.lastSummary) {
-        setSummary(pending.lastSummary);
-      } else if (pending?.nodeType === "shop" && run.results?.progress?.shopVisitSummary) {
-        const visitSummary = run.results?.progress?.shopVisitSummary;
-        const moneySpent = visitSummary?.moneySpent ?? 0;
-        const moneyEarned = visitSummary?.moneyEarned ?? 0;
-        setSummary({
-          nodeId: run.results?.progress?.currentNodeId ?? nodeId,
-          nodeType: "shop",
-          nodeLabel: "Poké Mart",
-          outcome: "visited",
-          itemsBought: visitSummary?.itemsBought ?? [],
-          itemsSold: visitSummary?.itemsSold ?? [],
-          moneySpent,
-          moneyEarned,
-          netMoneyChange: moneyEarned - moneySpent,
-        });
-      } else {
-        // Fallback: build minimal summary from progress
-        setSummary({
-          nodeId: run.results?.progress?.currentNodeId ?? nodeId,
-          nodeType: pending?.nodeType ?? "node",
-          nodeLabel: "Node",
-          outcome: "visited",
-          moneyDelta: 0,
-          itemsDelta: {},
-          faintCount: 0,
-        });
+
+    const normalizeResolvedSummary = (payload, fallbackNodeId) => {
+      if (!payload || typeof payload !== "object") return null;
+      const summaryPayload = payload.summary && typeof payload.summary === "object"
+        ? payload.summary
+        : payload;
+
+      const resolvedNodeType = summaryPayload.nodeType ?? payload.nodeType;
+      const resolvedNodeId = summaryPayload.nodeId ?? payload.nodeId ?? fallbackNodeId;
+      if (!resolvedNodeType && !resolvedNodeId) return null;
+
+      return {
+        ...summaryPayload,
+        nodeId: resolvedNodeId,
+        nodeType: resolvedNodeType ?? "node",
+      };
+    };
+
+    const loadSummary = async () => {
+      try {
+        const rows = await base44.entities.Run.filter({ id: runId });
+        const run = rows[0];
+        if (!run) {
+          handleInvalidRun();
+          setLoading(false);
+          return;
+        }
+
+        const progress = run.results?.progress ?? {};
+        const pending = progress.pendingEncounter ?? null;
+        const fallbackNodeId = progress.currentNodeId ?? nodeId;
+
+        const resolvedFromPending = normalizeResolvedSummary(pending?.lastSummary, fallbackNodeId);
+        const resolvedFromProgress = normalizeResolvedSummary(progress.lastNodeSummary, fallbackNodeId);
+
+        let resolvedSummary = resolvedFromPending ?? resolvedFromProgress;
+
+        if (!resolvedSummary) {
+          try {
+            const actions = await runApi.listRunActions(runId);
+            const nodeResolvedAction = [...(actions ?? [])].reverse().find((action) => (
+              action.actionType === "node_resolved" && (!nodeId || action.payload?.nodeId === nodeId)
+            ));
+            resolvedSummary = normalizeResolvedSummary(nodeResolvedAction?.payload, fallbackNodeId);
+          } catch (_) {
+            // non-blocking fallback below
+          }
+        }
+
+        if (resolvedSummary) {
+          setSummary(resolvedSummary);
+        } else {
+          setSummary({
+            nodeId: fallbackNodeId,
+            nodeType: pending?.nodeType ?? "node",
+            nodeLabel: "Node",
+            outcome: "visited",
+            moneyDelta: 0,
+            itemsDelta: {},
+            faintCount: 0,
+          });
+        }
+      } catch (_) {
+        handleInvalidRun();
+      } finally {
+        setLoading(false);
       }
-    }).catch(() => handleInvalidRun()).finally(() => setLoading(false));
+    };
+
+    loadSummary();
   }, [runId]);
 
   const [relicCount, setRelicCount] = useState(null);
@@ -131,7 +168,7 @@ export default function NodeComplete() {
   const shopMoneySpent = summary.moneySpent ?? 0;
   const shopMoneyEarned = summary.moneyEarned ?? 0;
   const netMoneyChange = summary.netMoneyChange ?? (shopMoneyEarned - shopMoneySpent);
-  const hadShopTransactions = boughtItems.length > 0 || soldItems.length > 0;
+  const hadShopTransactions = boughtItems.length > 0 || soldItems.length > 0 || shopMoneySpent > 0 || shopMoneyEarned > 0;
 
   const getShopItemName = (itemId) => SHOP_ITEM_BY_ID[itemId]?.name ?? itemId;
 
