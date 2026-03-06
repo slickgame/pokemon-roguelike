@@ -24,8 +24,6 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState(null);
   const [selling, setSelling] = useState(null);
-  const [startingMoney, setStartingMoney] = useState(0);
-  const [purchasesMade, setPurchasesMade] = useState(0);
 
   const buildEmptyShopVisitSummary = useCallback(() => ({
     nodeId: shopNodeKey,
@@ -62,13 +60,10 @@ export default function Shop() {
       });
       const updatedRun = { ...r, results: { ...(r.results ?? {}), progress: nextProgress } };
       setRun(updatedRun);
-      setStartingMoney(nextProgress.money ?? 0);
     } else {
       setRun(r);
-      setStartingMoney(baseProgress.money ?? 0);
     }
 
-    setPurchasesMade(0);
   }, [runId, shopNodeKey, buildEmptyShopVisitSummary]);
 
   useEffect(() => {
@@ -89,7 +84,6 @@ export default function Shop() {
     shopFirstPurchaseDone: currentShopState.firstPurchaseDiscountUsed,
   }) < 100;
 
-  const moneySpent = useMemo(() => Math.max(0, startingMoney - money), [startingMoney, money]);
 
   const persistProgress = async (updatedProgress) => {
     await base44.entities.Run.update(runId, {
@@ -154,7 +148,6 @@ export default function Shop() {
         moneyAfter: newMoney,
       });
 
-      setPurchasesMade((count) => count + 1);
       if (discounted) {
         toast(`Bought ${item.name}! Bargain Seal applied: -$${originalCost - finalCost} 💰`, "success");
       } else {
@@ -232,8 +225,6 @@ export default function Shop() {
           runId,
           resolution: {
             type: "shop",
-            purchasesMade,
-            moneySpent,
             ...nodeSummary,
           },
         });
@@ -250,7 +241,7 @@ export default function Shop() {
         navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId}`));
         return;
       } catch (e) {
-        // fallback: go back to map
+        toast(e?.message || "Failed to leave shop", "error");
       }
     }
     navigate(createPageUrl(`RunMap?runId=${runId}`));
