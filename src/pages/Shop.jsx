@@ -225,6 +225,7 @@ export default function Shop() {
           runId,
           resolution: {
             type: "shop",
+            nodeId,
             ...nodeSummary,
           },
         });
