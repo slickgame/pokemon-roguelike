@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { clearActiveRunId, getActiveRunId, setActiveRunId } from "@/lib/activeRun";
 import { base44 } from "@/api/base44Client";
 import { runApi } from "../components/api/runApi";
@@ -74,7 +75,7 @@ function computeAvailableNodes(graph, currentNodeId, completedNodeIds, startNode
 export default function RunMap() {
   const navigate = useNavigate();
   const { toasts, toast, dismiss } = useToast();
-  const { runId, handleInvalidRun } = useRequiredRunId({ page: "RunMap", toast });
+  const { runId } = useRequiredRunId({ page: "RunMap", toast });
 
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
