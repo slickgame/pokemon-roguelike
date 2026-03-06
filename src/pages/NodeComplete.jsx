@@ -7,6 +7,7 @@ import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight, Sparkles } from "lucide-react";
+import { SHOP_ITEM_BY_ID } from "@/lib/shopItems";
 
 const NODE_ICONS = {
   trainer_weak: "⚔️",
@@ -46,6 +47,21 @@ export default function NodeComplete() {
       const pending = run.results?.progress?.pendingEncounter ?? null;
       if (pending?.lastSummary) {
         setSummary(pending.lastSummary);
+      } else if (pending?.nodeType === "shop" && run.results?.progress?.shopVisitSummary) {
+        const visitSummary = run.results?.progress?.shopVisitSummary;
+        const moneySpent = visitSummary?.moneySpent ?? 0;
+        const moneyEarned = visitSummary?.moneyEarned ?? 0;
+        setSummary({
+          nodeId: run.results?.progress?.currentNodeId ?? nodeId,
+          nodeType: "shop",
+          nodeLabel: "Poké Mart",
+          outcome: "visited",
+          itemsBought: visitSummary?.itemsBought ?? [],
+          itemsSold: visitSummary?.itemsSold ?? [],
+          moneySpent,
+          moneyEarned,
+          netMoneyChange: moneyEarned - moneySpent,
+        });
       } else {
         // Fallback: build minimal summary from progress
         setSummary({
@@ -109,6 +125,16 @@ export default function NodeComplete() {
   const isRunFinished = summary.runFinished;
   const routeAdvancedTo = summary.routeAdvancedTo ?? null;
 
+  const isShopSummary = summary.nodeType === "shop";
+  const boughtItems = summary.itemsBought ?? [];
+  const soldItems = summary.itemsSold ?? [];
+  const shopMoneySpent = summary.moneySpent ?? 0;
+  const shopMoneyEarned = summary.moneyEarned ?? 0;
+  const netMoneyChange = summary.netMoneyChange ?? (shopMoneyEarned - shopMoneySpent);
+  const hadShopTransactions = boughtItems.length > 0 || soldItems.length > 0;
+
+  const getShopItemName = (itemId) => SHOP_ITEM_BY_ID[itemId]?.name ?? itemId;
+
   return (
     <div className="max-w-md mx-auto px-4 py-12 space-y-4">
       {/* Title */}
@@ -166,6 +192,67 @@ export default function NodeComplete() {
               </div>
             )}
           </div>
+        </GameCard>
+      )}
+
+
+      {isShopSummary && (
+        <GameCard>
+          <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-3">Shop Summary</p>
+          {!hadShopTransactions ? (
+            <p className="text-sm text-white/50">You left without making any transactions.</p>
+          ) : (
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-white/70 font-semibold mb-1">Items Bought</p>
+                {boughtItems.length === 0 ? (
+                  <p className="text-white/40">None</p>
+                ) : (
+                  <ul className="space-y-1 text-white/80">
+                    {boughtItems.map((entry) => (
+                      <li key={`buy-${entry.itemId}`} className="flex items-center justify-between">
+                        <span>• {getShopItemName(entry.itemId)} x{entry.qty}</span>
+                        <span className="text-red-300">(-${entry.totalCost ?? 0})</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div>
+                <p className="text-white/70 font-semibold mb-1">Items Sold</p>
+                {soldItems.length === 0 ? (
+                  <p className="text-white/40">None</p>
+                ) : (
+                  <ul className="space-y-1 text-white/80">
+                    {soldItems.map((entry) => (
+                      <li key={`sell-${entry.itemId}`} className="flex items-center justify-between">
+                        <span>• {getShopItemName(entry.itemId)} x{entry.qty}</span>
+                        <span className="text-emerald-300">(+$${entry.totalRevenue ?? 0})</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-white/10 space-y-1">
+                <div className="flex items-center justify-between text-white/70">
+                  <span>Money Spent</span>
+                  <span className="text-red-300">-${shopMoneySpent}</span>
+                </div>
+                <div className="flex items-center justify-between text-white/70">
+                  <span>Money Earned</span>
+                  <span className="text-emerald-300">+${shopMoneyEarned}</span>
+                </div>
+                <div className="flex items-center justify-between font-semibold">
+                  <span className="text-white">Net Change</span>
+                  <span className={netMoneyChange >= 0 ? "text-emerald-300" : "text-red-300"}>
+                    {netMoneyChange >= 0 ? `+$${netMoneyChange}` : `-$${Math.abs(netMoneyChange)}`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </GameCard>
       )}
 
