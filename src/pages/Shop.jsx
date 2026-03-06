@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useRequiredRunId } from "@/hooks/useRequiredRunId";
@@ -69,7 +69,7 @@ export default function Shop() {
   useEffect(() => {
     if (!runId) { setLoading(false); return; }
     load().catch(() => handleInvalidRun()).finally(() => setLoading(false));
-  }, [runId]);
+  }, [runId, load, handleInvalidRun]);
 
   const progress = run?.results?.progress ?? {};
   const money = progress.money ?? 0;
