@@ -77,20 +77,35 @@ export default function NodeComplete() {
         const resolvedFromPending = normalizeResolvedSummary(pending?.lastSummary, fallbackNodeId);
         const resolvedFromProgress = normalizeResolvedSummary(progress.lastNodeSummary, fallbackNodeId);
 
-        let resolvedSummary = resolvedFromPending ?? resolvedFromProgress;
+    const resolveFromActionLog = async () => {
+      try {
+        const actions = await runApi.listRunActions(runId);
+        const nodeResolvedAction = [...(actions ?? [])].reverse().find((action) => (
+          action.actionType === "node_resolved" && (!nodeId || action.payload?.nodeId === nodeId)
+        ));
+        return normalizeResolvedSummary(nodeResolvedAction?.payload, fallbackNodeId);
+      } catch (_) {
+        return null;
+      }
+    };
 
-        if (!resolvedSummary) {
-          try {
-            const actions = await runApi.listRunActions(runId);
-            const nodeResolvedAction = [...(actions ?? [])].reverse().find((action) => (
-              action.actionType === "node_resolved" && (!nodeId || action.payload?.nodeId === nodeId)
-            ));
-            resolvedSummary = normalizeResolvedSummary(nodeResolvedAction?.payload, fallbackNodeId);
-          } catch (_) {
-            // non-blocking fallback below
-          }
-        }
+    const isLikelyShopNode =
+      pending?.nodeType === "shop" ||
+      resolvedFromPending?.nodeType === "shop" ||
+      resolvedFromProgress?.nodeType === "shop";
 
+    const shouldPreferActionLog = Boolean(nodeId) || isLikelyShopNode;
+
+    let resolvedSummary = null;
+    if (shouldPreferActionLog) {
+      const resolvedFromAction = await resolveFromActionLog();
+      resolvedSummary = resolvedFromAction ?? resolvedFromPending ?? resolvedFromProgress;
+    } else {
+      resolvedSummary = resolvedFromPending ?? resolvedFromProgress;
+      if (!resolvedSummary) {
+        resolvedSummary = await resolveFromActionLog();
+      }
+    }
         if (resolvedSummary) {
           setSummary(resolvedSummary);
         } else {
