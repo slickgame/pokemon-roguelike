@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
 import { runApi } from "../components/api/runApi";
 import GameCard from "../components/ui/GameCard";
@@ -17,7 +18,7 @@ export default function Shop() {
   const navigate = useNavigate();
   const { toasts, toast, dismiss } = useToast();
   const params = new URLSearchParams(window.location.search);
-  const runId  = params.get("runId");
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "Shop", toast });
   const nodeId = params.get("nodeId");
 
   const [run, setRun] = useState(null);
@@ -32,7 +33,7 @@ export default function Shop() {
 
   useEffect(() => {
     if (!runId) { setLoading(false); return; }
-    load().finally(() => setLoading(false));
+    load().catch(() => handleInvalidRun()).finally(() => setLoading(false));
   }, [runId]);
 
   const progress   = run?.results?.progress ?? {};
