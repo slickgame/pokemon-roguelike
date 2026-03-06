@@ -69,7 +69,7 @@ export default function Shop() {
   useEffect(() => {
     if (!runId) { setLoading(false); return; }
     load().catch(() => handleInvalidRun()).finally(() => setLoading(false));
-  }, [runId]);
+  }, [runId, load, handleInvalidRun]);
 
   const progress = run?.results?.progress ?? {};
   const money = progress.money ?? 0;
