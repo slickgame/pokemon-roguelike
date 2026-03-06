@@ -188,6 +188,27 @@ export default function Home() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleContinueHomeActiveRun = () => {
+    if (!activeRun) return;
+    resumeActiveRun({ base44, navigate, toast });
+  };
+
+  const handleSurrenderHomeActiveRun = async () => {
+    if (!activeRun?.id) return;
+    setLoading(true);
+    try {
+      await runApi.surrenderRun(activeRun.id, "home_surrender");
+      clearActiveRunId();
+      toast("Run surrendered.", "success");
+      setActiveRun(null);
+      await loadActiveRun();
+    } catch (err) {
+      toast(err.response?.data?.error || err.message || "Failed to surrender run", "error");
+    } finally {
+      setLoading(false);
       setShowStartBlockedModal(false);
     }
   };
@@ -218,6 +239,10 @@ const handleSurrenderHomeActiveRun = async () => {
     base44.auth.redirectToLogin(window.location.href);
   };
 
+  const handleSignOut = () => {
+    base44.auth.logout(window.location.href);
+  };
+
   const modifiersByCategory = useMemo(() =>
     MODIFIER_CATEGORIES.reduce((acc, cat) => {
       acc[cat] = MODIFIERS.filter(m => m.category === cat);
@@ -243,12 +268,16 @@ const handleSurrenderHomeActiveRun = async () => {
   }
 
   // ── Error ────────────────────────────────────────────────────────────────
-  if (playerError) {
+  if (playerError && user) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <GameCard className="text-center py-10">
-          <p className="text-red-400 mb-4">Error: {playerError}</p>
-          <GameButton onClick={() => window.location.reload()} variant="primary">Retry</GameButton>
+        <GameCard className="text-center py-10 max-w-xl mx-auto">
+          <h2 className="text-xl font-bold text-white mb-2">Could not load your trainer profile.</h2>
+          <p className="text-white/50 mb-6">{playerError}</p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <GameButton onClick={refreshPlayer} variant="primary">Retry</GameButton>
+            <GameButton onClick={handleSignOut} variant="secondary">Sign Out</GameButton>
+          </div>
         </GameCard>
         <ToastContainer toasts={toasts} onDismiss={dismiss} />
       </div>
@@ -256,7 +285,7 @@ const handleSurrenderHomeActiveRun = async () => {
   }
 
   // ── Not logged in ────────────────────────────────────────────────────────
-  if (!user || !player) {
+  if (!user) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-14">
@@ -282,6 +311,22 @@ const handleSurrenderHomeActiveRun = async () => {
             </GameButton>
           </GameCard>
         </div>
+        <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      </div>
+    );
+  }
+
+  if (user && !player) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <GameCard className="text-center py-10 max-w-xl mx-auto">
+          <h2 className="text-xl font-bold text-white mb-2">Could not load your trainer profile.</h2>
+          <p className="text-white/50 mb-6">Please retry to reconnect your player data.</p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <GameButton onClick={refreshPlayer} variant="primary">Retry</GameButton>
+            <GameButton onClick={handleSignOut} variant="secondary">Sign Out</GameButton>
+          </div>
+        </GameCard>
         <ToastContainer toasts={toasts} onDismiss={dismiss} />
       </div>
     );
