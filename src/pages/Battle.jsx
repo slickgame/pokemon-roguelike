@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
-import { runApi } from "../components/api/runApi";
+import { invokeWithRetry } from "@/api/invokeWithRetry";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
 import PokemonBattleCard from "../components/battle/PokemonBattleCard";
@@ -16,28 +17,40 @@ import LearnMoveModal from "../components/battle/LearnMoveModal";
 export default function Battle() {
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);
-  const runId = params.get("runId");
+  const { toasts, toast, dismiss } = useToast();
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "Battle", toast });
   const battleId = params.get("battleId");
   const nodeId = params.get("nodeId");
   const routeId = params.get("routeId") ?? "route1";
 
-  const { toasts, toast, dismiss } = useToast();
   const [state, setState] = useState(null);
   const [turnNumber, setTurnNumber] = useState(0);
   const [winner, setWinner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [committing, setCommitting] = useState(false);
-  const [commands, setCommands] = useState({});
+  const [commandsBySlot, setCommandsBySlot] = useState({});
   const [showDebug, setShowDebug] = useState(false);
   const [choosing, setChoosing] = useState(false);
   const [showBag, setShowBag] = useState(false);
   const [run, setRun] = useState(null);
   const [learnQueue, setLearnQueue] = useState([]); // queued learn prompts
+  const [lastCommitError, setLastCommitError] = useState(null);
+
+  const draftKey = runId && battleId ? `battleDraft:${runId}:${battleId}` : null;
 
   // Load run for inventory/economy display + status guard
   useEffect(() => {
     if (!runId) return;
-    base44.entities.Run.filter({ id: runId }).then(rows => { if (rows[0]) setRun(rows[0]); });
+    base44.entities.Run.filter({ id: runId })
+      .then(rows => {
+        if (rows[0]) setRun(rows[0]);
+        else {
+          handleInvalidRun();
+        }
+      })
+      .catch(() => {
+        handleInvalidRun();
+      });
   }, [runId]);
 
   // Auto-navigate away if run is no longer active (and no battle is in progress)
@@ -50,7 +63,11 @@ export default function Battle() {
 
   // Load / reload battle state from Battle entity (persistence on refresh)
   useEffect(() => {
-    if (!battleId) { setLoading(false); return; }
+    if (!battleId) {
+      setLoading(false);
+      if (runId) navigate(createPageUrl(`RunMap?runId=${runId}`));
+      return;
+    }
     base44.entities.Battle.filter({ id: battleId })
       .then(rows => {
         const b = rows[0];
@@ -58,6 +75,9 @@ export default function Battle() {
           setState(b.state);
           setTurnNumber(b.turnNumber ?? 0);
           setWinner(b.state?.winner ?? null);
+        } else {
+          toast("Battle not found.", "error");
+          navigate(createPageUrl(`RunMap?runId=${runId}`));
         }
       })
       .catch(e => toast(e.message, "error"))
@@ -67,6 +87,22 @@ export default function Battle() {
   // Rebuild default commands when state changes (new turn)
   useEffect(() => {
     if (!state) return;
+
+    if (draftKey) {
+      const draftRaw = localStorage.getItem(draftKey);
+      if (draftRaw) {
+        try {
+          const draft = JSON.parse(draftRaw);
+          if (draft && typeof draft === "object") {
+            setCommandsBySlot(draft);
+            return;
+          }
+        } catch (_) {
+          localStorage.removeItem(draftKey);
+        }
+      }
+    }
+
     const defaults = {};
     const aliveEnemyTargets = (state.enemy.active ?? []).map((p, i) => ({ p, i })).filter(({ p }) => p && !p.fainted);
     for (let i = 0; i < (state.player.active ?? []).length; i++) {
@@ -79,18 +115,60 @@ export default function Battle() {
         target: { side: "enemy", slot: aliveEnemyTargets[0]?.i ?? 0 },
       };
     }
-    setCommands(defaults);
-  }, [turnNumber, !!state]);
+    setCommandsBySlot(defaults);
+  }, [turnNumber, !!state, draftKey]);
+
+  const setCommand = (slotIdx, commandObj) => {
+    setLastCommitError(null);
+    setCommandsBySlot(prev => ({ ...prev, [slotIdx]: commandObj }));
+  };
+
+  useEffect(() => {
+    if (!draftKey || winner) return;
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(commandsBySlot ?? {}));
+    } catch (_) {}
+  }, [commandsBySlot, draftKey, winner]);
+
+  const pendingReplacement = state?.pendingReplacement ?? null;
 
   const handleCommit = async () => {
-    const cmds = Object.values(commands);
-    if (cmds.length === 0) return;
+    setLastCommitError(null);
+    if (committing) {
+      setLastCommitError("Already committing…");
+      return;
+    }
+    if (winner) {
+      setLastCommitError("Battle already ended.");
+      return;
+    }
+    if (pendingReplacement) {
+      setLastCommitError("Choose a replacement first.");
+      return;
+    }
+    if (learnQueue.length > 0) {
+      setLastCommitError("Resolve the move learning prompt first.");
+      return;
+    }
+
+    const cmds = [];
+    for (let slot = 0; slot <= 2; slot++) {
+      const cmd = commandsBySlot?.[slot];
+      if (cmd) cmds.push(cmd);
+    }
+    if (cmds.length === 0) {
+      setLastCommitError("No actions selected. Choose moves/switch/items first.");
+      toast("No actions selected.", "error");
+      return;
+    }
+
     setCommitting(true);
     try {
-      const res = await base44.functions.invoke("commitTurn", {
+      const res = await invokeWithRetry(base44, "commitTurn", {
         runId, battleId, playerCommands: cmds,
       });
       const data = res.data;
+      if (draftKey) localStorage.removeItem(draftKey);
       setState(data.state);
       setTurnNumber(data.turnNumber);
       const newWinner = data.winner ?? null;
@@ -111,7 +189,7 @@ export default function Battle() {
         // Resolve via canonical resolveNode — marks node complete, clears pendingEncounter
         const allPlayerPokes = [...(data.state?.player?.active ?? []), ...(data.state?.player?.bench ?? [])];
         const faintCount = allPlayerPokes.filter(p => p?.fainted).length;
-        const resolveRes = await base44.functions.invoke("resolveNode", {
+        const resolveRes = await invokeWithRetry(base44, "resolveNode", {
           runId,
           resolution: { type: "battle", winner: newWinner, faintCount, battleId },
         });
@@ -124,7 +202,10 @@ export default function Battle() {
         }
       }
     } catch (e) {
-      toast(e.response?.data?.error || e.message || "Failed to commit turn", "error");
+      const msg = e?.response?.data?.error || e?.message || "Failed to commit turn";
+      setLastCommitError(msg);
+      toast(msg, "error");
+      console.error("commitTurn failed:", e);
     } finally {
       setCommitting(false);
     }
@@ -160,15 +241,22 @@ export default function Battle() {
   const playerBench  = state.player.bench  ?? [];
   const enemyActive  = state.enemy.active  ?? [];
   const enemyBench   = state.enemy.bench   ?? [];
-  const pendingReplacement = state.pendingReplacement ?? null;
+  const commitDisabledReason = pendingReplacement
+    ? "Replacement required"
+    : learnQueue.length > 0
+      ? "Move learn prompt pending"
+      : committing
+        ? "Submitting turn…"
+        : null;
 
   const handleChooseReplacement = async (benchIndex) => {
     setChoosing(true);
     try {
-      const res = await base44.functions.invoke("chooseReplacement", {
+      const res = await invokeWithRetry(base44, "chooseReplacement", {
         runId, battleId, slot: pendingReplacement.slot, benchIndex,
       });
       const data = res.data;
+      if (draftKey) localStorage.removeItem(draftKey);
       setState(data.state);
       setTurnNumber(data.turnNumber ?? turnNumber);
     } catch (e) {
@@ -298,8 +386,8 @@ export default function Battle() {
             <CommandBuilder
               playerActive={playerActive}
               playerBench={playerBench}
-              commands={commands}
-              onChange={(slot, cmd) => setCommands(prev => ({ ...prev, [slot]: cmd }))}
+              commands={commandsBySlot}
+              onChange={setCommand}
               enemyActive={enemyActive}
               inventory={inventory}
             />
@@ -314,6 +402,12 @@ export default function Battle() {
               <Swords className="w-4 h-4" />
               Commit Turn
             </GameButton>
+            {commitDisabledReason && (
+              <p className="text-xs text-amber-300/80 mt-2">{commitDisabledReason}</p>
+            )}
+            {lastCommitError && (
+              <p className="text-xs text-red-400/80 mt-2">{lastCommitError}</p>
+            )}
           </GameCard>
         )}
 

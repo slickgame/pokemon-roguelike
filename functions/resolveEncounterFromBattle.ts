@@ -164,50 +164,7 @@ Deno.serve(async (req) => {
         base44.entities.Run.update(runId, { nextActionIdx: rewardIdx }),
       ]);
 
-      // If gym — finish run with resultsSummary + aether award
-      if (nodeType === 'gym') {
-        const nowIso = new Date().toISOString();
-        const gymIdx = rewardIdx + 1;
-        await base44.entities.RunAction.create({ runId, idx: gymIdx, actionType: 'gym_defeated', payload: { gymId: 'gym1', routeId: updatedProgress.routeId } });
-
-        const resultsSummary = await computeAndFinalizeRun(base44, run, nowIso);
-
-        // Award aether — only set aetherAwarded=true if Player update confirmed
-        let aetherAwarded = false;
-        let playerAetherAfter = null;
-        let aetherAwardError = null;
-
-        if (resultsSummary.aetherEarned > 0) {
-          const award = await awardAetherToPlayer(base44, run.playerId, resultsSummary.aetherEarned);
-          if (award.ok) {
-            aetherAwarded = true;
-            playerAetherAfter = award.after;
-          } else {
-            aetherAwardError = award.reason;
-          }
-        } else {
-          aetherAwarded = true;
-        }
-
-        const finishIdx = gymIdx + 1;
-        await base44.entities.RunAction.create({ runId, idx: finishIdx, actionType: 'run_finished', payload: { resultsSummary, aetherAwarded, playerAetherAfter } });
-
-        await base44.entities.Run.update(runId, {
-          status: 'finished', endedAt: nowIso, nextActionIdx: finishIdx,
-          results: {
-            ...(run.results ?? {}),
-            progress: updatedProgress,
-            winner: 'player',
-            gymDefeated: true,
-            resultsSummary,
-            finalizedAt: nowIso,
-            aetherAwarded,
-            aetherDelta: resultsSummary.aetherEarned,
-            playerAetherAfter,
-            ...(aetherAwardError ? { aetherAwardError } : {}),
-          },
-        });
-      }
+      // Gym wins do not end the run. Run ending is only for battle loss, explicit dev end, or future champion victory.
     } else {
       // loss — persist final party state + compute resultsSummary + award aether
       const nowIso = new Date().toISOString();
