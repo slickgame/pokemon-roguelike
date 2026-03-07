@@ -142,15 +142,57 @@ function buildFreshPokemon(species, level, subSeed) {
   const nature = NATURES[rngInt(rng, NATURES.length)];
   const abilityId = species.abilities[rngInt(rng, species.abilities.length)];
   const shiny = rngInt(rng, 1024) === 0;
+  const gender = rollGender(species.id, rng);
   const moves = buildMoveset(species);
+
+  const ivs = {
+    hp: 0,
+    atk: 0,
+    def: 0,
+    spa: 0,
+    spd: 0,
+    spe: 0,
+  };
+
+  const evs = {
+    hp: 0,
+    atk: 0,
+    def: 0,
+    spa: 0,
+    spd: 0,
+    spe: 0,
+  };
+
   const stats = computeStats(species.baseStats, level);
+
   return {
-    speciesId: species.id, name: species.name, types: species.types, level, nature, abilityId, shiny,
-    ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
+    speciesId: species.id,
+    name: species.name,
+    types: species.types,
+    level,
+    exp: 0,
+    nature,
+    abilityId,
+    gender,
+    shiny,
+    ivs,
+    evs,
     baseStats: species.baseStats,
-    stats: { atk: stats.atk, def: stats.def, spa: stats.spa, spd: stats.spd, spe: stats.spe },
-    maxHp: stats.hp, currentHp: stats.hp,
-    status: null, statusTurns: 0, moves, fainted: false,
+    stats: {
+      hp: stats.hp,
+      atk: stats.atk,
+      def: stats.def,
+      spa: stats.spa,
+      spd: stats.spd,
+      spe: stats.spe,
+    },
+    maxHp: stats.hp,
+    currentHp: stats.hp,
+    status: null,
+    statusTurns: 0,
+    heldItem: null,
+    moves,
+    fainted: false,
   };
 }
 
