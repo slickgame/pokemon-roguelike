@@ -193,11 +193,21 @@ export default function NodeComplete() {
 
   useEffect(() => {
     if (!runId) return;
-    base44.entities.Run.filter({ id: runId }).then(rows => {
-      const r = rows[0];
-      if (r) setRelicCount((r.results?.progress?.relics ?? []).length);
-      else handleInvalidRun();
-    });
+
+    base44.entities.Run.filter({ id: runId })
+      .then(rows => {
+        const r = rows[0];
+        if (r) {
+          setRelicCount((r.results?.progress?.relics ?? []).length);
+        } else {
+          // Do not redirect away from NodeComplete here.
+          // Just hide relic count if the run can't be fetched.
+          setRelicCount(null);
+        }
+      })
+      .catch(() => {
+        setRelicCount(null);
+      });
   }, [runId]);
 
   const handleContinue = async () => {
