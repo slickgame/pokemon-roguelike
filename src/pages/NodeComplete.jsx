@@ -41,16 +41,22 @@ export default function NodeComplete() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!runId) { setLoading(false); return; }
+    if (!runId) {
+      setLoading(false);
+      return;
+    }
 
     const normalizeResolvedSummary = (payload, fallbackNodeId) => {
       if (!payload || typeof payload !== "object") return null;
-      const summaryPayload = payload.summary && typeof payload.summary === "object"
-        ? payload.summary
-        : payload;
+
+      const summaryPayload =
+        payload.summary && typeof payload.summary === "object"
+          ? payload.summary
+          : payload;
 
       const resolvedNodeType = summaryPayload.nodeType ?? payload.nodeType;
       const resolvedNodeId = summaryPayload.nodeId ?? payload.nodeId ?? fallbackNodeId;
+
       if (!resolvedNodeType && !resolvedNodeId) return null;
 
       return {
@@ -64,9 +70,9 @@ export default function NodeComplete() {
       try {
         const rows = await base44.entities.Run.filter({ id: runId });
         const run = rows[0];
+
         if (!run) {
           handleInvalidRun();
-          setLoading(false);
           return;
         }
 
@@ -74,38 +80,56 @@ export default function NodeComplete() {
         const pending = progress.pendingEncounter ?? null;
         const fallbackNodeId = progress.currentNodeId ?? nodeId;
 
-        const resolvedFromPending = normalizeResolvedSummary(pending?.lastSummary, fallbackNodeId);
-        const resolvedFromProgress = normalizeResolvedSummary(progress.lastNodeSummary, fallbackNodeId);
+        const resolvedFromPending = normalizeResolvedSummary(
+          pending?.lastSummary,
+          fallbackNodeId
+        );
 
-    const resolveFromActionLog = async () => {
-      try {
-        const actions = await runApi.listRunActions(runId);
-        const nodeResolvedAction = [...(actions ?? [])].reverse().find((action) => (
-          action.actionType === "node_resolved" && (!nodeId || action.payload?.nodeId === nodeId)
-        ));
-        return normalizeResolvedSummary(nodeResolvedAction?.payload, fallbackNodeId);
-      } catch (_) {
-        return null;
-      }
-    };
+        const resolvedFromProgress = normalizeResolvedSummary(
+          progress.lastNodeSummary,
+          fallbackNodeId
+        );
 
-    const isLikelyShopNode =
-      pending?.nodeType === "shop" ||
-      resolvedFromPending?.nodeType === "shop" ||
-      resolvedFromProgress?.nodeType === "shop";
+        const resolveFromActionLog = async () => {
+          try {
+            const actions = await runApi.listRunActions(runId);
+            const nodeResolvedAction = [...(actions ?? [])]
+              .reverse()
+              .find(
+                (action) =>
+                  action.actionType === "node_resolved" &&
+                  (!nodeId || action.payload?.nodeId === nodeId)
+              );
 
-    const shouldPreferActionLog = Boolean(nodeId) || isLikelyShopNode;
+            return normalizeResolvedSummary(
+              nodeResolvedAction?.payload,
+              fallbackNodeId
+            );
+          } catch (_) {
+            return null;
+          }
+        };
 
-    let resolvedSummary = null;
-    if (shouldPreferActionLog) {
-      const resolvedFromAction = await resolveFromActionLog();
-      resolvedSummary = resolvedFromAction ?? resolvedFromPending ?? resolvedFromProgress;
-    } else {
-      resolvedSummary = resolvedFromPending ?? resolvedFromProgress;
-      if (!resolvedSummary) {
-        resolvedSummary = await resolveFromActionLog();
-      }
-    }
+        const isLikelyShopNode =
+          pending?.nodeType === "shop" ||
+          resolvedFromPending?.nodeType === "shop" ||
+          resolvedFromProgress?.nodeType === "shop";
+
+        const shouldPreferActionLog = Boolean(nodeId) || isLikelyShopNode;
+
+        let resolvedSummary = null;
+
+        if (shouldPreferActionLog) {
+          const resolvedFromAction = await resolveFromActionLog();
+          resolvedSummary =
+            resolvedFromAction ?? resolvedFromPending ?? resolvedFromProgress;
+        } else {
+          resolvedSummary = resolvedFromPending ?? resolvedFromProgress;
+          if (!resolvedSummary) {
+            resolvedSummary = await resolveFromActionLog();
+          }
+        }
+
         if (resolvedSummary) {
           setSummary(resolvedSummary);
         } else {
@@ -127,7 +151,7 @@ export default function NodeComplete() {
     };
 
     loadSummary();
-  }, [runId]);
+  }, [runId, nodeId, handleInvalidRun]);
 
   const [relicCount, setRelicCount] = useState(null);
 
