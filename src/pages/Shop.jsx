@@ -219,12 +219,24 @@ export default function Shop() {
       const nodeSummary = {
         nodeType: "shop",
         nodeId,
+        nodeLabel: "Poké Mart",
+        outcome: "visited",
         itemsBought: visitSummary.itemsBought ?? [],
         itemsSold: visitSummary.itemsSold ?? [],
         moneySpent: moneySpentValue,
         moneyEarned: moneyEarnedValue,
         netMoneyChange: moneyEarnedValue - moneySpentValue,
+        moneyDelta: 0,
+        itemsDelta: {},
+        faintCount: 0,
       };
+
+      // Cache summary locally so NodeComplete can always render it,
+      // even if the follow-up fetch to Base44 is flaky.
+      sessionStorage.setItem(
+        `nodeCompleteSummary:${runId}:${nodeId}`,
+        JSON.stringify(nodeSummary)
+      );
 
       await base44.functions.invoke("resolveNode", {
         runId,
@@ -248,7 +260,7 @@ export default function Shop() {
       navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId}`));
     } catch (e) {
       toast(e?.response?.data?.error || e?.message || "Failed to leave shop", "error");
-      return; // IMPORTANT: stay on shop if leave fails
+      return;
     }
   };
 
