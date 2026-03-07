@@ -46,6 +46,8 @@ export default function NodeComplete() {
       return;
     }
 
+    const cacheKey = `nodeCompleteSummary:${runId}:${nodeId ?? "unknown"}`;
+
     const normalizeResolvedSummary = (payload, fallbackNodeId) => {
       if (!payload || typeof payload !== "object") return null;
 
@@ -68,11 +70,36 @@ export default function NodeComplete() {
 
     const loadSummary = async () => {
       try {
+        // 1) Prefer cached summary from the previous page
+        const cachedRaw = sessionStorage.getItem(cacheKey);
+        if (cachedRaw) {
+          try {
+            const cachedSummary = JSON.parse(cachedRaw);
+            if (cachedSummary && typeof cachedSummary === "object") {
+              setSummary(cachedSummary);
+              setLoading(false);
+              return;
+            }
+          } catch (_) {
+            sessionStorage.removeItem(cacheKey);
+          }
+        }
+
+        // 2) Fallback to backend lookup
         const rows = await base44.entities.Run.filter({ id: runId });
         const run = rows[0];
 
         if (!run) {
-          handleInvalidRun();
+          setSummary({
+            nodeId: nodeId ?? null,
+            nodeType: "node",
+            nodeLabel: "Node",
+            outcome: "visited",
+            moneyDelta: 0,
+            itemsDelta: {},
+            faintCount: 0,
+          });
+          setLoading(false);
           return;
         }
 
@@ -144,14 +171,23 @@ export default function NodeComplete() {
           });
         }
       } catch (_) {
-        handleInvalidRun();
+        // Do NOT kick player to Home here. Show a safe fallback instead.
+        setSummary({
+          nodeId: nodeId ?? null,
+          nodeType: "node",
+          nodeLabel: "Node",
+          outcome: "visited",
+          moneyDelta: 0,
+          itemsDelta: {},
+          faintCount: 0,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     loadSummary();
-  }, [runId, nodeId, handleInvalidRun]);
+  }, [runId, nodeId]);
 
   const [relicCount, setRelicCount] = useState(null);
 
