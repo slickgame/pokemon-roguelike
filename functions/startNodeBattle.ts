@@ -237,7 +237,7 @@ function hydrateFromPartyState(partySnap, speciesMap) {
   const maxHp = resolvedStats.hp;
   const currentHp = partySnap.fainted
     ? 0
-    : Math.min(partySnap.currentHP ?? maxHp, maxHp);
+    : Math.max(0, Math.min(partySnap.currentHP ?? maxHp, maxHp));
 
   return {
     speciesId: sp.id,
