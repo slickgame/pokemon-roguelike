@@ -33,21 +33,6 @@ const MVP_CONFIG = { allowedSpeciesIds: [1, 4, 7, 10, 25] };
 
 const NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
-const GENDER_RATIOS: Record<number, { male: number; female: number; genderless?: boolean }> = {
-  1:  { male: 0.875, female: 0.125 }, // Bulbasaur
-  4:  { male: 0.875, female: 0.125 }, // Charmander
-  7:  { male: 0.875, female: 0.125 }, // Squirtle
-  10: { male: 0.5,   female: 0.5   }, // Caterpie
-  25: { male: 0.5,   female: 0.5   }, // Pikachu
-};
-
-function rollGender(speciesId: number, rng: () => number) {
-  const ratio = GENDER_RATIOS[speciesId];
-  if (!ratio) return rng() < 0.5 ? "Male" : "Female";
-  if (ratio.genderless) return "Genderless";
-  return rng() < ratio.male ? "Male" : "Female";
-}
-
 const _speciesMap = {};
 for (const s of DB_SPECIES) _speciesMap[s.id] = s;
 const _movesMap = {};
