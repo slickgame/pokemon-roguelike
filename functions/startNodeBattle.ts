@@ -521,7 +521,7 @@ Deno.serve(async (req) => {
     };
 
     // Persist partyState + pending encounter for this node.
-    const allHydratedForPersist = [...playerActive, ...playerBench].filter(Boolean);
+  const allHydratedForPersist = [...sanitizedPlayer.active, ...sanitizedPlayer.bench].filter(Boolean);
   const updatedPartyState = newPartyState ?? (allHydratedForPersist.length > 0
     ? allHydratedForPersist.map((poke) => ({
         speciesId: poke.speciesId,
