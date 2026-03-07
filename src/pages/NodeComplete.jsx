@@ -201,6 +201,9 @@ export default function NodeComplete() {
   }, [runId]);
 
   const handleContinue = async () => {
+    const cacheKey = `nodeCompleteSummary:${runId}:${nodeId ?? "unknown"}`;
+    sessionStorage.removeItem(cacheKey);
+
     if (summary?.runFinished || summary?.outcome === "loss") {
       navigate(createPageUrl(`Results?runId=${runId}`));
       return;
@@ -209,7 +212,7 @@ export default function NodeComplete() {
     try {
       await base44.functions.invoke("advanceRouteIfPending", { runId });
     } catch (_) {
-      // Non-blocking fallback: if this call fails, return to map without advancing.
+      // Non-blocking fallback
     }
 
     navigate(createPageUrl(`RunMap?runId=${runId}`));
