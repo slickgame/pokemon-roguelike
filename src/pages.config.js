@@ -61,6 +61,7 @@ import RunMap from './pages/RunMap';
 import Seasons from './pages/Seasons';
 import Shop from './pages/Shop';
 import StarterSelect from './pages/StarterSelect';
+import Party from './pages/Party';
 import __Layout from './Layout.jsx';
 
 
