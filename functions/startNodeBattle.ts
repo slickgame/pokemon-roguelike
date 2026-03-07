@@ -295,7 +295,14 @@ function initPartyState(pickedIds, benchSpecies, seed) {
         nature: poke.nature ?? "Hardy",
         abilityId: poke.abilityId ?? null,
         shiny: poke.shiny ?? false,
-        ivs: poke.ivs ?? {},
+        ivs: poke.ivs ?? {
+          hp: 0,
+          atk: 0,
+          def: 0,
+          spa: 0,
+          spd: 0,
+          spe: 0,
+        },
         evs: poke.evs ?? {
           hp: 0,
           atk: 0,
