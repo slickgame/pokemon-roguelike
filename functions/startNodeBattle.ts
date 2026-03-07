@@ -266,20 +266,59 @@ function hydrateFromPartyState(partySnap, speciesMap) {
 // ── Initialize partyState for a fresh run ─────────────────────────────────────
 function initPartyState(pickedIds, benchSpecies, seed) {
   const allSpecies = [
-    ...pickedIds.map((sid, i) => ({ sid, seed: `${seed}:player:active:${i}:${sid}`, level: 5 })),
-    ...benchSpecies.map((sp, i) => ({ sid: sp.id, seed: `${seed}:player:bench:${i}:${sp.id}`, level: 5 })),
+    ...pickedIds.map((sid, i) => ({
+      sid,
+      seed: `${seed}:player:active:${i}:${sid}`,
+      level: 5,
+    })),
+    ...benchSpecies.map((sp, i) => ({
+      sid: sp.id,
+      seed: `${seed}:player:bench:${i}:${sp.id}`,
+      level: 5,
+    })),
   ];
-  return allSpecies.map(({ sid, seed: subSeed, level }) => {
-    const sp = _speciesMap[sid];
-    if (!sp) return null;
-    const poke = buildFreshPokemon(sp, level, subSeed);
-    return {
-      speciesId: poke.speciesId, name: poke.name, level: poke.level,
-      exp: 0,
-      currentHP: poke.maxHp, maxHP: poke.maxHp, fainted: false, status: null,
-      moves: poke.moves.map(m => ({ id: m.id, pp: m.pp, ppMax: m.pp })),
-    };
-  }).filter(Boolean);
+
+  return allSpecies
+    .map(({ sid, seed: subSeed, level }) => {
+      const sp = _speciesMap[sid];
+      if (!sp) return null;
+
+      const poke = buildFreshPokemon(sp, level, subSeed);
+
+      return {
+        speciesId: poke.speciesId,
+        name: poke.name,
+        level: poke.level,
+        exp: poke.exp ?? 0,
+        gender: poke.gender ?? "Male",
+        types: poke.types ?? [],
+        nature: poke.nature ?? "Hardy",
+        abilityId: poke.abilityId ?? null,
+        shiny: poke.shiny ?? false,
+        ivs: poke.ivs ?? {},
+        evs: poke.evs ?? {
+          hp: 0,
+          atk: 0,
+          def: 0,
+          spa: 0,
+          spd: 0,
+          spe: 0,
+        },
+        baseStats: poke.baseStats ?? sp.baseStats,
+        stats: poke.stats ?? null,
+        currentHP: poke.maxHp,
+        maxHP: poke.maxHp,
+        fainted: false,
+        status: null,
+        heldItem: null,
+        moves: poke.moves.map((m) => ({
+          id: m.id,
+          pp: m.pp,
+          ppMax: m.pp,
+        })),
+      };
+    })
+    .filter(Boolean);
 }
 
 const TIER_LEVEL        = { weak: 5, avg: 6, skilled: 7, boss: 9 };
