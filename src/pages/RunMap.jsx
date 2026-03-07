@@ -12,7 +12,7 @@ import { ToastContainer, useToast } from "../components/ui/Toast";
 import RouteMapView from "../components/runmap/RouteMapView";
 import NextNodeCard from "../components/runmap/NextNodeCard";
 import NodeIcon from "../components/runmap/NodeIcon";
-import { MapPin, ShoppingBag, RefreshCw, Package, Coins } from "lucide-react";
+import { MapPin, RefreshCw, Package, Coins, Users } from "lucide-react";
 import BagModal from "../components/battle/BagModal";
 import RelicPanel from "../components/runmap/RelicPanel";
 
@@ -442,6 +442,14 @@ export default function RunMap() {
             <Package className="w-3.5 h-3.5" />
             Bag
           </button>
+          <button
+            onClick={() => navigate(createPageUrl(`Party?runId=${runId}`))}
+            className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-xl text-emerald-300 text-xs hover:bg-emerald-500/20 transition-colors"
+            >
+            <Users className="w-3.5 h-3.5" />
+            Party
+          </button>
+
         </div>
       </div>
 
