@@ -80,6 +80,7 @@ export const PAGES = {
     "Seasons": Seasons,
     "Shop": Shop,
     "StarterSelect": StarterSelect,
+    "Party": Party,
 }
 
 export const pagesConfig = {
