@@ -516,20 +516,41 @@ function validateItem(cmd, state, inventory) {
 // ── Convert battle state → partyState snapshot ───────────────────────────────
 function extractPartyState(playerSide) {
   const allPokes = [...playerSide.active, ...playerSide.bench];
-  return allPokes.filter(p => !!p).map(p => ({
-    speciesId: p.speciesId,
-    name: p.name,
-    level: p.level,
-    exp: p.exp ?? 0,
-    ivs: p.ivs ?? {},
-    nature: p.nature ?? "hardy",
-    stats: p.stats ?? null,   // PATCH 3: always persist computed stats
-    currentHP: p.currentHp,
-    maxHP: p.maxHp,
-    fainted: p.fainted,
-    status: p.status ?? null,
-    moves: p.moves.map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
-  }));
+
+  return allPokes
+    .filter((p) => !!p)
+    .map((p) => ({
+      speciesId: p.speciesId,
+      name: p.name,
+      level: p.level,
+      exp: p.exp ?? 0,
+      gender: p.gender ?? "Male",
+      types: p.types ?? [],
+      nature: p.nature ?? "Hardy",
+      abilityId: p.abilityId ?? null,
+      shiny: p.shiny ?? false,
+      ivs: p.ivs ?? {},
+      evs: p.evs ?? {
+        hp: 0,
+        atk: 0,
+        def: 0,
+        spa: 0,
+        spd: 0,
+        spe: 0,
+      },
+      baseStats: p.baseStats ?? null,
+      stats: p.stats ?? null,
+      currentHP: p.currentHp,
+      maxHP: p.maxHp,
+      fainted: p.fainted,
+      status: p.status ?? null,
+      heldItem: p.heldItem ?? null,
+      moves: (p.moves ?? []).map((m) => ({
+        id: m.id,
+        pp: m.currentPp ?? m.pp,
+        ppMax: m.pp,
+      })),
+    }));
 }
 
 Deno.serve(async (req) => {
