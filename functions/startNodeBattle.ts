@@ -515,19 +515,47 @@ Deno.serve(async (req) => {
 
     // Persist partyState + pending encounter for this node.
     const allHydratedForPersist = [...playerActive, ...playerBench].filter(Boolean);
-    const updatedPartyState = newPartyState ?? (allHydratedForPersist.length > 0
-      ? allHydratedForPersist.map(poke => ({
-          speciesId: poke.speciesId,
-          name: poke.name,
-          level: poke.level ?? 5,
-          exp: poke.exp ?? 0,
-          currentHP: poke.currentHp ?? 0,
-          maxHP: poke.maxHp ?? 1,
-          fainted: poke.fainted ?? false,
-          status: poke.status ?? null,
-          moves: (poke.moves ?? []).map(m => ({ id: m.id, pp: m.currentPp ?? m.pp, ppMax: m.pp })),
-        }))
-      : (existingProgress.partyState ?? []));
+  const updatedPartyState = newPartyState ?? (allHydratedForPersist.length > 0
+    ? allHydratedForPersist.map((poke) => ({
+        speciesId: poke.speciesId,
+        name: poke.name,
+        level: poke.level ?? 5,
+        exp: poke.exp ?? 0,
+        gender: poke.gender ?? "Male",
+        types: poke.types ?? [],
+        nature: poke.nature ?? "Hardy",
+        abilityId: poke.abilityId ?? null,
+        shiny: poke.shiny ?? false,
+        ivs: poke.ivs ?? {
+          hp: 0,
+          atk: 0,
+          def: 0,
+          spa: 0,
+          spd: 0,
+          spe: 0,
+        },
+        evs: poke.evs ?? {
+          hp: 0,
+          atk: 0,
+          def: 0,
+          spa: 0,
+          spd: 0,
+          spe: 0,
+        },
+        baseStats: poke.baseStats ?? null,
+        stats: poke.stats ?? null,
+        currentHP: poke.currentHp ?? 0,
+        maxHP: poke.maxHp ?? 1,
+        fainted: poke.fainted ?? false,
+        status: poke.status ?? null,
+        heldItem: poke.heldItem ?? null,
+        moves: (poke.moves ?? []).map((m) => ({
+          id: m.id,
+          pp: m.currentPp ?? m.pp,
+          ppMax: m.pp,
+        })),
+      }))
+    : (existingProgress.partyState ?? []));
 
     await base44.asServiceRole.entities.Run.update(runId, {
       results: {
