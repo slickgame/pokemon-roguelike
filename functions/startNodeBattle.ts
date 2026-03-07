@@ -200,32 +200,64 @@ function buildFreshPokemon(species, level, subSeed) {
 function hydrateFromPartyState(partySnap, speciesMap) {
   const sp = speciesMap[partySnap.speciesId];
   if (!sp) return null;
-  const moves = (partySnap.moves ?? []).map(m => {
-    const dbMove = getMoveById(m.id);
-    if (!dbMove) return null;
-    return { ...dbMove, currentPp: m.pp, pp: m.ppMax ?? dbMove.pp };
-  }).filter(Boolean);
-  if (moves.length === 0) moves.push(...buildMoveset(sp));
+
+  const moves = (partySnap.moves ?? [])
+    .map((m) => {
+      const dbMove = getMoveById(m.id);
+      if (!dbMove) return null;
+      return {
+        ...dbMove,
+        currentPp: m.pp,
+        pp: m.ppMax ?? dbMove.pp,
+      };
+    })
+    .filter(Boolean);
+
+  if (moves.length === 0) {
+    moves.push(...buildMoveset(sp));
+  }
+
   const level = partySnap.level ?? 5;
   const exp = partySnap.exp ?? 0;
-  // Recompute stats so they're always level-accurate; use stored HP
-  const freshStats = computeStats(sp.baseStats, level);
+  const ivs = partySnap.ivs ?? { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+  const evs = partySnap.evs ?? { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+  const baseStats = partySnap.baseStats ?? sp.baseStats;
+  const freshStats = computeStats(baseStats, level);
+
   const storedStats = partySnap.stats ?? null;
-  const resolvedStats = storedStats
-    ? { atk: storedStats.atk || freshStats.atk, def: storedStats.def || freshStats.def, spa: storedStats.spa || freshStats.spa, spd: storedStats.spd || freshStats.spd, spe: storedStats.spe || freshStats.spe }
-    : { atk: freshStats.atk, def: freshStats.def, spa: freshStats.spa, spd: freshStats.spd, spe: freshStats.spe };
-  const maxHp = freshStats.hp;
-  const currentHp = partySnap.fainted ? 0 : Math.min(partySnap.currentHP ?? maxHp, maxHp);
+  const resolvedStats = {
+    hp: storedStats?.hp ?? freshStats.hp,
+    atk: storedStats?.atk ?? freshStats.atk,
+    def: storedStats?.def ?? freshStats.def,
+    spa: storedStats?.spa ?? freshStats.spa,
+    spd: storedStats?.spd ?? freshStats.spd,
+    spe: storedStats?.spe ?? freshStats.spe,
+  };
+
+  const maxHp = resolvedStats.hp;
+  const currentHp = partySnap.fainted
+    ? 0
+    : Math.min(partySnap.currentHP ?? maxHp, maxHp);
+
   return {
-    speciesId: sp.id, name: sp.name, types: sp.types, level,
+    speciesId: sp.id,
+    name: partySnap.name ?? sp.name,
+    types: partySnap.types ?? sp.types,
+    level,
     exp,
-    nature: "Hardy", abilityId: sp.abilities[0], shiny: false,
-    ivs: { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 },
-    baseStats: sp.baseStats,
+    nature: partySnap.nature ?? "Hardy",
+    abilityId: partySnap.abilityId ?? sp.abilities[0],
+    gender: partySnap.gender ?? "Male",
+    shiny: partySnap.shiny ?? false,
+    ivs,
+    evs,
+    baseStats,
     stats: resolvedStats,
     maxHp,
     currentHp,
-    status: partySnap.status ?? null, statusTurns: 0,
+    status: partySnap.status ?? null,
+    statusTurns: 0,
+    heldItem: partySnap.heldItem ?? null,
     moves,
     fainted: partySnap.fainted ?? false,
   };
