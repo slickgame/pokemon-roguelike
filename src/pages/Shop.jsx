@@ -206,46 +206,50 @@ export default function Shop() {
   };
 
   const handleLeave = async () => {
-    // Resolve via canonical resolveNode then go to NodeComplete
-    if (nodeId && run) {
-      try {
-        const visitSummary = progress.shopVisitSummary ?? buildEmptyShopVisitSummary();
-        const moneySpentValue = visitSummary.moneySpent ?? 0;
-        const moneyEarnedValue = visitSummary.moneyEarned ?? 0;
-        const nodeSummary = {
-          nodeType: "shop",
-          itemsBought: visitSummary.itemsBought ?? [],
-          itemsSold: visitSummary.itemsSold ?? [],
-          moneySpent: moneySpentValue,
-          moneyEarned: moneyEarnedValue,
-          netMoneyChange: moneyEarnedValue - moneySpentValue,
-        };
-
-        await base44.functions.invoke("resolveNode", {
-          runId,
-          resolution: {
-            type: "shop",
-            nodeId,
-            ...nodeSummary,
-          },
-        });
-
-        const latestRun = await runApi.getRun(runId);
-        const latestProgress = latestRun?.results?.progress ?? {};
-        await base44.entities.Run.update(runId, {
-          results: {
-            ...(latestRun?.results ?? {}),
-            progress: { ...latestProgress, shopVisitSummary: null },
-          },
-        });
-
-        navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId}`));
-        return;
-      } catch (e) {
-        toast(e?.message || "Failed to leave shop", "error");
-      }
+    if (!nodeId || !run) {
+      toast("Missing shop node context.", "error");
+      return;
     }
-    navigate(createPageUrl(`RunMap?runId=${runId}`));
+
+    try {
+      const visitSummary = progress.shopVisitSummary ?? buildEmptyShopVisitSummary();
+      const moneySpentValue = visitSummary.moneySpent ?? 0;
+      const moneyEarnedValue = visitSummary.moneyEarned ?? 0;
+
+      const nodeSummary = {
+        nodeType: "shop",
+        nodeId,
+        itemsBought: visitSummary.itemsBought ?? [],
+        itemsSold: visitSummary.itemsSold ?? [],
+        moneySpent: moneySpentValue,
+        moneyEarned: moneyEarnedValue,
+        netMoneyChange: moneyEarnedValue - moneySpentValue,
+      };
+
+      await base44.functions.invoke("resolveNode", {
+        runId,
+        resolution: {
+          type: "shop",
+          nodeId,
+          ...nodeSummary,
+        },
+      });
+
+      const latestRun = await runApi.getRun(runId);
+      const latestProgress = latestRun?.results?.progress ?? {};
+
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(latestRun?.results ?? {}),
+          progress: { ...latestProgress, shopVisitSummary: null },
+        },
+      });
+
+      navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId}`));
+    } catch (e) {
+      toast(e?.response?.data?.error || e?.message || "Failed to leave shop", "error");
+      return; // IMPORTANT: stay on shop if leave fails
+    }
   };
 
   if (loading) return (
