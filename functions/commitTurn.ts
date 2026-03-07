@@ -401,6 +401,7 @@ function applyXpToPoke(poke, xpAmount, log) {
     // PATCH 1: Recompute FULL stats after level-up — never partial, never merged into baseStats
     const newStats = recomputeStats(poke);
     poke.stats = {
+      hp: newStats.hp,
       atk: newStats.atk,
       def: newStats.def,
       spa: newStats.spa,
