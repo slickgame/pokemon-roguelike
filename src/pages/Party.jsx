@@ -31,6 +31,184 @@ const STAT_LABELS = {
   spe: "Speed",
 };
 
+const STARTER_SPECIES = {
+  1: {
+    id: 1,
+    name: "Bulbasaur",
+    types: ["grass", "poison"],
+    baseStats: { hp: 45, atk: 49, def: 49, spa: 65, spd: 65, spe: 45 },
+    abilities: ["overgrow"],
+    startMoves: [
+      { id: "tackle", name: "Tackle", pp: 35 },
+      { id: "growl", name: "Growl", pp: 40 },
+    ],
+  },
+  4: {
+    id: 4,
+    name: "Charmander",
+    types: ["fire"],
+    baseStats: { hp: 39, atk: 52, def: 43, spa: 60, spd: 50, spe: 65 },
+    abilities: ["blaze"],
+    startMoves: [
+      { id: "scratch", name: "Scratch", pp: 35 },
+      { id: "growl", name: "Growl", pp: 40 },
+    ],
+  },
+  7: {
+    id: 7,
+    name: "Squirtle",
+    types: ["water"],
+    baseStats: { hp: 44, atk: 48, def: 65, spa: 50, spd: 64, spe: 43 },
+    abilities: ["torrent"],
+    startMoves: [
+      { id: "tackle", name: "Tackle", pp: 35 },
+      { id: "tail_whip", name: "Tail Whip", pp: 30 },
+    ],
+  },
+  10: {
+    id: 10,
+    name: "Caterpie",
+    types: ["bug"],
+    baseStats: { hp: 45, atk: 30, def: 35, spa: 20, spd: 20, spe: 45 },
+    abilities: ["shield_dust"],
+    startMoves: [
+      { id: "tackle", name: "Tackle", pp: 35 },
+      { id: "string_shot", name: "String Shot", pp: 40 },
+    ],
+  },
+  25: {
+    id: 25,
+    name: "Pikachu",
+    types: ["electric"],
+    baseStats: { hp: 35, atk: 55, def: 40, spa: 50, spd: 50, spe: 90 },
+    abilities: ["static"],
+    startMoves: [
+      { id: "thunder_shock", name: "ThunderShock", pp: 30 },
+      { id: "growl", name: "Growl", pp: 40 },
+    ],
+  },
+};
+
+const PARTY_NATURES = [
+  "Hardy","Lonely","Brave","Adamant","Naughty",
+  "Bold","Docile","Relaxed","Impish","Lax",
+  "Timid","Hasty","Serious","Jolly","Naive",
+  "Modest","Mild","Quiet","Bashful","Rash",
+  "Calm","Gentle","Sassy","Careful","Quirky"
+];
+
+const PARTY_GENDER_RATIOS = {
+  1: { male: 0.875, female: 0.125 },
+  4: { male: 0.875, female: 0.125 },
+  7: { male: 0.875, female: 0.125 },
+  10: { male: 0.5, female: 0.5 },
+  25: { male: 0.5, female: 0.5 },
+};
+
+function hashString(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  }
+  return h >>> 0;
+}
+
+function makeRng(seedStr) {
+  let s = hashString(String(seedStr));
+  return () => {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function rngInt(rng, max) {
+  return Math.floor(rng() * max);
+}
+
+function rollGender(speciesId, rng) {
+  const ratio = PARTY_GENDER_RATIOS[speciesId];
+  if (!ratio) return rng() < 0.5 ? "Male" : "Female";
+  return rng() < ratio.male ? "Male" : "Female";
+}
+
+function computeFallbackStats(baseStats, level) {
+  const cs = (b) => Math.floor((2 * b * level) / 100 + 5);
+  const chp = (b) => Math.floor((2 * b * level) / 100) + level + 10;
+  return {
+    hp: chp(baseStats.hp),
+    atk: cs(baseStats.atk),
+    def: cs(baseStats.def),
+    spa: cs(baseStats.spa),
+    spd: cs(baseStats.spd),
+    spe: cs(baseStats.spe),
+  };
+}
+
+function buildFallbackPartyFromRun(run, actions) {
+  const existingParty = run?.results?.progress?.partyState ?? [];
+  if (existingParty.length > 0) return existingParty;
+
+  const starterConfirm = [...(actions ?? [])]
+    .reverse()
+    .find((a) => a.actionType === "starter_confirm");
+
+  const team = starterConfirm?.payload?.team ?? [];
+  if (!Array.isArray(team) || team.length === 0) return [];
+
+  return team
+    .map((entry, index) => {
+      const speciesId = Number(entry?.speciesId);
+      const species = STARTER_SPECIES[speciesId];
+      if (!species) return null;
+
+      const level = 5;
+      const rng = makeRng(`${run?.seed ?? "fallback"}:starter_confirm:${index}:${speciesId}`);
+      const nature = PARTY_NATURES[rngInt(rng, PARTY_NATURES.length)];
+      const abilityId = species.abilities[rngInt(rng, species.abilities.length)];
+      const shiny = rngInt(rng, 1024) === 0;
+      const gender = rollGender(speciesId, rng);
+      const stats = computeFallbackStats(species.baseStats, level);
+
+      return {
+        speciesId,
+        name: species.name,
+        level,
+        exp: 0,
+        gender,
+        types: species.types,
+        nature,
+        abilityId,
+        shiny,
+        ivs: { ...DEFAULT_IVS },
+        evs: { ...DEFAULT_EVS },
+        baseStats: species.baseStats,
+        stats: {
+          hp: stats.hp,
+          atk: stats.atk,
+          def: stats.def,
+          spa: stats.spa,
+          spd: stats.spd,
+          spe: stats.spe,
+        },
+        currentHP: stats.hp,
+        maxHP: stats.hp,
+        fainted: false,
+        status: null,
+        heldItem: null,
+        moves: species.startMoves.map((m) => ({
+          id: m.id,
+          name: m.name,
+          pp: m.pp,
+          ppMax: m.pp,
+        })),
+      };
+    })
+    .filter(Boolean);
+}
+
 function getPartyStateFromRun(run) {
   return run?.results?.progress?.partyState ?? [];
 }
@@ -254,6 +432,7 @@ export default function Party() {
   const navigate = useNavigate();
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [run, setRun] = useState(null);
+  const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const { runId, handleInvalidRun } = useRequiredRunId({ page: "Party" });
@@ -263,28 +442,37 @@ export default function Party() {
 
     let mounted = true;
 
-    async function loadRun() {
+    async function loadPartyData() {
       try {
         setLoading(true);
-        const loadedRun = await runApi.getRun(runId);
+
+        const [loadedRun, loadedActions] = await Promise.all([
+          runApi.getRun(runId),
+          runApi.listRunActions(runId),
+        ]);
+
         if (!mounted) return;
+
         setRun(loadedRun);
+        setActions(Array.isArray(loadedActions) ? loadedActions : []);
       } catch (err) {
-        console.error("Failed to load run for Party page:", err);
+        console.error("Failed to load Party page data:", err);
         if (mounted) handleInvalidRun?.();
       } finally {
         if (mounted) setLoading(false);
       }
     }
 
-    loadRun();
+    loadPartyData();
 
     return () => {
       mounted = false;
     };
-  }, [runId]);
+  }, [runId, handleInvalidRun]);
 
-  const party = useMemo(() => getPartyStateFromRun(run), [run]);
+  const party = useMemo(() => {
+    return buildFallbackPartyFromRun(run, actions);
+  }, [run, actions]);
 
   return (
     <div style={styles.page}>
@@ -304,9 +492,7 @@ export default function Party() {
       {loading ? (
         <div style={styles.emptyBox}>Loading party...</div>
       ) : party.length === 0 ? (
-        <div style={styles.emptyBox}>
-          No party data found.
-        </div>
+        <div style={styles.emptyBox}>No party data found.</div>
       ) : (
         <div style={styles.cardGrid}>
           {party.map((mon, index) => {
@@ -327,9 +513,7 @@ export default function Party() {
                       Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
                     </div>
                   </div>
-                  <div style={styles.slotBadge}>
-                    Slot {index + 1}
-                  </div>
+                  <div style={styles.slotBadge}>Slot {index + 1}</div>
                 </div>
 
                 <div style={styles.infoLine}>
