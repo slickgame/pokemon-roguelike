@@ -1,5 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { useRequiredRunId } from "@/hooks/useRequiredRunId";
+import { runApi } from "../components/api/runApi";
 
 const DEFAULT_IVS = {
   hp: 0,
@@ -27,16 +30,6 @@ const STAT_LABELS = {
   spd: "Sp. Def",
   spe: "Speed",
 };
-
-function getRunFromStorage() {
-  try {
-    const raw = localStorage.getItem("currentRun");
-    return raw ? JSON.parse(raw) : null;
-  } catch (err) {
-    console.error("Failed to read currentRun from localStorage:", err);
-    return null;
-  }
-}
 
 function getPartyStateFromRun(run) {
   return run?.results?.progress?.partyState ?? [];
@@ -260,8 +253,37 @@ function PartyDetailModal({ pokemon, onClose }) {
 export default function Party() {
   const navigate = useNavigate();
   const [selectedPokemon, setSelectedPokemon] = useState(null);
+  const [run, setRun] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const run = useMemo(() => getRunFromStorage(), []);
+  const { runId, handleInvalidRun } = useRequiredRunId({ page: "Party" });
+
+  useEffect(() => {
+    if (!runId) return;
+
+    let mounted = true;
+
+    async function loadRun() {
+      try {
+        setLoading(true);
+        const loadedRun = await runApi.getRun(runId);
+        if (!mounted) return;
+        setRun(loadedRun);
+      } catch (err) {
+        console.error("Failed to load run for Party page:", err);
+        if (mounted) handleInvalidRun?.();
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    loadRun();
+
+    return () => {
+      mounted = false;
+    };
+  }, [runId]);
+
   const party = useMemo(() => getPartyStateFromRun(run), [run]);
 
   return (
@@ -271,12 +293,17 @@ export default function Party() {
           <h1 style={styles.pageTitle}>Party</h1>
           <p style={styles.subText}>View your current team and Pokémon details.</p>
         </div>
-        <button style={styles.backButton} onClick={() => navigate(-1)}>
+        <button
+          style={styles.backButton}
+          onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
+        >
           Back
         </button>
       </div>
 
-      {party.length === 0 ? (
+      {loading ? (
+        <div style={styles.emptyBox}>Loading party...</div>
+      ) : party.length === 0 ? (
         <div style={styles.emptyBox}>
           No party data found.
         </div>
