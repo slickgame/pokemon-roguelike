@@ -461,10 +461,13 @@ export default function Party() {
           if (!mounted) return;
           setActions([]);
         }
-      } catch (err) {
-        console.error("Failed to load Party page run:", err);
-        if (mounted) handleInvalidRun?.();
-      } finally {
+        } catch (err) {
+          console.error("Failed to load Party page run:", err);
+          if (!mounted) return;
+
+          // Only kick out if the run truly cannot be loaded.
+          handleInvalidRun?.();
+        } finally {
         if (mounted) setLoading(false);
       }
     }
@@ -474,7 +477,7 @@ export default function Party() {
     return () => {
       mounted = false;
     };
-  }, [runId, handleInvalidRun]);
+    }, [runId]);
 
   const party = useMemo(() => {
     return buildFallbackPartyFromRun(run, actions);
