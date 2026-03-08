@@ -446,17 +446,23 @@ export default function Party() {
       try {
         setLoading(true);
 
-        const [loadedRun, loadedActions] = await Promise.all([
-          runApi.getRun(runId),
-          runApi.listRunActions(runId),
-        ]);
-
+        // This is the only required call.
+        const loadedRun = await runApi.getRun(runId);
         if (!mounted) return;
-
         setRun(loadedRun);
-        setActions(Array.isArray(loadedActions) ? loadedActions : []);
+
+        // This is optional fallback support only.
+        try {
+          const loadedActions = await runApi.listRunActions(runId);
+          if (!mounted) return;
+          setActions(Array.isArray(loadedActions) ? loadedActions : []);
+        } catch (actionsErr) {
+          console.warn("Party page could not load run actions fallback:", actionsErr);
+          if (!mounted) return;
+          setActions([]);
+        }
       } catch (err) {
-        console.error("Failed to load Party page data:", err);
+        console.error("Failed to load Party page run:", err);
         if (mounted) handleInvalidRun?.();
       } finally {
         if (mounted) setLoading(false);
