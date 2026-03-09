@@ -442,6 +442,8 @@ export default function Party() {
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [partyOverride, setPartyOverride] = useState(null);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
 
   const { runId, handleInvalidRun } = useRequiredRunId({ page: "Party" });
 
