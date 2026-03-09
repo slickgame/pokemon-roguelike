@@ -234,6 +234,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (actionType === "party_reorder") {
+      const nextPartyState = Array.isArray(payload?.partyState) ? payload.partyState : null;
+
+      if (!nextPartyState) {
+        return Response.json({ error: "party_reorder requires payload.partyState" }, { status: 400 });
+      }
+
+      const existingProgress = run.results?.progress ?? {};
+
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(run.results ?? {}),
+          progress: {
+            ...existingProgress,
+            partyState: nextPartyState,
+            money: existingProgress.money ?? 0,
+            inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
+          },
+        },
+      });
+    }
+
     return Response.json({ ok: true, idx: currentIdx });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
