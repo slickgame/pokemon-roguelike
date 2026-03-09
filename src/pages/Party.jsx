@@ -435,6 +435,7 @@ function PartyDetailModal({ pokemon, onClose }) {
 export default function Party() {
   const navigate = useNavigate();
   const [selectedPokemon, setSelectedPokemon] = useState(null);
+  const [selectedPokemonIndex, setSelectedPokemonIndex] = useState(null);
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -515,7 +516,10 @@ export default function Party() {
               <button
                 key={`${mon.speciesId}-${index}`}
                 style={styles.card}
-                onClick={() => setSelectedPokemon(mon)}
+                onClick={() => {
+                  setSelectedPokemon(mon);
+                  setSelectedPokemonIndex(index);
+                }}
               >
                 <div style={styles.cardTopRow}>
                   <div>
@@ -567,6 +571,9 @@ export default function Party() {
 
       <PartyDetailModal
         pokemon={selectedPokemon}
+        slotIndex={party.findIndex(
+          (p, i) => `${p.speciesId}-${i}` === `${selectedPokemon?.speciesId}-${party.indexOf(selectedPokemon)}`
+        )}
         onClose={() => setSelectedPokemon(null)}
       />
     </div>
