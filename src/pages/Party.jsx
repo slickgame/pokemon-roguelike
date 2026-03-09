@@ -490,7 +490,6 @@ export default function Party() {
   const baseParty = useMemo(() => {
     return buildFallbackPartyFromRun(run, actions);
   }, [run, actions]);
-
   const party = partyOverride ?? baseParty;
 
   function movePartyMemberLeft(index) {
