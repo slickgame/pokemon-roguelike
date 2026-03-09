@@ -441,6 +441,7 @@ export default function Party() {
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [partyOverride, setPartyOverride] = useState(null);
 
   const { runId, handleInvalidRun } = useRequiredRunId({ page: "Party" });
 
