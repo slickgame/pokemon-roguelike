@@ -496,6 +496,57 @@ export default function Party() {
   const activeParty = party.slice(0, 3);
   const benchParty = party.slice(3);
 
+  function reorderParty(fromIndex, toIndex) {
+  if (
+    fromIndex === null ||
+    toIndex === null ||
+    fromIndex === undefined ||
+    toIndex === undefined ||
+    fromIndex === toIndex
+  ) {
+    return;
+  }
+
+  function handleDragStart(index) {
+  setDraggedIndex(index);
+}
+
+function handleDragEnter(index) {
+  setDragOverIndex(index);
+}
+
+function handleDragEnd() {
+  setDraggedIndex(null);
+  setDragOverIndex(null);
+}
+
+function handleDrop(index) {
+  if (draggedIndex === null || draggedIndex === undefined) return;
+  reorderParty(draggedIndex, index);
+  setDraggedIndex(null);
+  setDragOverIndex(null);
+}
+
+  const nextParty = [...party];
+  const [moved] = nextParty.splice(fromIndex, 1);
+  nextParty.splice(toIndex, 0, moved);
+
+  setPartyOverride(nextParty);
+
+  if (selectedPokemonIndex === fromIndex) {
+    setSelectedPokemon(moved);
+    setSelectedPokemonIndex(toIndex);
+  } else if (
+    selectedPokemonIndex !== null &&
+    selectedPokemonIndex !== undefined
+  ) {
+    const movedSelected = nextParty[selectedPokemonIndex];
+    if (movedSelected) {
+      setSelectedPokemon(movedSelected);
+    }
+  }
+}
+
   function movePartyMemberLeft(index) {
   if (index <= 0) return;
 
@@ -561,14 +612,27 @@ function movePartyMemberRight(index) {
           const xp = getXpData(mon);
 
           return (
-            <button
-              key={`${mon.speciesId}-${index}`}
-              style={styles.card}
-              onClick={() => {
-                setSelectedPokemon(mon);
-                setSelectedPokemonIndex(index);
-              }}
-            >
+              <button
+      key={`${mon.speciesId}-${index}`}
+      style={{
+        ...styles.card,
+        ...(dragOverIndex === index ? styles.dragOverCard : {}),
+        ...(draggedIndex === index ? styles.draggingCard : {}),
+      }}
+      draggable
+      onDragStart={() => handleDragStart(index)}
+      onDragEnter={() => handleDragEnter(index)}
+      onDragOver={(e) => e.preventDefault()}
+      onDragEnd={handleDragEnd}
+      onDrop={(e) => {
+        e.preventDefault();
+        handleDrop(index);
+      }}
+      onClick={() => {
+        setSelectedPokemon(mon);
+        setSelectedPokemonIndex(index);
+      }}
+    >
               <div style={styles.cardTopRow}>
                 <div>
                   <div style={styles.cardName}>
@@ -662,13 +726,26 @@ function movePartyMemberRight(index) {
 
             return (
               <button
-                key={`${mon.speciesId}-${index}`}
-                style={styles.benchCard}
-                onClick={() => {
-                  setSelectedPokemon(mon);
-                  setSelectedPokemonIndex(index);
-                }}
-              >
+  key={`${mon.speciesId}-${index}`}
+  style={{
+    ...styles.benchCard,
+    ...(dragOverIndex === index ? styles.dragOverCard : {}),
+    ...(draggedIndex === index ? styles.draggingCard : {}),
+  }}
+  draggable
+  onDragStart={() => handleDragStart(index)}
+  onDragEnter={() => handleDragEnter(index)}
+  onDragOver={(e) => e.preventDefault()}
+  onDragEnd={handleDragEnd}
+  onDrop={(e) => {
+    e.preventDefault();
+    handleDrop(index);
+  }}
+  onClick={() => {
+    setSelectedPokemon(mon);
+    setSelectedPokemonIndex(index);
+  }}
+>
                 <div style={styles.cardTopRow}>
                   <div>
                     <div style={styles.cardName}>
@@ -898,6 +975,15 @@ disabledReorderButton: {
   fontSize: "12px",
   fontWeight: 700,
   cursor: "not-allowed",
+},
+
+dragOverCard: {
+  outline: "2px solid #60a5fa",
+  transform: "scale(1.01)",
+},
+
+draggingCard: {
+  opacity: 0.55,
 },
 
 partySections: {
