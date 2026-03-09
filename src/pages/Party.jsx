@@ -441,6 +441,7 @@ export default function Party() {
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savingOrder, setSavingOrder] = useState(false);
   const [partyOverride, setPartyOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -496,6 +497,37 @@ export default function Party() {
   const activeParty = party.slice(0, 3);
   const benchParty = party.slice(3);
 
+async function persistPartyOrder(nextParty) {
+  if (!runId || !Array.isArray(nextParty)) return;
+
+  try {
+    setSavingOrder(true);
+
+    await runApi.appendAction(runId, "party_reorder", {
+      partyState: nextParty,
+    });
+
+    setRun((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        results: {
+          ...(prev.results ?? {}),
+          progress: {
+            ...(prev.results?.progress ?? {}),
+            partyState: nextParty,
+          },
+        },
+      };
+    });
+  } catch (err) {
+    console.error("Failed to save party order:", err);
+  } finally {
+    setSavingOrder(false);
+  }
+}
+
 function reorderParty(fromIndex, toIndex) {
   if (
     fromIndex === null ||
@@ -512,6 +544,7 @@ function reorderParty(fromIndex, toIndex) {
   nextParty.splice(toIndex, 0, moved);
 
   setPartyOverride(nextParty);
+  persistPartyOrder(nextParty);
 
   if (selectedPokemonIndex === fromIndex) {
     setSelectedPokemon(moved);
@@ -553,6 +586,7 @@ function handleDrop(index) {
   const nextParty = [...party];
   [nextParty[index - 1], nextParty[index]] = [nextParty[index], nextParty[index - 1]];
   setPartyOverride(nextParty);
+  persistPartyOrder(nextParty);
 
   if (selectedPokemonIndex === index) {
     setSelectedPokemon(nextParty[index - 1]);
@@ -569,6 +603,7 @@ function movePartyMemberRight(index) {
   const nextParty = [...party];
   [nextParty[index], nextParty[index + 1]] = [nextParty[index + 1], nextParty[index]];
   setPartyOverride(nextParty);
+  persistPartyOrder(nextParty);
 
   if (selectedPokemonIndex === index) {
     setSelectedPokemon(nextParty[index + 1]);
@@ -583,9 +618,12 @@ function movePartyMemberRight(index) {
     <div style={styles.page}>
       <div style={styles.headerRow}>
         <div>
-          <h1 style={styles.pageTitle}>Party</h1>
-          <p style={styles.subText}>View your current team and Pokémon details.</p>
-        </div>
+        <h1 style={styles.pageTitle}>Party</h1>
+        <p style={styles.subText}>View your current team and Pokémon details.</p>
+        {savingOrder && (
+          <p style={styles.savingText}>Saving party order...</p>
+        )}
+      </div>
         <button
           style={styles.backButton}
           onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
@@ -984,6 +1022,12 @@ dragOverCard: {
 
 draggingCard: {
   opacity: 0.55,
+},
+
+savingText: {
+  color: "#93c5fd",
+  fontSize: "13px",
+  marginTop: "6px",
 },
 
 partySections: {
