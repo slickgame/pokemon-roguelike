@@ -308,6 +308,10 @@ function getHpBarColor(mon) {
   return "#16a34a";
 }
 
+function getPartyRole(index) {
+  return index < 3 ? "Active" : "Bench";
+}
+
 function PartyDetailModal({ pokemon, onClose }) {
   const [statView, setStatView] = useState("total");
 
