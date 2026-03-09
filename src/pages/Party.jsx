@@ -496,7 +496,7 @@ export default function Party() {
   const activeParty = party.slice(0, 3);
   const benchParty = party.slice(3);
 
-  function reorderParty(fromIndex, toIndex) {
+function reorderParty(fromIndex, toIndex) {
   if (
     fromIndex === null ||
     toIndex === null ||
@@ -506,26 +506,6 @@ export default function Party() {
   ) {
     return;
   }
-
-  function handleDragStart(index) {
-  setDraggedIndex(index);
-}
-
-function handleDragEnter(index) {
-  setDragOverIndex(index);
-}
-
-function handleDragEnd() {
-  setDraggedIndex(null);
-  setDragOverIndex(null);
-}
-
-function handleDrop(index) {
-  if (draggedIndex === null || draggedIndex === undefined) return;
-  reorderParty(draggedIndex, index);
-  setDraggedIndex(null);
-  setDragOverIndex(null);
-}
 
   const nextParty = [...party];
   const [moved] = nextParty.splice(fromIndex, 1);
@@ -545,6 +525,26 @@ function handleDrop(index) {
       setSelectedPokemon(movedSelected);
     }
   }
+}
+
+function handleDragStart(index) {
+  setDraggedIndex(index);
+}
+
+function handleDragEnter(index) {
+  setDragOverIndex(index);
+}
+
+function handleDragEnd() {
+  setDraggedIndex(null);
+  setDragOverIndex(null);
+}
+
+function handleDrop(index) {
+  if (draggedIndex === null || draggedIndex === undefined) return;
+  reorderParty(draggedIndex, index);
+  setDraggedIndex(null);
+  setDragOverIndex(null);
 }
 
   function movePartyMemberLeft(index) {
