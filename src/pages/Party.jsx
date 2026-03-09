@@ -491,7 +491,7 @@ export default function Party() {
     return buildFallbackPartyFromRun(run, actions);
   }, [run, actions]);
 
-  const [partyOverride, setPartyOverride] = useState(null);
+  const party = partyOverride ?? baseParty;
 
   function movePartyMemberLeft(index) {
   if (index <= 0) return;
