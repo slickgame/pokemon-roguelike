@@ -491,6 +491,8 @@ export default function Party() {
     return buildFallbackPartyFromRun(run, actions);
   }, [run, actions]);
   const party = partyOverride ?? baseParty;
+  const activeParty = party.slice(0, 3);
+  const benchParty = party.slice(3);
 
   function movePartyMemberLeft(index) {
   if (index <= 0) return;
@@ -540,18 +542,126 @@ function movePartyMemberRight(index) {
       </div>
 
       {loading ? (
-        <div style={styles.emptyBox}>Loading party...</div>
-      ) : party.length === 0 ? (
-        <div style={styles.emptyBox}>No party data found.</div>
+  <div style={styles.emptyBox}>Loading party...</div>
+) : party.length === 0 ? (
+  <div style={styles.emptyBox}>No party data found.</div>
+) : (
+  <div style={styles.partySections}>
+    <div style={styles.partySection}>
+      <div style={styles.sectionHeader}>
+        <h2 style={styles.sectionTitleText}>Active Team</h2>
+        <div style={styles.sectionSubtitle}>These are your current battle slots.</div>
+      </div>
+
+      <div style={styles.cardGrid}>
+        {activeParty.map((mon, localIndex) => {
+          const index = localIndex;
+          const xp = getXpData(mon);
+
+          return (
+            <button
+              key={`${mon.speciesId}-${index}`}
+              style={styles.card}
+              onClick={() => {
+                setSelectedPokemon(mon);
+                setSelectedPokemonIndex(index);
+              }}
+            >
+              <div style={styles.cardTopRow}>
+                <div>
+                  <div style={styles.cardName}>
+                    {mon.name} {mon.gender ? `(${mon.gender})` : ""}
+                  </div>
+                  <div style={styles.subText}>
+                    Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
+                  </div>
+                </div>
+                <div style={styles.badgeColumn}>
+                  <div style={styles.slotBadge}>Slot {index + 1}</div>
+                  <div style={styles.activeBadge}>Active</div>
+                </div>
+              </div>
+
+              <div style={styles.infoLine}>
+                HP: {mon.currentHP ?? 0} / {mon.maxHP ?? 0}
+              </div>
+              <div style={styles.barOuter}>
+                <div
+                  style={{
+                    ...styles.barInner,
+                    width: `${getHpPercent(mon)}%`,
+                    backgroundColor: getHpBarColor(mon),
+                  }}
+                />
+              </div>
+
+              <div style={{ ...styles.infoLine, marginTop: 10 }}>
+                XP: {xp.currentExp} • Next in {xp.expNeededForNext}
+              </div>
+              <div style={styles.barOuter}>
+                <div
+                  style={{
+                    ...styles.barInner,
+                    width: `${xp.progressPercent}%`,
+                    backgroundColor: "#2563eb",
+                  }}
+                />
+              </div>
+
+              <div style={styles.metaRow}>
+                <span>Nature: {mon.nature ?? "Hardy"}</span>
+                <span>Status: {mon.fainted ? "FNT" : (mon.status ?? "Normal")}</span>
+              </div>
+
+              <div style={styles.reorderRow}>
+                <button
+                  type="button"
+                  style={index === 0 ? styles.disabledReorderButton : styles.reorderButton}
+                  disabled={index === 0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    movePartyMemberLeft(index);
+                  }}
+                >
+                  ← Move Left
+                </button>
+
+                <button
+                  type="button"
+                  style={index === party.length - 1 ? styles.disabledReorderButton : styles.reorderButton}
+                  disabled={index === party.length - 1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    movePartyMemberRight(index);
+                  }}
+                >
+                  Move Right →
+                </button>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+
+    <div style={styles.partySection}>
+      <div style={styles.sectionHeader}>
+        <h2 style={styles.sectionTitleText}>Bench</h2>
+        <div style={styles.sectionSubtitle}>Reserve Pokémon outside the current front 3.</div>
+      </div>
+
+      {benchParty.length === 0 ? (
+        <div style={styles.emptyBenchBox}>No bench Pokémon.</div>
       ) : (
         <div style={styles.cardGrid}>
-          {party.map((mon, index) => {
+          {benchParty.map((mon, localIndex) => {
+            const index = localIndex + 3;
             const xp = getXpData(mon);
 
             return (
               <button
                 key={`${mon.speciesId}-${index}`}
-                style={styles.card}
+                style={styles.benchCard}
                 onClick={() => {
                   setSelectedPokemon(mon);
                   setSelectedPokemonIndex(index);
@@ -566,19 +676,9 @@ function movePartyMemberRight(index) {
                       Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
                     </div>
                   </div>
-                <div style={styles.badgeColumn}>
-                  <div style={styles.slotBadge}>
-                    Slot {index + 1}
-                  </div>
-                  <div
-                    style={
-                      getPartyRole(index) === "Active"
-                        ? styles.activeBadge
-                        : styles.benchBadge
-                    }
-                  >
-                    {getPartyRole(index)}
-                  </div>
+                  <div style={styles.badgeColumn}>
+                    <div style={styles.slotBadge}>Slot {index + 1}</div>
+                    <div style={styles.benchBadge}>Bench</div>
                   </div>
                 </div>
 
@@ -643,7 +743,9 @@ function movePartyMemberRight(index) {
           })}
         </div>
       )}
-
+    </div>
+  </div>
+)}
       <PartyDetailModal
         pokemon={selectedPokemon}
         slotIndex={selectedPokemonIndex}
@@ -794,6 +896,55 @@ disabledReorderButton: {
   fontSize: "12px",
   fontWeight: 700,
   cursor: "not-allowed",
+},
+
+partySections: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "28px",
+},
+
+partySection: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "14px",
+},
+
+sectionHeader: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+},
+
+sectionTitleText: {
+  margin: 0,
+  fontSize: "22px",
+  fontWeight: 700,
+  color: "#f8fafc",
+},
+
+sectionSubtitle: {
+  fontSize: "13px",
+  color: "#94a3b8",
+},
+
+emptyBenchBox: {
+  background: "#111827",
+  border: "1px solid #374151",
+  borderRadius: "16px",
+  padding: "20px",
+  color: "#9ca3af",
+},
+
+benchCard: {
+  background: "#111827",
+  border: "1px solid #374151",
+  borderRadius: "16px",
+  padding: "16px",
+  textAlign: "left",
+  cursor: "pointer",
+  color: "#cbd5e1",
+  opacity: 0.88,
 },
 
   barOuter: {
