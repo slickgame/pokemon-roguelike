@@ -312,7 +312,7 @@ function getPartyRole(index) {
   return index < 3 ? "Active" : "Bench";
 }
 
-function PartyDetailModal({ pokemon, onClose }) {
+function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
 
   if (!pokemon) return null;
@@ -350,6 +350,8 @@ function PartyDetailModal({ pokemon, onClose }) {
         </div>
 
         <div style={styles.infoGrid}>
+          <div><strong>Party Slot:</strong> {slotIndex !== null && slotIndex !== undefined ? slotIndex + 1 : "-"}</div>
+          <div><strong>Role:</strong> {slotIndex !== null && slotIndex !== undefined ? getPartyRole(slotIndex) : "-"}</div>
           <div><strong>Nature:</strong> {pokemon.nature ?? "Hardy"}</div>
           <div><strong>Ability:</strong> {formatAbilityName(pokemon.abilityId)}</div>
           <div><strong>Held Item:</strong> {pokemon.heldItem ?? "None"}</div>
@@ -530,7 +532,20 @@ export default function Party() {
                       Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
                     </div>
                   </div>
-                  <div style={styles.slotBadge}>Slot {index + 1}</div>
+                <div style={styles.badgeColumn}>
+                  <div style={styles.slotBadge}>
+                    Slot {index + 1}
+                  </div>
+                  <div
+                    style={
+                      getPartyRole(index) === "Active"
+                        ? styles.activeBadge
+                        : styles.benchBadge
+                    }
+                  >
+                    {getPartyRole(index)}
+                  </div>
+                  </div>
                 </div>
 
                 <div style={styles.infoLine}>
