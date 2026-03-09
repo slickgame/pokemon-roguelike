@@ -486,9 +486,43 @@ export default function Party() {
     };
     }, [runId]);
 
-  const party = useMemo(() => {
+  const baseParty = useMemo(() => {
     return buildFallbackPartyFromRun(run, actions);
   }, [run, actions]);
+
+  const party = partyOverride ?? baseParty;
+
+  function movePartyMemberLeft(index) {
+  if (index <= 0) return;
+
+  const nextParty = [...party];
+  [nextParty[index - 1], nextParty[index]] = [nextParty[index], nextParty[index - 1]];
+  setPartyOverride(nextParty);
+
+  if (selectedPokemonIndex === index) {
+    setSelectedPokemon(nextParty[index - 1]);
+    setSelectedPokemonIndex(index - 1);
+  } else if (selectedPokemonIndex === index - 1) {
+    setSelectedPokemon(nextParty[index]);
+    setSelectedPokemonIndex(index);
+  }
+}
+
+function movePartyMemberRight(index) {
+  if (index >= party.length - 1) return;
+
+  const nextParty = [...party];
+  [nextParty[index], nextParty[index + 1]] = [nextParty[index + 1], nextParty[index]];
+  setPartyOverride(nextParty);
+
+  if (selectedPokemonIndex === index) {
+    setSelectedPokemon(nextParty[index + 1]);
+    setSelectedPokemonIndex(index + 1);
+  } else if (selectedPokemonIndex === index + 1) {
+    setSelectedPokemon(nextParty[index]);
+    setSelectedPokemonIndex(index);
+  }
+}
 
   return (
     <div style={styles.page}>
@@ -577,6 +611,32 @@ export default function Party() {
                 <div style={styles.metaRow}>
                   <span>Nature: {mon.nature ?? "Hardy"}</span>
                   <span>Status: {mon.fainted ? "FNT" : (mon.status ?? "Normal")}</span>
+                </div>
+
+                <div style={styles.reorderRow}>
+                  <button
+                    type="button"
+                    style={index === 0 ? styles.disabledReorderButton : styles.reorderButton}
+                    disabled={index === 0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      movePartyMemberLeft(index);
+                    }}
+                  >
+                    ← Move Left
+                  </button>
+
+                  <button
+                    type="button"
+                    style={index === party.length - 1 ? styles.disabledReorderButton : styles.reorderButton}
+                    disabled={index === party.length - 1}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      movePartyMemberRight(index);
+                    }}
+                  >
+                    Move Right →
+                  </button>
                 </div>
               </button>
             );
@@ -706,6 +766,36 @@ benchBadge: {
     color: "#cbd5e1",
     flexWrap: "wrap",
   },
+
+reorderRow: {
+  display: "flex",
+  gap: "8px",
+  marginTop: "12px",
+  flexWrap: "wrap",
+},
+
+reorderButton: {
+  background: "#1d4ed8",
+  color: "#ffffff",
+  border: "none",
+  borderRadius: "10px",
+  padding: "8px 10px",
+  fontSize: "12px",
+  fontWeight: 700,
+  cursor: "pointer",
+},
+
+disabledReorderButton: {
+  background: "#334155",
+  color: "#94a3b8",
+  border: "none",
+  borderRadius: "10px",
+  padding: "8px 10px",
+  fontSize: "12px",
+  fontWeight: 700,
+  cursor: "not-allowed",
+},
+
   barOuter: {
     width: "100%",
     height: "10px",
