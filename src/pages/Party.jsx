@@ -665,6 +665,34 @@ const styles = {
     padding: "6px 10px",
     borderRadius: "999px",
   },
+
+  badgeColumn: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "6px",
+  alignItems: "flex-end",
+},
+
+activeBadge: {
+  fontSize: "11px",
+  background: "#14532d",
+  color: "#bbf7d0",
+  padding: "4px 8px",
+  borderRadius: "999px",
+  border: "1px solid #166534",
+  fontWeight: 700,
+},
+
+benchBadge: {
+  fontSize: "11px",
+  background: "#3f3f46",
+  color: "#e4e4e7",
+  padding: "4px 8px",
+  borderRadius: "999px",
+  border: "1px solid #52525b",
+  fontWeight: 700,
+},
+
   infoLine: {
     fontSize: "14px",
     marginBottom: "6px",
