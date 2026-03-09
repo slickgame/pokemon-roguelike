@@ -571,10 +571,11 @@ export default function Party() {
 
       <PartyDetailModal
         pokemon={selectedPokemon}
-        slotIndex={party.findIndex(
-          (p, i) => `${p.speciesId}-${i}` === `${selectedPokemon?.speciesId}-${party.indexOf(selectedPokemon)}`
-        )}
-        onClose={() => setSelectedPokemon(null)}
+        slotIndex={selectedPokemonIndex}
+        onClose={() => {
+          setSelectedPokemon(null);
+          setSelectedPokemonIndex(null);
+        }}
       />
     </div>
   );
