@@ -312,6 +312,11 @@ function getPartyRole(index) {
   return index < 3 ? "Active" : "Bench";
 }
 
+function getPokemonSpriteUrl(speciesId) {
+  if (!speciesId) return "";
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${speciesId}.png`;
+}
+
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
 
@@ -335,7 +340,16 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.modalHeader}>
+      <div style={styles.modalHeader}>
+        <div style={styles.modalHeaderLeft}>
+          <div style={styles.modalSpriteWrap}>
+            <img
+              src={getPokemonSpriteUrl(pokemon.speciesId)}
+              alt={pokemon.name}
+              style={styles.modalSprite}
+            />
+          </div>
+
           <div>
             <h2 style={styles.modalTitle}>
               {pokemon.name} {pokemon.gender ? `(${pokemon.gender})` : ""}
@@ -344,10 +358,12 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
               Lv. {pokemon.level} • {(pokemon.types ?? []).join(" / ") || "Unknown"}
             </div>
           </div>
-          <button style={styles.closeButton} onClick={onClose}>
-            X
-          </button>
         </div>
+
+        <button style={styles.closeButton} onClick={onClose}>
+          X
+        </button>
+      </div>
 
         <div style={styles.infoGrid}>
           <div><strong>Party Slot:</strong> {slotIndex !== null && slotIndex !== undefined ? slotIndex + 1 : "-"}</div>
@@ -672,14 +688,25 @@ function movePartyMemberRight(index) {
       }}
     >
               <div style={styles.cardTopRow}>
-                <div>
-                  <div style={styles.cardName}>
-                    {mon.name} {mon.gender ? `(${mon.gender})` : ""}
+                <div style={styles.cardTopLeft}>
+                  <div style={styles.cardSpriteWrap}>
+                    <img
+                      src={getPokemonSpriteUrl(mon.speciesId)}
+                      alt={mon.name}
+                      style={styles.cardSprite}
+                    />
                   </div>
-                  <div style={styles.subText}>
-                    Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
+
+                  <div>
+                    <div style={styles.cardName}>
+                      {mon.name} {mon.gender ? `(${mon.gender})` : ""}
+                    </div>
+                    <div style={styles.subText}>
+                      Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
+                    </div>
                   </div>
                 </div>
+
                 <div style={styles.badgeColumn}>
                   <div style={styles.slotBadge}>Slot {index + 1}</div>
                   <div style={styles.activeBadge}>Active</div>
@@ -785,14 +812,25 @@ function movePartyMemberRight(index) {
   }}
 >
                 <div style={styles.cardTopRow}>
-                  <div>
-                    <div style={styles.cardName}>
-                      {mon.name} {mon.gender ? `(${mon.gender})` : ""}
+                  <div style={styles.cardTopLeft}>
+                    <div style={styles.cardSpriteWrap}>
+                      <img
+                        src={getPokemonSpriteUrl(mon.speciesId)}
+                        alt={mon.name}
+                        style={styles.cardSprite}
+                      />
                     </div>
-                    <div style={styles.subText}>
-                      Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
+
+                    <div>
+                      <div style={styles.cardName}>
+                        {mon.name} {mon.gender ? `(${mon.gender})` : ""}
+                      </div>
+                      <div style={styles.subText}>
+                        Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
+                      </div>
                     </div>
                   </div>
+
                   <div style={styles.badgeColumn}>
                     <div style={styles.slotBadge}>Slot {index + 1}</div>
                     <div style={styles.benchBadge}>Bench</div>
@@ -1077,6 +1115,55 @@ benchCard: {
   cursor: "pointer",
   color: "#cbd5e1",
   opacity: 0.88,
+},
+
+cardTopLeft: {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  minWidth: 0,
+},
+
+cardSpriteWrap: {
+  width: "68px",
+  height: "68px",
+  borderRadius: "12px",
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid #334155",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+},
+
+cardSprite: {
+  width: "56px",
+  height: "56px",
+  imageRendering: "pixelated",
+},
+
+modalHeaderLeft: {
+  display: "flex",
+  alignItems: "center",
+  gap: "16px",
+},
+
+modalSpriteWrap: {
+  width: "96px",
+  height: "96px",
+  borderRadius: "16px",
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid #334155",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+},
+
+modalSprite: {
+  width: "84px",
+  height: "84px",
+  imageRendering: "pixelated",
 },
 
   barOuter: {
