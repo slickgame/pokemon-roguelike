@@ -38,6 +38,8 @@ const MOVE_DETAILS = {
     category: "Physical",
     power: 40,
     accuracy: 100,
+    targetText: "One enemy",
+    effectText: "A basic physical attack with no additional effect.",
   },
   scratch: {
     name: "Scratch",
@@ -45,6 +47,8 @@ const MOVE_DETAILS = {
     category: "Physical",
     power: 40,
     accuracy: 100,
+    targetText: "One enemy",
+    effectText: "A basic physical attack with no additional effect.",
   },
   ember: {
     name: "Ember",
@@ -52,6 +56,8 @@ const MOVE_DETAILS = {
     category: "Special",
     power: 40,
     accuracy: 100,
+    targetText: "One enemy",
+    effectText: "A small burst of fire that damages one enemy. May burn in future versions.",
   },
   growl: {
     name: "Growl",
@@ -59,6 +65,8 @@ const MOVE_DETAILS = {
     category: "Status",
     power: null,
     accuracy: 100,
+    targetText: "All enemies",
+    effectText: "Lowers the Attack stat of all opposing Pokémon.",
   },
   vine_whip: {
     name: "Vine Whip",
@@ -66,6 +74,8 @@ const MOVE_DETAILS = {
     category: "Physical",
     power: 45,
     accuracy: 100,
+    targetText: "One enemy",
+    effectText: "Strikes one enemy with whipping vines.",
   },
   water_gun: {
     name: "Water Gun",
@@ -73,6 +83,8 @@ const MOVE_DETAILS = {
     category: "Special",
     power: 40,
     accuracy: 100,
+    targetText: "One enemy",
+    effectText: "Shoots water at one enemy. No added effect.",
   },
   thunder_shock: {
     name: "ThunderShock",
@@ -80,6 +92,8 @@ const MOVE_DETAILS = {
     category: "Special",
     power: 40,
     accuracy: 100,
+    targetText: "One enemy",
+    effectText: "A weak electric blast that damages one enemy. May paralyze in future versions.",
   },
   quick_attack: {
     name: "Quick Attack",
@@ -87,6 +101,8 @@ const MOVE_DETAILS = {
     category: "Physical",
     power: 40,
     accuracy: 100,
+    targetText: "One enemy",
+    effectText: "A fast strike that usually acts before normal-priority moves.",
   },
   string_shot: {
     name: "String Shot",
@@ -94,6 +110,8 @@ const MOVE_DETAILS = {
     category: "Status",
     power: null,
     accuracy: 95,
+    targetText: "All enemies",
+    effectText: "Lowers the Speed stat of all opposing Pokémon.",
   },
   tail_whip: {
     name: "Tail Whip",
@@ -101,6 +119,8 @@ const MOVE_DETAILS = {
     category: "Status",
     power: null,
     accuracy: 100,
+    targetText: "All enemies",
+    effectText: "Lowers the Defense stat of all opposing Pokémon.",
   },
 };
 
@@ -454,8 +474,25 @@ function getMoveDetails(move) {
       accuracy: null,
       pp: 0,
       ppMax: 0,
+      targetText: "Unknown",
+      effectText: "No description available.",
     };
   }
+
+  const dbMove = MOVE_DETAILS[move.id] ?? {};
+
+  return {
+    name: move.name ?? dbMove.name ?? "Unknown Move",
+    type: dbMove.type ?? "Unknown",
+    category: dbMove.category ?? "Unknown",
+    power: dbMove.power ?? null,
+    accuracy: dbMove.accuracy ?? null,
+    pp: move.pp ?? 0,
+    ppMax: move.ppMax ?? move.pp ?? 0,
+    targetText: dbMove.targetText ?? "Unknown",
+    effectText: dbMove.effectText ?? "No description available.",
+  };
+}
 
   const dbMove = MOVE_DETAILS[move.id] ?? {};
 
@@ -596,24 +633,36 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
                 const details = getMoveDetails(move);
 
                 return (
-                  <div key={move.id} style={styles.moveCard}>
-                    <div style={styles.moveTopRow}>
-                      <strong style={styles.moveName}>{details.name}</strong>
-                      <span style={styles.movePp}>
-                        PP {details.pp}/{details.ppMax}
-                      </span>
-                    </div>
-
-                    <div style={styles.moveMetaRow}>
-                      <span style={styles.moveMetaBadge}>{details.type}</span>
-                      <span style={styles.moveMetaBadge}>{details.category}</span>
-                    </div>
-
-                    <div style={styles.moveStatsRow}>
-                      <span>Power: {details.power ?? "--"}</span>
-                      <span>Accuracy: {details.accuracy ?? "--"}</span>
-                    </div>
+              <div key={move.id} style={styles.moveTooltipWrap}>
+                <div style={styles.moveCard}>
+                  <div style={styles.moveTopRow}>
+                    <strong style={styles.moveName}>{details.name}</strong>
+                    <span style={styles.movePp}>
+                      PP {details.pp}/{details.ppMax}
+                    </span>
                   </div>
+
+                  <div style={styles.moveMetaRow}>
+                    <span style={styles.moveMetaBadge}>{details.type}</span>
+                    <span style={styles.moveMetaBadge}>{details.category}</span>
+                  </div>
+
+                  <div style={styles.moveStatsRow}>
+                    <span>Power: {details.power ?? "--"}</span>
+                    <span>Accuracy: {details.accuracy ?? "--"}</span>
+                  </div>
+                </div>
+
+                <div style={styles.moveTooltip}>
+                  <div style={styles.moveTooltipTitle}>{details.name}</div>
+                  <div style={styles.moveTooltipText}>
+                    <strong>Target:</strong> {details.targetText}
+                  </div>
+                  <div style={styles.moveTooltipText}>
+                    <strong>Effect:</strong> {details.effectText}
+                  </div>
+                </div>
+              </div>
                 );
               })
             )}
