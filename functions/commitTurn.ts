@@ -35,22 +35,66 @@ function makeRng(seedStr) {
   return { next, getCallCount: () => callCount };
 }
 
+const NATURE_EFFECTS = {
+  Hardy:   { up: null, down: null },
+  Lonely:  { up: "atk", down: "def" },
+  Brave:   { up: "atk", down: "spe" },
+  Adamant: { up: "atk", down: "spa" },
+  Naughty: { up: "atk", down: "spd" },
+
+  Bold:    { up: "def", down: "atk" },
+  Docile:  { up: null, down: null },
+  Relaxed: { up: "def", down: "spe" },
+  Impish:  { up: "def", down: "spa" },
+  Lax:     { up: "def", down: "spd" },
+
+  Timid:   { up: "spe", down: "atk" },
+  Hasty:   { up: "spe", down: "def" },
+  Serious: { up: null, down: null },
+  Jolly:   { up: "spe", down: "spa" },
+  Naive:   { up: "spe", down: "spd" },
+
+  Modest:  { up: "spa", down: "atk" },
+  Mild:    { up: "spa", down: "def" },
+  Quiet:   { up: "spa", down: "spe" },
+  Bashful: { up: null, down: null },
+  Rash:    { up: "spa", down: "spd" },
+
+  Calm:    { up: "spd", down: "atk" },
+  Gentle:  { up: "spd", down: "def" },
+  Sassy:   { up: "spd", down: "spe" },
+  Careful: { up: "spd", down: "spa" },
+  Quirky:  { up: null, down: null },
+};
+
+function getNatureModifier(nature, statKey) {
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+  if (effect.up === statKey) return 1.1;
+  if (effect.down === statKey) return 0.9;
+  return 1.0;
+}
+
 // ── Stat helpers ──────────────────────────────────────────────────────────────
-function computeStatValue(base, level, isHP = false) {
-  const inner = Math.floor((2 * base * level) / 100);
-  return isHP ? inner + level + 10 : Math.floor((inner + 5));
+function computeStatValue(base, level, iv = 0, ev = 0, natureMod = 1, isHP = false) {
+  const inner = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100);
+  if (isHP) return inner + level + 10;
+  return Math.floor((inner + 5) * natureMod);
 }
 
 function computeAllStats(mon) {
   const b = mon.baseStats;
   const lv = mon.level;
+  const ivs = mon.ivs ?? {};
+  const evs = mon.evs ?? {};
+  const nature = mon.nature ?? "Hardy";
+
   return {
-    hp:  computeStatValue(b.hp,  lv, true),
-    atk: computeStatValue(b.atk, lv),
-    def: computeStatValue(b.def, lv),
-    spa: computeStatValue(b.spa, lv),
-    spd: computeStatValue(b.spd, lv),
-    spe: computeStatValue(b.spe, lv),
+    hp:  computeStatValue(b.hp,  lv, ivs.hp ?? 0,  evs.hp ?? 0,  1, true),
+    atk: computeStatValue(b.atk, lv, ivs.atk ?? 0, evs.atk ?? 0, getNatureModifier(nature, "atk")),
+    def: computeStatValue(b.def, lv, ivs.def ?? 0, evs.def ?? 0, getNatureModifier(nature, "def")),
+    spa: computeStatValue(b.spa, lv, ivs.spa ?? 0, evs.spa ?? 0, getNatureModifier(nature, "spa")),
+    spd: computeStatValue(b.spd, lv, ivs.spd ?? 0, evs.spd ?? 0, getNatureModifier(nature, "spd")),
+    spe: computeStatValue(b.spe, lv, ivs.spe ?? 0, evs.spe ?? 0, getNatureModifier(nature, "spe")),
   };
 }
 
@@ -59,7 +103,18 @@ function getStat(mon, key) {
   if (typeof val === "number" && isFinite(val) && val > 0) return val;
   // Emergency recompute fallback
   if (!mon.stats) mon.stats = {};
-  const computed = computeStatValue(mon.baseStats[key], mon.level, key === "hp");
+const ivs = mon.ivs ?? {};
+const evs = mon.evs ?? {};
+const nature = mon.nature ?? "Hardy";
+
+const computed = computeStatValue(
+  mon.baseStats[key],
+  mon.level,
+  ivs[key] ?? 0,
+  evs[key] ?? 0,
+  key === "hp" ? 1 : getNatureModifier(nature, key),
+  key === "hp"
+);
   mon.stats[key] = computed;
   return computed;
 }
