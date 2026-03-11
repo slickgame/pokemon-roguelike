@@ -31,99 +31,6 @@ const STAT_LABELS = {
   spe: "Speed",
 };
 
-const MOVE_DETAILS = {
-  tackle: {
-    name: "Tackle",
-    type: "Normal",
-    category: "Physical",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A basic physical attack with no additional effect.",
-  },
-  scratch: {
-    name: "Scratch",
-    type: "Normal",
-    category: "Physical",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A basic physical attack with no additional effect.",
-  },
-  ember: {
-    name: "Ember",
-    type: "Fire",
-    category: "Special",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A small burst of fire that damages one enemy. May burn in future versions.",
-  },
-  growl: {
-    name: "Growl",
-    type: "Normal",
-    category: "Status",
-    power: null,
-    accuracy: 100,
-    targetText: "All enemies",
-    effectText: "Lowers the Attack stat of all opposing Pokémon.",
-  },
-  vine_whip: {
-    name: "Vine Whip",
-    type: "Grass",
-    category: "Physical",
-    power: 45,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "Strikes one enemy with whipping vines.",
-  },
-  water_gun: {
-    name: "Water Gun",
-    type: "Water",
-    category: "Special",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "Shoots water at one enemy. No added effect.",
-  },
-  thunder_shock: {
-    name: "ThunderShock",
-    type: "Electric",
-    category: "Special",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A weak electric blast that damages one enemy. May paralyze in future versions.",
-  },
-  quick_attack: {
-    name: "Quick Attack",
-    type: "Normal",
-    category: "Physical",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A fast strike that usually acts before normal-priority moves.",
-  },
-  string_shot: {
-    name: "String Shot",
-    type: "Bug",
-    category: "Status",
-    power: null,
-    accuracy: 95,
-    targetText: "All enemies",
-    effectText: "Lowers the Speed stat of all opposing Pokémon.",
-  },
-  tail_whip: {
-    name: "Tail Whip",
-    type: "Normal",
-    category: "Status",
-    power: null,
-    accuracy: 100,
-    targetText: "All enemies",
-    effectText: "Lowers the Defense stat of all opposing Pokémon.",
-  },
-};
-
 const STARTER_SPECIES = {
   1: {
     id: 1,
@@ -189,6 +96,38 @@ const PARTY_NATURES = [
   "Modest","Mild","Quiet","Bashful","Rash",
   "Calm","Gentle","Sassy","Careful","Quirky"
 ];
+
+const NATURE_EFFECTS = {
+  Hardy:   { up: null, down: null },
+  Lonely:  { up: "atk", down: "def" },
+  Brave:   { up: "atk", down: "spe" },
+  Adamant: { up: "atk", down: "spa" },
+  Naughty: { up: "atk", down: "spd" },
+
+  Bold:    { up: "def", down: "atk" },
+  Docile:  { up: null, down: null },
+  Relaxed: { up: "def", down: "spe" },
+  Impish:  { up: "def", down: "spa" },
+  Lax:     { up: "def", down: "spd" },
+
+  Timid:   { up: "spe", down: "atk" },
+  Hasty:   { up: "spe", down: "def" },
+  Serious: { up: null, down: null },
+  Jolly:   { up: "spe", down: "spa" },
+  Naive:   { up: "spe", down: "spd" },
+
+  Modest:  { up: "spa", down: "atk" },
+  Mild:    { up: "spa", down: "def" },
+  Quiet:   { up: "spa", down: "spe" },
+  Bashful: { up: null, down: null },
+  Rash:    { up: "spa", down: "spd" },
+
+  Calm:    { up: "spd", down: "atk" },
+  Gentle:  { up: "spd", down: "def" },
+  Sassy:   { up: "spd", down: "spe" },
+  Careful: { up: "spd", down: "spa" },
+  Quirky:  { up: null, down: null },
+};
 
 const PARTY_GENDER_RATIOS = {
   1: { male: 0.875, female: 0.125 },
@@ -314,6 +253,28 @@ function formatAbilityName(abilityId) {
     .join(" ");
 }
 
+function formatStatName(statKey) {
+  const map = {
+    hp: "HP",
+    atk: "Attack",
+    def: "Defense",
+    spa: "Sp. Atk",
+    spd: "Sp. Def",
+    spe: "Speed",
+  };
+  return map[statKey] ?? statKey;
+}
+
+function getNatureEffectText(nature) {
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+
+  if (!effect.up || !effect.down) {
+    return "Neutral nature";
+  }
+
+  return `+${formatStatName(effect.up)}, -${formatStatName(effect.down)}`;
+}
+
 function getGrowthRateForSpecies(speciesId) {
   const GROWTH_RATES = {
     1: "Medium Slow",
@@ -410,39 +371,8 @@ function getPokemonSpriteUrl(speciesId) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${speciesId}.png`;
 }
 
-function getMoveDetails(move) {
-  if (!move) {
-    return {
-      name: "Unknown Move",
-      type: "Unknown",
-      category: "Unknown",
-      power: null,
-      accuracy: null,
-      pp: 0,
-      ppMax: 0,
-      targetText: "Unknown",
-      effectText: "No description available.",
-    };
-  }
-
-  const dbMove = MOVE_DETAILS[move.id] ?? {};
-
-  return {
-    name: move.name ?? dbMove.name ?? "Unknown Move",
-    type: dbMove.type ?? "Unknown",
-    category: dbMove.category ?? "Unknown",
-    power: dbMove.power ?? null,
-    accuracy: dbMove.accuracy ?? null,
-    pp: move.pp ?? 0,
-    ppMax: move.ppMax ?? move.pp ?? 0,
-    targetText: dbMove.targetText ?? "Unknown",
-    effectText: dbMove.effectText ?? "No description available.",
-  };
-}
-
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
-  const [hoveredMoveId, setHoveredMoveId] = useState(null);
 
   if (!pokemon) return null;
 
@@ -492,7 +422,12 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
         <div style={styles.infoGrid}>
           <div><strong>Party Slot:</strong> {slotIndex !== null && slotIndex !== undefined ? slotIndex + 1 : "-"}</div>
           <div><strong>Role:</strong> {slotIndex !== null && slotIndex !== undefined ? getPartyRole(slotIndex) : "-"}</div>
-          <div><strong>Nature:</strong> {pokemon.nature ?? "Hardy"}</div>
+          <div>
+            <strong>Nature:</strong> {pokemon.nature ?? "Hardy"}{" "}
+            <span style={styles.natureEffectText}>
+              ({getNatureEffectText(pokemon.nature ?? "Hardy")})
+            </span>
+          </div>
           <div><strong>Ability:</strong> {formatAbilityName(pokemon.abilityId)}</div>
           <div><strong>Held Item:</strong> {pokemon.heldItem ?? "None"}</div>
           <div><strong>Status:</strong> {pokemon.fainted ? "FNT" : (pokemon.status ?? "Normal")}</div>
@@ -552,61 +487,23 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
           </div>
         </div>
 
-<div style={styles.section}>
-  <div style={styles.sectionTitle}>Moves</div>
-  <div style={styles.movesList}>
-    {(pokemon.moves ?? []).length === 0 ? (
-      <div style={styles.subText}>No moves found.</div>
-    ) : (
-      pokemon.moves.map((move) => {
-        const details = getMoveDetails(move);
-
-        return (
-          <div
-                  key={move.id}
-                  style={styles.moveTooltipWrap}
-                  onMouseEnter={() => setHoveredMoveId(move.id)}
-                  onMouseLeave={() => setHoveredMoveId(null)}
-                >
-          <div style={styles.moveCard}>
-            <div style={styles.moveTopRow}>
-              <strong style={styles.moveName}>{details.name}</strong>
-              <span style={styles.movePp}>
-                PP {details.pp}/{details.ppMax}
-              </span>
-            </div>
-
-            <div style={styles.moveMetaRow}>
-              <span style={styles.moveMetaBadge}>{details.type}</span>
-              <span style={styles.moveMetaBadge}>{details.category}</span>
-            </div>
-
-            <div style={styles.moveStatsRow}>
-              <span>Power: {details.power ?? "--"}</span>
-              <span>Accuracy: {details.accuracy ?? "--"}</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              ...styles.moveTooltip,
-              opacity: hoveredMoveId === move.id ? 1 : 0,
-            }}
-          >
-            <div style={styles.moveTooltipTitle}>{details.name}</div>
-            <div style={styles.moveTooltipText}>
-              <strong>Target:</strong> {details.targetText}
-            </div>
-            <div style={styles.moveTooltipText}>
-              <strong>Effect:</strong> {details.effectText}
-            </div>
+        <div style={styles.section}>
+          <div style={styles.sectionTitle}>Moves</div>
+          <div style={styles.movesList}>
+            {(pokemon.moves ?? []).length === 0 ? (
+              <div style={styles.subText}>No moves found.</div>
+            ) : (
+              pokemon.moves.map((move) => (
+                <div key={move.id} style={styles.moveRow}>
+                  <span>{move.name}</span>
+                  <strong>
+                    PP {move.pp ?? 0}/{move.ppMax ?? move.pp ?? 0}
+                  </strong>
+                </div>
+              ))
+            )}
           </div>
         </div>
-        );
-      })
-    )}
-  </div>
-</div>
       </div>
     </div>
   );
@@ -1162,6 +1059,11 @@ activeBadge: {
   fontWeight: 700,
 },
 
+natureEffectText: {
+  color: "#93c5fd",
+  fontSize: "12px",
+},
+
 benchBadge: {
   fontSize: "11px",
   background: "#3f3f46",
@@ -1202,57 +1104,6 @@ reorderButton: {
   fontSize: "12px",
   fontWeight: 700,
   cursor: "pointer",
-},
-
-moveCard: {
-  background: "#1e293b",
-  border: "1px solid #334155",
-  borderRadius: "12px",
-  padding: "12px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-},
-
-moveTopRow: {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "12px",
-  alignItems: "center",
-},
-
-moveName: {
-  fontSize: "15px",
-  color: "#f8fafc",
-},
-
-movePp: {
-  fontSize: "13px",
-  color: "#cbd5e1",
-  fontWeight: 700,
-},
-
-moveMetaRow: {
-  display: "flex",
-  gap: "8px",
-  flexWrap: "wrap",
-},
-
-moveMetaBadge: {
-  fontSize: "12px",
-  background: "#334155",
-  color: "#e2e8f0",
-  borderRadius: "999px",
-  padding: "4px 8px",
-},
-
-moveStatsRow: {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "12px",
-  fontSize: "13px",
-  color: "#cbd5e1",
-  flexWrap: "wrap",
 },
 
 disabledReorderButton: {
@@ -1371,41 +1222,6 @@ modalSpriteWrap: {
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
-},
-
-moveTooltipWrap: {
-  position: "relative",
-},
-
-moveTooltip: {
-  position: "absolute",
-  left: "0",
-  top: "100%",
-  marginTop: "8px",
-  width: "260px",
-  background: "#020617",
-  color: "#e2e8f0",
-  border: "1px solid #334155",
-  borderRadius: "12px",
-  padding: "10px 12px",
-  zIndex: 20,
-  boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-  opacity: 0,
-  pointerEvents: "none",
-  transition: "opacity 0.15s ease",
-},
-
-moveTooltipTitle: {
-  fontSize: "14px",
-  fontWeight: 700,
-  marginBottom: "6px",
-  color: "#f8fafc",
-},
-
-moveTooltipText: {
-  fontSize: "12px",
-  lineHeight: 1.45,
-  color: "#cbd5e1",
 },
 
 modalSprite: {
