@@ -505,7 +505,7 @@ function getMoveDetails(move) {
     pp: move.pp ?? 0,
     ppMax: move.ppMax ?? move.pp ?? 0,
   };
-}
+
 
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
