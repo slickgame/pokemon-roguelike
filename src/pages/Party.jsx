@@ -368,6 +368,22 @@ function getNatureEffectText(nature) {
   return `+${formatStatName(effect.up)}, -${formatStatName(effect.down)}`;
 }
 
+function getNatureStatStyle(nature, statKey, statView) {
+  if (statView !== "total") return {};
+
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+
+  if (effect.up === statKey) {
+    return styles.natureBoostStat;
+  }
+
+  if (effect.down === statKey) {
+    return styles.natureLowerStat;
+  }
+
+  return {};
+}
+
 function getGrowthRateForSpecies(speciesId) {
   const GROWTH_RATES = {
     1: "Medium Slow",
@@ -602,12 +618,26 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
           </div>
 
           <div style={styles.statsGrid}>
-            {Object.keys(STAT_LABELS).map((key) => (
-              <div key={key} style={styles.statRow}>
-                <span>{STAT_LABELS[key]}</span>
-                <strong>{selectedStats?.[key] ?? 0}</strong>
-              </div>
-            ))}
+            {Object.keys(STAT_LABELS).map((key) => {
+              const natureStatStyle = getNatureStatStyle(
+                pokemon.nature ?? "Hardy",
+                key,
+                statView
+              );
+
+              return (
+                <div
+                  key={key}
+                  style={{
+                    ...styles.statRow,
+                    ...natureStatStyle,
+                  }}
+                >
+                  <span>{STAT_LABELS[key]}</span>
+                  <strong>{selectedStats?.[key] ?? 0}</strong>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -1476,6 +1506,18 @@ moveTooltipText: {
   fontSize: "12px",
   lineHeight: 1.45,
   color: "#cbd5e1",
+},
+
+natureBoostStat: {
+  border: "1px solid #166534",
+  background: "rgba(22, 101, 52, 0.22)",
+  color: "#bbf7d0",
+},
+
+natureLowerStat: {
+  border: "1px solid #991b1b",
+  background: "rgba(153, 27, 27, 0.20)",
+  color: "#fecaca",
 },
 
   barOuter: {
