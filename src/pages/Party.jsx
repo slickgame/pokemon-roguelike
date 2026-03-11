@@ -31,6 +31,79 @@ const STAT_LABELS = {
   spe: "Speed",
 };
 
+const MOVE_DETAILS = {
+  tackle: {
+    name: "Tackle",
+    type: "Normal",
+    category: "Physical",
+    power: 40,
+    accuracy: 100,
+  },
+  scratch: {
+    name: "Scratch",
+    type: "Normal",
+    category: "Physical",
+    power: 40,
+    accuracy: 100,
+  },
+  ember: {
+    name: "Ember",
+    type: "Fire",
+    category: "Special",
+    power: 40,
+    accuracy: 100,
+  },
+  growl: {
+    name: "Growl",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    accuracy: 100,
+  },
+  vine_whip: {
+    name: "Vine Whip",
+    type: "Grass",
+    category: "Physical",
+    power: 45,
+    accuracy: 100,
+  },
+  water_gun: {
+    name: "Water Gun",
+    type: "Water",
+    category: "Special",
+    power: 40,
+    accuracy: 100,
+  },
+  thunder_shock: {
+    name: "ThunderShock",
+    type: "Electric",
+    category: "Special",
+    power: 40,
+    accuracy: 100,
+  },
+  quick_attack: {
+    name: "Quick Attack",
+    type: "Normal",
+    category: "Physical",
+    power: 40,
+    accuracy: 100,
+  },
+  string_shot: {
+    name: "String Shot",
+    type: "Bug",
+    category: "Status",
+    power: null,
+    accuracy: 95,
+  },
+  tail_whip: {
+    name: "Tail Whip",
+    type: "Normal",
+    category: "Status",
+    power: null,
+    accuracy: 100,
+  },
+};
+
 const STARTER_SPECIES = {
   1: {
     id: 1,
@@ -371,6 +444,32 @@ function getPokemonSpriteUrl(speciesId) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${speciesId}.png`;
 }
 
+function getMoveDetails(move) {
+  if (!move) {
+    return {
+      name: "Unknown Move",
+      type: "Unknown",
+      category: "Unknown",
+      power: null,
+      accuracy: null,
+      pp: 0,
+      ppMax: 0,
+    };
+  }
+
+  const dbMove = MOVE_DETAILS[move.id] ?? {};
+
+  return {
+    name: move.name ?? dbMove.name ?? "Unknown Move",
+    type: dbMove.type ?? "Unknown",
+    category: dbMove.category ?? "Unknown",
+    power: dbMove.power ?? null,
+    accuracy: dbMove.accuracy ?? null,
+    pp: move.pp ?? 0,
+    ppMax: move.ppMax ?? move.pp ?? 0,
+  };
+}
+
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
 
@@ -493,14 +592,30 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
             {(pokemon.moves ?? []).length === 0 ? (
               <div style={styles.subText}>No moves found.</div>
             ) : (
-              pokemon.moves.map((move) => (
-                <div key={move.id} style={styles.moveRow}>
-                  <span>{move.name}</span>
-                  <strong>
-                    PP {move.pp ?? 0}/{move.ppMax ?? move.pp ?? 0}
-                  </strong>
-                </div>
-              ))
+              pokemon.moves.map((move) => {
+                const details = getMoveDetails(move);
+
+                return (
+                  <div key={move.id} style={styles.moveCard}>
+                    <div style={styles.moveTopRow}>
+                      <strong style={styles.moveName}>{details.name}</strong>
+                      <span style={styles.movePp}>
+                        PP {details.pp}/{details.ppMax}
+                      </span>
+                    </div>
+
+                    <div style={styles.moveMetaRow}>
+                      <span style={styles.moveMetaBadge}>{details.type}</span>
+                      <span style={styles.moveMetaBadge}>{details.category}</span>
+                    </div>
+
+                    <div style={styles.moveStatsRow}>
+                      <span>Power: {details.power ?? "--"}</span>
+                      <span>Accuracy: {details.accuracy ?? "--"}</span>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
