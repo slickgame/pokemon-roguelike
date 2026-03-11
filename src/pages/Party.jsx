@@ -1445,6 +1445,41 @@ moveStatsRow: {
   flexWrap: "wrap",
 },
 
+moveTooltipWrap: {
+  position: "relative",
+},
+
+moveTooltip: {
+  position: "absolute",
+  left: "0",
+  top: "100%",
+  marginTop: "8px",
+  width: "260px",
+  background: "#020617",
+  color: "#e2e8f0",
+  border: "1px solid #334155",
+  borderRadius: "12px",
+  padding: "10px 12px",
+  zIndex: 20,
+  boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+  opacity: 0,
+  pointerEvents: "none",
+  transition: "opacity 0.15s ease",
+},
+
+moveTooltipTitle: {
+  fontSize: "14px",
+  fontWeight: 700,
+  marginBottom: "6px",
+  color: "#f8fafc",
+},
+
+moveTooltipText: {
+  fontSize: "12px",
+  lineHeight: 1.45,
+  color: "#cbd5e1",
+},
+
   barOuter: {
     width: "100%",
     height: "10px",
