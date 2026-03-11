@@ -1345,6 +1345,57 @@ modalSprite: {
   imageRendering: "pixelated",
 },
 
+moveCard: {
+  background: "#1e293b",
+  border: "1px solid #334155",
+  borderRadius: "12px",
+  padding: "12px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+},
+
+moveTopRow: {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "12px",
+  alignItems: "center",
+},
+
+moveName: {
+  fontSize: "15px",
+  color: "#f8fafc",
+},
+
+movePp: {
+  fontSize: "13px",
+  color: "#cbd5e1",
+  fontWeight: 700,
+},
+
+moveMetaRow: {
+  display: "flex",
+  gap: "8px",
+  flexWrap: "wrap",
+},
+
+moveMetaBadge: {
+  fontSize: "12px",
+  background: "#334155",
+  color: "#e2e8f0",
+  borderRadius: "999px",
+  padding: "4px 8px",
+},
+
+moveStatsRow: {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "12px",
+  fontSize: "13px",
+  color: "#cbd5e1",
+  flexWrap: "wrap",
+},
+
   barOuter: {
     width: "100%",
     height: "10px",
