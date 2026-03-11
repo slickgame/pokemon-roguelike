@@ -509,6 +509,7 @@ function getMoveDetails(move) {
 
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
+  const [hoveredMoveId, setHoveredMoveId] = useState(null);
 
   if (!pokemon) return null;
 
@@ -633,7 +634,12 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
                 const details = getMoveDetails(move);
 
                 return (
-              <div key={move.id} style={styles.moveTooltipWrap}>
+              <div
+                key={move.id}
+                style={styles.moveTooltipWrap}
+                onMouseEnter={() => setHoveredMoveId(move.id)}
+                onMouseLeave={() => setHoveredMoveId(null)}
+              >
                 <div style={styles.moveCard}>
                   <div style={styles.moveTopRow}>
                     <strong style={styles.moveName}>{details.name}</strong>
@@ -653,7 +659,12 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
                   </div>
                 </div>
 
-                <div style={styles.moveTooltip}>
+                <div
+                  style={{
+                    ...styles.moveTooltip,
+                    opacity: hoveredMoveId === move.id ? 1 : 0,
+                  }}
+                >
                   <div style={styles.moveTooltipTitle}>{details.name}</div>
                   <div style={styles.moveTooltipText}>
                     <strong>Target:</strong> {details.targetText}
