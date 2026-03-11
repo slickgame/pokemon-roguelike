@@ -494,19 +494,6 @@ function getMoveDetails(move) {
   };
 }
 
-  const dbMove = MOVE_DETAILS[move.id] ?? {};
-
-  return {
-    name: move.name ?? dbMove.name ?? "Unknown Move",
-    type: dbMove.type ?? "Unknown",
-    category: dbMove.category ?? "Unknown",
-    power: dbMove.power ?? null,
-    accuracy: dbMove.accuracy ?? null,
-    pp: move.pp ?? 0,
-    ppMax: move.ppMax ?? move.pp ?? 0,
-  };
-
-
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
   const [hoveredMoveId, setHoveredMoveId] = useState(null);
