@@ -749,6 +749,7 @@ export default function Party() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [savingOrder, setSavingOrder] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | success | error
   const [partyOverride, setPartyOverride] = useState(null);
   const [boxOverride, setBoxOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -756,6 +757,17 @@ export default function Party() {
   const [saveMessage, setSaveMessage] = useState("");
 
   const { runId } = useRequiredRunId({ page: "Party" });
+
+useEffect(() => {
+  if (!saveMessage) return;
+
+  const timeout = setTimeout(() => {
+    setSaveMessage("");
+    setSaveStatus("idle");
+  }, 2200);
+
+  return () => clearTimeout(timeout);
+}, [saveMessage]);
 
 useEffect(() => {
   if (!runId) return;
@@ -821,17 +833,25 @@ useEffect(() => {
     setBoxOverride(nextBox);
     setSaveMessage("Saving...");
 
-  try {
-    await runApi.appendAction(runId, "party_box_update", {
-      partyState: nextParty,
-      boxState: nextBox,
-    });
-    setSaveMessage(message);
-  } catch (err) {
-    console.error("Failed to save party/box update:", err);
-    setSaveMessage("Save failed.");
-  }
+try {
+  setSavingOrder(true);
+  setSaveStatus("saving");
+  setSaveMessage("Saving party changes...");
 
+  await runApi.appendAction(runId, "party_box_update", {
+    partyState: nextParty,
+    boxState: nextBox,
+  });
+
+  setSaveStatus("success");
+  setSaveMessage(message || "Party changes saved.");
+} catch (err) {
+  console.error("Failed to save party/box update:", err);
+  setSaveStatus("error");
+  setSaveMessage("Save failed. Please try again.");
+} finally {
+  setSavingOrder(false);
+}
     setTimeout(() => {
       setSaveMessage("");
     }, 1800);
