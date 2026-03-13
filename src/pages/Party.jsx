@@ -969,7 +969,19 @@ useEffect(() => {
           <p style={styles.subText}>View your current team, Pokémon details, and storage box.</p>
         </div>
         <div style={styles.headerButtonStack}>
-          {saveMessage ? <div style={styles.saveToast}>{saveMessage}</div> : null}
+          {saveMessage ? (
+            <div
+              style={
+                saveStatus === "saving"
+                  ? styles.saveBannerSaving
+                  : saveStatus === "error"
+                  ? styles.saveBannerError
+                  : styles.saveBannerSuccess
+              }
+            >
+              {saveMessage}
+            </div>
+          ) : null}
           <button
             style={styles.backButton}
             onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
