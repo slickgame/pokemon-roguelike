@@ -614,7 +614,7 @@ function PokemonCard({
         ...(draggedIndex === index ? styles.draggingCard : {}),
         ...(mon.shiny ? styles.shinyCardAccent : {}),
       }}
-      draggable
+      draggable={!savingOrder}
       onDragStart={() => onDragStart(index)}
       onDragEnter={() => onDragEnter(index)}
       onDragOver={(e) => e.preventDefault()}
