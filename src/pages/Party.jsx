@@ -754,7 +754,7 @@ export default function Party() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [saveMessage, setSaveMessage] = useState("");
 
-  const { runId, handleInvalidRun } = useRequiredRunId({ page: "Party" });
+  const { runId } = useRequiredRunId({ page: "Party" });
 
 useEffect(() => {
   if (!runId) return;
