@@ -595,6 +595,7 @@ function PokemonCard({
   onAddToParty,
   disableLeft,
   disableRight,
+  savingOrder = false,
 }) {
   const xp = getXpData(mon);
   const [spriteErrored, setSpriteErrored] = useState(false);
