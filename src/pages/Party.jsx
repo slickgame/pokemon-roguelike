@@ -1079,6 +1079,7 @@ function movePartyMemberRight(index) {
   key={`${mon.speciesId}-${index}`}
   style={{
     ...styles.benchCard,
+    ...(mon.shiny ? styles.shinyBenchCard : {}),
     ...(dragOverIndex === index ? styles.dragOverCard : {}),
     ...(draggedIndex === index ? styles.draggingCard : {}),
   }}
