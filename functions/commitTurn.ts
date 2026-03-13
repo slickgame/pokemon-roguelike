@@ -407,70 +407,99 @@ function recomputeStats(poke) {
 }
 
 // ── EV Architecture ───────────────────────────────────────────────────────────
-// Official caps: 252 per stat, 510 total across all stats.
-// No EVs are awarded from battle currently — this is the hook for future
-// sources (events, relics, camp training, shops).
-const EV_STAT_CAP   = 252;
-const EV_TOTAL_CAP  = 510;
+// Official caps: 252 per stat, 510 total.
+// No EVs are awarded from battle — this is the hook for future sources
+// (events, relics, camp training, shops).
+
+const EV_STAT_CAP  = 252;
+const EV_TOTAL_CAP = 510;
+const EV_STAT_ORDER = ["hp","atk","def","spa","spd","spe"];
 
 /**
- * Apply an EV grant to a Pokémon in-battle object.
- * `evGrant` is a partial object, e.g. { atk: 3, spe: 1 }.
- * Returns the actual EVs applied (after cap enforcement).
- * Also recalculates affected stats so they're immediately correct.
- *
- * Call this wherever EVs should be granted in the future.
- * Currently called with an empty grant {} — zero overhead, no stat changes.
+ * Ensure an EVs object has all six stats, each clamped to [0, 252],
+ * and total ≤ 510. Overflow is trimmed in EV_STAT_ORDER order.
+ * Safe to call on any raw/partial EV object.
  */
-function applyEvsToPoke(poke, evGrant, log) {
-  if (!poke || typeof evGrant !== "object") return {};
-
-  const evs = poke.evs ?? { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 };
-  poke.evs = evs;
-
-  // Current total EVs across all stats
-  const totalBefore = Object.values(evs).reduce((s, v) => s + (v ?? 0), 0);
-  const remaining   = Math.max(0, EV_TOTAL_CAP - totalBefore);
-  if (remaining === 0) return {};
-
-  let totalUsed = 0;
-  const applied = {};
-
-  for (const stat of ["hp","atk","def","spa","spd","spe"]) {
-    const amount = evGrant[stat] ?? 0;
-    if (amount <= 0) continue;
-
-    const currentEv = evs[stat] ?? 0;
-    // Per-stat cap
-    const canAddStat  = Math.max(0, EV_STAT_CAP - currentEv);
-    // Total cap (shared bucket)
-    const canAddTotal = Math.max(0, remaining - totalUsed);
-    const add = Math.min(amount, canAddStat, canAddTotal);
-    if (add <= 0) continue;
-
-    evs[stat] = currentEv + add;
-    applied[stat] = add;
-    totalUsed += add;
+function normalizeEvs(evs) {
+  let total = 0;
+  const out = {};
+  for (const stat of EV_STAT_ORDER) {
+    const raw = Math.max(0, Math.floor(evs?.[stat] ?? 0));
+    const capped = Math.min(raw, EV_STAT_CAP);
+    const allowed = Math.min(capped, Math.max(0, EV_TOTAL_CAP - total));
+    out[stat] = allowed;
+    total += allowed;
   }
+  return out;
+}
 
-  if (Object.keys(applied).length === 0) return {};
+/**
+ * Merge EV gains into existing EVs, enforcing all caps.
+ * Returns a new normalized EV object — does not mutate inputs.
+ *
+ * Example future usage:
+ *   poke.evs = applyEvGain(poke.evs, { atk: 16 });
+ */
+function applyEvGain(currentEvs, gains) {
+  const merged = {};
+  for (const stat of EV_STAT_ORDER) {
+    merged[stat] = (currentEvs?.[stat] ?? 0) + (gains?.[stat] ?? 0);
+  }
+  return normalizeEvs(merged);
+}
 
-  // Recalculate stats that changed
+/**
+ * Grant EVs to a Pokémon in-battle object and immediately recompute stats.
+ * - Enforces all caps via normalizeEvs.
+ * - Recalculates full stat block.
+ * - Adjusts maxHp and preserves currentHp correctly if HP changes.
+ * - Pushes a readable log message when log is provided and EVs actually changed.
+ *
+ * Example future usage:
+ *   grantEvsToPoke(pokemon, { atk: 16 }, log, "training");
+ *   grantEvsToPoke(pokemon, { spe: 12 }, log, "wind shrine");
+ *
+ * Currently NOT called from battle flow — zero EVs awarded from battle.
+ */
+function grantEvsToPoke(poke, evGains, log, sourceLabel) {
+  if (!poke || !evGains) return;
+
+  const before = normalizeEvs(poke.evs ?? {});
+  const after  = applyEvGain(before, evGains);
+
+  // Check if anything actually changed
+  const changed = EV_STAT_ORDER.filter(s => after[s] !== before[s]);
+  if (changed.length === 0) return;
+
+  poke.evs = after;
+
+  // Recompute all stats with new EVs
   const newStats = computeAllStats(poke);
-  for (const stat of Object.keys(applied)) {
+  if (!poke.stats) poke.stats = {};
+
+  for (const stat of EV_STAT_ORDER) {
     if (stat === "hp") {
-      const hpDelta = newStats.hp - poke.maxHp;
+      const hpDelta = newStats.hp - (poke.maxHp ?? newStats.hp);
       poke.maxHp = newStats.hp;
-      if (hpDelta > 0) poke.currentHp = Math.min(poke.currentHp + hpDelta, poke.maxHp);
+      // Preserve current HP ratio; add HP bonus from new EVs proportionally
+      if (hpDelta > 0) {
+        poke.currentHp = Math.min((poke.currentHp ?? 0) + hpDelta, poke.maxHp);
+      }
+      poke.currentHp = Math.max(0, Math.min(poke.currentHp ?? 0, poke.maxHp));
     } else {
       poke.stats[stat] = newStats[stat];
     }
   }
 
-  const parts = Object.entries(applied).map(([k, v]) => `+${v} ${k}`).join(", ");
-  log.push(`[EV] ${poke.name} gained EVs: ${parts}`);
-
-  return applied;
+  if (Array.isArray(log)) {
+    const parts = changed
+      .filter(s => after[s] > before[s])
+      .map(s => `+${after[s] - before[s]} ${s}`);
+    if (parts.length > 0) {
+      const label = sourceLabel ? ` (${sourceLabel})` : "";
+      log.push(`[EV] ${poke.name} gained EVs${label}: ${parts.join(", ")}`);
+    }
+  }
 }
 
 // Learnsets — must mirror components/db/learnsets.js (keyed by speciesId integer)
