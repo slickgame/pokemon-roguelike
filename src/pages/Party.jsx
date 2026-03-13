@@ -812,16 +812,16 @@ export default function Party() {
     setBoxOverride(nextBox);
     setSaveMessage("Saving...");
 
-try {
-  await runApi.appendAction(runId, "party_box_update", {
-    partyState: nextParty,
-    boxState: nextBox,
-  });
-  setSaveMessage(message);
-} catch (err) {
-  console.error("Failed to save party/box update:", err);
-  setSaveMessage("Save failed.");
-}
+  try {
+    await runApi.appendAction(runId, "party_box_update", {
+      partyState: nextParty,
+      boxState: nextBox,
+    });
+    setSaveMessage(message);
+  } catch (err) {
+    console.error("Failed to save party/box update:", err);
+    setSaveMessage("Save failed.");
+  }
 
     setTimeout(() => {
       setSaveMessage("");
