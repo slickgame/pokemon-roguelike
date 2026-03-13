@@ -835,30 +835,26 @@ useEffect(() => {
   async function savePartyAndBox(nextParty, nextBox, message = "Saved.") {
     setPartyOverride(nextParty);
     setBoxOverride(nextBox);
-    setSaveMessage("Saving...");
 
-try {
-  setSavingOrder(true);
-  setSaveStatus("saving");
-  setSaveMessage("Saving party changes...");
+    try {
+      setSavingOrder(true);
+      setSaveStatus("saving");
+      setSaveMessage("Saving party changes...");
 
-  await runApi.appendAction(runId, "party_box_update", {
-    partyState: nextParty,
-    boxState: nextBox,
-  });
+      await runApi.appendAction(runId, "party_box_update", {
+        partyState: nextParty,
+        boxState: nextBox,
+      });
 
-  setSaveStatus("success");
-  setSaveMessage(message || "Party changes saved.");
-} catch (err) {
-  console.error("Failed to save party/box update:", err);
-  setSaveStatus("error");
-  setSaveMessage("Save failed. Please try again.");
-} finally {
-  setSavingOrder(false);
-}
-    setTimeout(() => {
-      setSaveMessage("");
-    }, 1800);
+      setSaveStatus("success");
+      setSaveMessage(message || "Party changes saved.");
+    } catch (err) {
+      console.error("Failed to save party/box update:", err);
+      setSaveStatus("error");
+      setSaveMessage("Save failed. Please try again.");
+    } finally {
+      setSavingOrder(false);
+    }
   }
 
   function reorderParty(fromIndex, toIndex) {
