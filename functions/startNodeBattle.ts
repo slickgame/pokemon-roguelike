@@ -162,27 +162,28 @@ function sanitizeActives(active, bench) {
   return { active: newActive, bench: newBench };
 }
 
-// ── EV cap enforcement (used during hydration) ────────────────────────────────
-const EV_STAT_CAP  = 252;
-const EV_TOTAL_CAP = 510;
+// ── EV normalization (mirrors commitTurn.normalizeEvs) ────────────────────────
+// Official caps: 252 per stat, 510 total. Overflow trimmed in stat order.
+const EV_STAT_CAP   = 252;
+const EV_TOTAL_CAP  = 510;
+const EV_STAT_ORDER = ["hp","atk","def","spa","spd","spe"];
 
 /**
- * Clamp an EVs object to official caps.
- * Call this any time EVs are read from storage before computing stats,
- * so corrupted or over-granted EVs can never inflate stats.
+ * Ensure an EVs object has all six stats, each clamped to [0, 252],
+ * and total ≤ 510. Overflow is trimmed in EV_STAT_ORDER order.
+ * Identical behavior to normalizeEvs in commitTurn.ts.
  */
-function clampEvs(evs) {
-  const stats = ["hp","atk","def","spa","spd","spe"];
-  const clamped = {};
+function normalizeEvs(evs) {
   let total = 0;
-  for (const stat of stats) {
+  const out = {};
+  for (const stat of EV_STAT_ORDER) {
     const raw = Math.max(0, Math.floor(evs?.[stat] ?? 0));
-    const perStat = Math.min(raw, EV_STAT_CAP);
-    const allowed = Math.max(0, Math.min(perStat, EV_TOTAL_CAP - total));
-    clamped[stat] = allowed;
+    const capped = Math.min(raw, EV_STAT_CAP);
+    const allowed = Math.min(capped, Math.max(0, EV_TOTAL_CAP - total));
+    out[stat] = allowed;
     total += allowed;
   }
-  return clamped;
+  return out;
 }
 
 // ── Stat computation ──────────────────────────────────────────────────────────
