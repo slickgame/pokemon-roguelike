@@ -788,7 +788,13 @@ export default function Party() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [savingOrder, setSavingOrder] = useState(false);
-  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | success | error
+  const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | success | error | warning
+  const [saveMessage, setSaveMessage] = useState("");
+
+  function showSaveFeedback(status, message) {
+    setSaveStatus(status);
+    setSaveMessage(message);
+  }
   const [partyOverride, setPartyOverride] = useState(null);
   const [boxOverride, setBoxOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -799,6 +805,7 @@ export default function Party() {
 
 useEffect(() => {
   if (!saveMessage) return;
+  if (saveStatus === "saving") return;
 
   const timeout = setTimeout(() => {
     setSaveMessage("");
@@ -806,7 +813,7 @@ useEffect(() => {
   }, 2200);
 
   return () => clearTimeout(timeout);
-}, [saveMessage]);
+}, [saveMessage, saveStatus]);
 
 useEffect(() => {
   if (!runId) return;
@@ -867,30 +874,49 @@ useEffect(() => {
   const activeParty = party.slice(0, 3);
   const benchParty = party.slice(3);
 
-  async function savePartyAndBox(nextParty, nextBox, message = "Saved.") {
-    setPartyOverride(nextParty);
-    setBoxOverride(nextBox);
+async function savePartyAndBox(nextParty, nextBox, message = "Saved.") {
+  const previousParty = [...party];
+  const previousBox = [...box];
 
-    try {
-      setSavingOrder(true);
-      setSaveStatus("saving");
-      setSaveMessage("Saving party changes...");
+  setPartyOverride(nextParty);
+  setBoxOverride(nextBox);
 
-      await runApi.appendAction(runId, "party_box_update", {
-        partyState: nextParty,
-        boxState: nextBox,
-      });
+  try {
+    setSavingOrder(true);
+    showSaveFeedback("saving", "Saving party changes...");
 
-      setSaveStatus("success");
-      setSaveMessage(message || "Party changes saved.");
-    } catch (err) {
-      console.error("Failed to save party/box update:", err);
-      setSaveStatus("error");
-      setSaveMessage("Save failed. Please try again.");
-    } finally {
-      setSavingOrder(false);
-    }
+    await runApi.appendAction(runId, "party_box_update", {
+      partyState: nextParty,
+      boxState: nextBox,
+    });
+
+    setRun((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        results: {
+          ...(prev.results ?? {}),
+          progress: {
+            ...(prev.results?.progress ?? {}),
+            partyState: nextParty,
+            boxState: nextBox,
+          },
+        },
+      };
+    });
+
+    showSaveFeedback("success", message || "Party changes saved.");
+  } catch (err) {
+    console.error("Failed to save party/box update:", err);
+
+    setPartyOverride(previousParty);
+    setBoxOverride(previousBox);
+
+    showSaveFeedback("error", "Save failed. Your last change was not applied.");
+  } finally {
+    setSavingOrder(false);
   }
+}
 
   function reorderParty(fromIndex, toIndex) {
     if (
@@ -983,19 +1009,17 @@ useEffect(() => {
     }
   }
 
-  function addToParty(mon, boxIndex) {
-    if (party.length >= 6) {
-      setSaveMessage("Party is full.");
-      setTimeout(() => setSaveMessage(""), 1800);
-      return;
-    }
-
-    const nextBox = [...box];
-    const [moved] = nextBox.splice(boxIndex, 1);
-    const nextParty = [...party, moved];
-    savePartyAndBox(nextParty, nextBox, `${mon.name} added to Party.`);
+function addToParty(mon, boxIndex) {
+  if (party.length >= 6) {
+    showSaveFeedback("warning", "Party is full.");
+    return;
   }
 
+  const nextBox = [...box];
+  const [moved] = nextBox.splice(boxIndex, 1);
+  const nextParty = [...party, moved];
+  savePartyAndBox(nextParty, nextBox, `${mon.name} added to Party.`);
+}
   return (
     <div style={styles.page}>
       <div style={styles.headerRow}>
@@ -1011,6 +1035,8 @@ useEffect(() => {
                   ? styles.saveBannerSaving
                   : saveStatus === "error"
                   ? styles.saveBannerError
+                  : saveStatus === "warning"
+                  ? styles.saveBannerWarning
                   : styles.saveBannerSuccess
               }
             >
@@ -1586,6 +1612,16 @@ saveBannerError: {
   background: "#7f1d1d",
   border: "1px solid #ef4444",
   color: "#fee2e2",
+  borderRadius: "12px",
+  padding: "12px 14px",
+  fontSize: "13px",
+  fontWeight: 700,
+},
+
+saveBannerWarning: {
+  background: "#78350f",
+  border: "1px solid #f59e0b",
+  color: "#fef3c7",
   borderRadius: "12px",
   padding: "12px 14px",
   fontSize: "13px",
