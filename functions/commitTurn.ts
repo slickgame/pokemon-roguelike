@@ -406,6 +406,73 @@ function recomputeStats(poke) {
   return computeAllStats(poke);
 }
 
+// ── EV Architecture ───────────────────────────────────────────────────────────
+// Official caps: 252 per stat, 510 total across all stats.
+// No EVs are awarded from battle currently — this is the hook for future
+// sources (events, relics, camp training, shops).
+const EV_STAT_CAP   = 252;
+const EV_TOTAL_CAP  = 510;
+
+/**
+ * Apply an EV grant to a Pokémon in-battle object.
+ * `evGrant` is a partial object, e.g. { atk: 3, spe: 1 }.
+ * Returns the actual EVs applied (after cap enforcement).
+ * Also recalculates affected stats so they're immediately correct.
+ *
+ * Call this wherever EVs should be granted in the future.
+ * Currently called with an empty grant {} — zero overhead, no stat changes.
+ */
+function applyEvsToPoke(poke, evGrant, log) {
+  if (!poke || typeof evGrant !== "object") return {};
+
+  const evs = poke.evs ?? { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 };
+  poke.evs = evs;
+
+  // Current total EVs across all stats
+  const totalBefore = Object.values(evs).reduce((s, v) => s + (v ?? 0), 0);
+  const remaining   = Math.max(0, EV_TOTAL_CAP - totalBefore);
+  if (remaining === 0) return {};
+
+  let totalUsed = 0;
+  const applied = {};
+
+  for (const stat of ["hp","atk","def","spa","spd","spe"]) {
+    const amount = evGrant[stat] ?? 0;
+    if (amount <= 0) continue;
+
+    const currentEv = evs[stat] ?? 0;
+    // Per-stat cap
+    const canAddStat  = Math.max(0, EV_STAT_CAP - currentEv);
+    // Total cap (shared bucket)
+    const canAddTotal = Math.max(0, remaining - totalUsed);
+    const add = Math.min(amount, canAddStat, canAddTotal);
+    if (add <= 0) continue;
+
+    evs[stat] = currentEv + add;
+    applied[stat] = add;
+    totalUsed += add;
+  }
+
+  if (Object.keys(applied).length === 0) return {};
+
+  // Recalculate stats that changed
+  const newStats = computeAllStats(poke);
+  for (const stat of Object.keys(applied)) {
+    if (stat === "hp") {
+      const hpDelta = newStats.hp - poke.maxHp;
+      poke.maxHp = newStats.hp;
+      if (hpDelta > 0) poke.currentHp = Math.min(poke.currentHp + hpDelta, poke.maxHp);
+    } else {
+      poke.stats[stat] = newStats[stat];
+    }
+  }
+
+  const parts = Object.entries(applied).map(([k, v]) => `+${v} ${k}`).join(", ");
+  log.push(`[EV] ${poke.name} gained EVs: ${parts}`);
+
+  return applied;
+}
+
 // Learnsets — must mirror components/db/learnsets.js (keyed by speciesId integer)
 const LEVEL_UP_LEARNSETS = {
   1:  [{ level: 7, moveId: "vine_whip" }],
