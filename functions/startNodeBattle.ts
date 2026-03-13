@@ -162,6 +162,29 @@ function sanitizeActives(active, bench) {
   return { active: newActive, bench: newBench };
 }
 
+// ── EV cap enforcement (used during hydration) ────────────────────────────────
+const EV_STAT_CAP  = 252;
+const EV_TOTAL_CAP = 510;
+
+/**
+ * Clamp an EVs object to official caps.
+ * Call this any time EVs are read from storage before computing stats,
+ * so corrupted or over-granted EVs can never inflate stats.
+ */
+function clampEvs(evs) {
+  const stats = ["hp","atk","def","spa","spd","spe"];
+  const clamped = {};
+  let total = 0;
+  for (const stat of stats) {
+    const raw = Math.max(0, Math.floor(evs?.[stat] ?? 0));
+    const perStat = Math.min(raw, EV_STAT_CAP);
+    const allowed = Math.max(0, Math.min(perStat, EV_TOTAL_CAP - total));
+    clamped[stat] = allowed;
+    total += allowed;
+  }
+  return clamped;
+}
+
 // ── Stat computation ──────────────────────────────────────────────────────────
 function computeStats(baseStats, level, ivs = {}, evs = {}, nature = "Hardy") {
   function hpStat(base, iv = 0, ev = 0) {
