@@ -618,7 +618,7 @@ function PokemonCard({
       draggable={!savingOrder}
       onDragStart={() => {
         if (savingOrder) return;
-        handleDragStart(index);
+        onDragStart(index);
       }}
       onDragEnter={() => onDragEnter(index)}
       onDragOver={(e) => e.preventDefault()}
