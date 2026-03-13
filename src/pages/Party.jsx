@@ -588,6 +588,7 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
                   </div>
                 );
               })
+            )}
           </div>
         </div>
       </div>
