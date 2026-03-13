@@ -555,18 +555,27 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
       <div style={styles.modalHeader}>
         <div style={styles.modalHeaderLeft}>
-          <div style={styles.modalSpriteWrap}>
-            <img
-              src={getPokemonSpriteUrl(pokemon.speciesId)}
+          <div style={{
+            ...styles.modalSpriteWrap,
+            ...(pokemon.shiny ? styles.shinySpriteWrap : {}),
+          }}>
+            <SpriteWithFallback
+              speciesId={pokemon.speciesId}
+              shiny={pokemon.shiny}
               alt={pokemon.name}
               style={styles.modalSprite}
             />
           </div>
 
           <div>
-            <h2 style={styles.modalTitle}>
-              {pokemon.name} {pokemon.gender ? `(${pokemon.gender})` : ""}
-            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <h2 style={styles.modalTitle}>
+                {pokemon.name} {pokemon.gender ? `(${pokemon.gender})` : ""}
+              </h2>
+              {pokemon.shiny && (
+                <span style={styles.shinyModalBadge}>✨ Shiny</span>
+              )}
+            </div>
             <div style={styles.subText}>
               Lv. {pokemon.level} • {(pokemon.types ?? []).join(" / ") || "Unknown"}
             </div>
