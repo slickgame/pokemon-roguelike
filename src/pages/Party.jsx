@@ -1526,6 +1526,37 @@ errorTitle: {
     padding: "8px 12px",
     cursor: "pointer",
   },
+
+  saveBannerSaving: {
+  background: "#1e3a8a",
+  border: "1px solid #3b82f6",
+  color: "#dbeafe",
+  borderRadius: "12px",
+  padding: "12px 14px",
+  fontSize: "13px",
+  fontWeight: 700,
+},
+
+saveBannerSuccess: {
+  background: "#14532d",
+  border: "1px solid #22c55e",
+  color: "#dcfce7",
+  borderRadius: "12px",
+  padding: "12px 14px",
+  fontSize: "13px",
+  fontWeight: 700,
+},
+
+saveBannerError: {
+  background: "#7f1d1d",
+  border: "1px solid #ef4444",
+  color: "#fee2e2",
+  borderRadius: "12px",
+  padding: "12px 14px",
+  fontSize: "13px",
+  fontWeight: 700,
+},
+
   statsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
@@ -1587,5 +1618,7 @@ errorTitle: {
     lineHeight: 1.4,
   },
 };
+
+
 
 styles.moveRowWithTooltip[":hover"] = {};
