@@ -750,6 +750,7 @@ export default function Party() {
   const [loadError, setLoadError] = useState("");
   const [savingOrder, setSavingOrder] = useState(false);
   const [partyOverride, setPartyOverride] = useState(null);
+  const [boxOverride, setBoxOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [saveMessage, setSaveMessage] = useState("");
