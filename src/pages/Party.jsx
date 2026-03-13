@@ -416,7 +416,7 @@ function getSpriteUrl(speciesId, shiny = false) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${speciesId}.png`;
 }
 
-function MoveTooltip({ move }) {
+function MoveTooltip({ move, visible }) {
   const moveInfo = MOVE_DATA[move?.id] ?? {
     name: move?.name ?? "Unknown Move",
     power: null,
@@ -424,6 +424,8 @@ function MoveTooltip({ move }) {
     target: "Unknown",
     description: "No move details available.",
   };
+
+  if (!visible) return null;
 
   return (
     <div style={styles.moveTooltip}>
@@ -438,6 +440,7 @@ function MoveTooltip({ move }) {
 
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
+  const [hoveredMoveId, setHoveredMoveId] = useState(null);
   const [spriteErrored, setSpriteErrored] = useState(false);
 
   if (!pokemon) return null;
@@ -559,16 +562,32 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
             {(pokemon.moves ?? []).length === 0 ? (
               <div style={styles.subText}>No moves found.</div>
             ) : (
-              pokemon.moves.map((move) => (
-                <div key={move.id} style={styles.moveRowWithTooltip}>
-                  <div style={styles.moveRow}>
-                    <span>{move.name ?? MOVE_DATA[move.id]?.name ?? move.id}</span>
-                    <strong>PP {move.pp ?? 0}/{move.ppMax ?? move.pp ?? 0}</strong>
+              pokemon.moves.map((move, idx) => {
+                const moveKey = `${move.id}-${idx}`;
+                return (
+                  <div
+                    key={moveKey}
+                    style={styles.moveRowWithTooltip}
+                    onMouseEnter={() => setHoveredMoveId(moveKey)}
+                    onMouseLeave={() => setHoveredMoveId(null)}
+                  >
+                    <div style={styles.moveRow}>
+                      <div style={styles.moveTextBlock}>
+                        <span style={styles.moveNameText}>
+                          {move.name ?? MOVE_DATA[move.id]?.name ?? move.id}
+                        </span>
+                        <span style={styles.moveSubText}>
+                          {MOVE_DATA[move.id]?.description ?? "No move details available."}
+                        </span>
+                      </div>
+                      <strong>
+                        PP {move.pp ?? 0}/{move.ppMax ?? move.pp ?? 0}
+                      </strong>
+                    </div>
+                    <MoveTooltip move={move} visible={hoveredMoveId === moveKey} />
                   </div>
-                  <MoveTooltip move={move} />
-                </div>
-              ))
-            )}
+                );
+              })
           </div>
         </div>
       </div>
@@ -684,10 +703,25 @@ function PokemonCard({
         />
       </div>
 
-      <div style={styles.metaRow}>
-        <span>Nature: {mon.nature ?? "Hardy"}</span>
-        <span>Status: {mon.fainted ? "FNT" : (mon.status ?? "Normal")}</span>
-      </div>
+<div style={styles.metaRow}>
+  <span>Nature: {mon.nature ?? "Hardy"}</span>
+  <span>Status: {mon.fainted ? "FNT" : (mon.status ?? "Normal")}</span>
+</div>
+
+<div style={styles.cardNatureText}>
+  {getNatureText(mon.nature ?? "Hardy")}
+</div>
+
+<div style={styles.cardMovesPreview}>
+  <strong style={styles.cardMovesPreviewLabel}>Moves:</strong>
+  <div style={styles.cardMovesPreviewList}>
+    {(mon.moves ?? []).length === 0
+      ? "No moves"
+      : mon.moves
+          .map((move) => move.name ?? MOVE_DATA[move.id]?.name ?? move.id)
+          .join(" • ")}
+  </div>
+</div>
 
       {!isBox ? (
         <div style={styles.reorderRow}>
