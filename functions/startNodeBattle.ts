@@ -291,9 +291,9 @@ function hydrateFromPartyState(partySnap, speciesMap) {
   const level = partySnap.level ?? 5;
   const exp = partySnap.exp ?? 0;
   const ivs = partySnap.ivs ?? { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
-  // Enforce official EV caps on load — prevents any corrupted/over-granted EVs
-  // from inflating stats. Safe no-op when EVs are all 0.
-  const evs = clampEvs(partySnap.evs ?? {});
+  // Normalize EVs on load — prevents corrupted/over-granted values from
+  // inflating stats. Safe no-op when EVs are all 0.
+  const evs = normalizeEvs(partySnap.evs ?? {});
   const baseStats = partySnap.baseStats ?? sp.baseStats;
   const freshStats = computeStats(baseStats, level, ivs, evs, partySnap.nature ?? "Hardy");
 
