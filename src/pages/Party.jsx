@@ -1099,9 +1099,13 @@ function movePartyMemberRight(index) {
 >
                 <div style={styles.cardTopRow}>
                   <div style={styles.cardTopLeft}>
-                    <div style={styles.cardSpriteWrap}>
-                      <img
-                        src={getPokemonSpriteUrl(mon.speciesId)}
+                    <div style={{
+                      ...styles.cardSpriteWrap,
+                      ...(mon.shiny ? styles.shinySpriteWrapMuted : {}),
+                    }}>
+                      <SpriteWithFallback
+                        speciesId={mon.speciesId}
+                        shiny={mon.shiny}
                         alt={mon.name}
                         style={styles.cardSprite}
                       />
@@ -1120,6 +1124,7 @@ function movePartyMemberRight(index) {
                   <div style={styles.badgeColumn}>
                     <div style={styles.slotBadge}>Slot {index + 1}</div>
                     <div style={styles.benchBadge}>Bench</div>
+                    {mon.shiny && <div style={styles.shinyBenchBadge}>✨ Shiny</div>}
                   </div>
                 </div>
 
