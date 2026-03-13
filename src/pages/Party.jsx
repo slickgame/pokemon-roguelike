@@ -475,9 +475,28 @@ function getPartyRole(index) {
   return index < 3 ? "Active" : "Bench";
 }
 
-function getPokemonSpriteUrl(speciesId) {
+function getPokemonSpriteUrl(speciesId, shiny = false) {
   if (!speciesId) return "";
+  if (shiny) {
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${speciesId}.png`;
+  }
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${speciesId}.png`;
+}
+
+function SpriteWithFallback({ speciesId, shiny, alt, style: imgStyle }) {
+  const [useFallback, setUseFallback] = React.useState(false);
+  const src = useFallback
+    ? getPokemonSpriteUrl(speciesId, false)
+    : getPokemonSpriteUrl(speciesId, shiny);
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      style={imgStyle}
+      onError={() => { if (!useFallback) setUseFallback(true); }}
+    />
+  );
 }
 
 function getMoveDetails(move) {
