@@ -1027,6 +1027,7 @@ try {
                     onMoveToBox={sendToBox}
                     disableLeft={index === 0}
                     disableRight={index === party.length - 1}
+                    savingOrder={savingOrder}
                   />
                 );
               })}
@@ -1067,6 +1068,7 @@ try {
                       onMoveToBox={sendToBox}
                       disableLeft={index === 0}
                       disableRight={index === party.length - 1}
+                      savingOrder={savingOrder}
                     />
                   );
                 })}
