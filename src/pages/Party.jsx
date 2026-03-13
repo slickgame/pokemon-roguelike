@@ -1680,4 +1680,58 @@ natureLowerStat: {
     justifyContent: "space-between",
     gap: "12px",
   },
+
+  // ── Shiny styles ────────────────────────────────────────────────────────────
+  shinyCard: {
+    border: "1px solid #a16207",
+    background: "linear-gradient(135deg, #1e293b 0%, #1c1a0e 100%)",
+    boxShadow: "0 0 10px rgba(234, 179, 8, 0.12)",
+  },
+
+  shinyBenchCard: {
+    border: "1px solid #78350f",
+    background: "linear-gradient(135deg, #111827 0%, #17130a 100%)",
+    boxShadow: "0 0 8px rgba(161, 98, 7, 0.10)",
+  },
+
+  shinySpriteWrap: {
+    border: "1px solid #ca8a04",
+    background: "rgba(234, 179, 8, 0.07)",
+  },
+
+  shinySpriteWrapMuted: {
+    border: "1px solid #92400e",
+    background: "rgba(161, 98, 7, 0.07)",
+  },
+
+  shinyBadge: {
+    fontSize: "11px",
+    background: "#713f12",
+    color: "#fde68a",
+    padding: "4px 8px",
+    borderRadius: "999px",
+    border: "1px solid #ca8a04",
+    fontWeight: 700,
+  },
+
+  shinyBenchBadge: {
+    fontSize: "11px",
+    background: "#451a03",
+    color: "#fcd34d",
+    padding: "4px 8px",
+    borderRadius: "999px",
+    border: "1px solid #78350f",
+    fontWeight: 700,
+  },
+
+  shinyModalBadge: {
+    fontSize: "14px",
+    background: "#713f12",
+    color: "#fde68a",
+    padding: "5px 12px",
+    borderRadius: "999px",
+    border: "1px solid #ca8a04",
+    fontWeight: 700,
+    letterSpacing: "0.02em",
+  },
 };
