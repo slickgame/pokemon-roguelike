@@ -77,16 +77,68 @@ function rollGender(speciesId: number, rng: () => number) {
   return rng() < ratio.male ? "Male" : "Female";
 }
 
-function computeStats(baseStats: any, level: number) {
-  const cs = (b: number) => Math.floor((2 * b * level) / 100 + 5);
-  const chp = (b: number) => Math.floor((2 * b * level) / 100) + level + 10;
+const NATURE_EFFECTS: Record<string, { up: string | null; down: string | null }> = {
+  Hardy:   { up: null, down: null },
+  Lonely:  { up: "atk", down: "def" },
+  Brave:   { up: "atk", down: "spe" },
+  Adamant: { up: "atk", down: "spa" },
+  Naughty: { up: "atk", down: "spd" },
+
+  Bold:    { up: "def", down: "atk" },
+  Docile:  { up: null, down: null },
+  Relaxed: { up: "def", down: "spe" },
+  Impish:  { up: "def", down: "spa" },
+  Lax:     { up: "def", down: "spd" },
+
+  Timid:   { up: "spe", down: "atk" },
+  Hasty:   { up: "spe", down: "def" },
+  Serious: { up: null, down: null },
+  Jolly:   { up: "spe", down: "spa" },
+  Naive:   { up: "spe", down: "spd" },
+
+  Modest:  { up: "spa", down: "atk" },
+  Mild:    { up: "spa", down: "def" },
+  Quiet:   { up: "spa", down: "spe" },
+  Bashful: { up: null, down: null },
+  Rash:    { up: "spa", down: "spd" },
+
+  Calm:    { up: "spd", down: "atk" },
+  Gentle:  { up: "spd", down: "def" },
+  Sassy:   { up: "spd", down: "spe" },
+  Careful: { up: "spd", down: "spa" },
+  Quirky:  { up: null, down: null },
+};
+
+function getNatureModifier(nature: string, statKey: string) {
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+  if (effect.up === statKey) return 1.1;
+  if (effect.down === statKey) return 0.9;
+  return 1.0;
+}
+
+function computeStats(
+  baseStats: any,
+  level: number,
+  ivs: any = {},
+  evs: any = {},
+  nature: string = "Hardy"
+) {
+  function hpStat(base: number, iv = 0, ev = 0) {
+    return Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + level + 10;
+  }
+
+  function otherStat(statKey: string, base: number, iv = 0, ev = 0) {
+    const raw = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5;
+    return Math.floor(raw * getNatureModifier(nature, statKey));
+  }
+
   return {
-    hp: chp(baseStats.hp),
-    atk: cs(baseStats.atk),
-    def: cs(baseStats.def),
-    spa: cs(baseStats.spa),
-    spd: cs(baseStats.spd),
-    spe: cs(baseStats.spe),
+    hp:  hpStat(baseStats.hp, ivs.hp ?? 0, evs.hp ?? 0),
+    atk: otherStat("atk", baseStats.atk, ivs.atk ?? 0, evs.atk ?? 0),
+    def: otherStat("def", baseStats.def, ivs.def ?? 0, evs.def ?? 0),
+    spa: otherStat("spa", baseStats.spa, ivs.spa ?? 0, evs.spa ?? 0),
+    spd: otherStat("spd", baseStats.spd, ivs.spd ?? 0, evs.spd ?? 0),
+    spe: otherStat("spe", baseStats.spe, ivs.spe ?? 0, evs.spe ?? 0),
   };
 }
 
@@ -120,7 +172,26 @@ function buildInitialPartyPokemon(species: any, level: number, seed: string) {
   const abilityId = species.abilities[rngInt(rng, species.abilities.length)];
   const shiny = rngInt(rng, 1024) === 0;
   const gender = rollGender(species.id, rng);
-  const stats = computeStats(species.baseStats, level);
+
+  const ivs = {
+    hp: rngInt(rng, 32),
+    atk: rngInt(rng, 32),
+    def: rngInt(rng, 32),
+    spa: rngInt(rng, 32),
+    spd: rngInt(rng, 32),
+    spe: rngInt(rng, 32),
+  };
+
+  const evs = {
+    hp: 0,
+    atk: 0,
+    def: 0,
+    spa: 0,
+    spd: 0,
+    spe: 0,
+  };
+
+  const stats = computeStats(species.baseStats, level, ivs, evs, nature);
 
   return {
     speciesId: species.id,
@@ -132,22 +203,8 @@ function buildInitialPartyPokemon(species: any, level: number, seed: string) {
     nature,
     abilityId,
     shiny,
-    ivs: {
-      hp: 0,
-      atk: 0,
-      def: 0,
-      spa: 0,
-      spd: 0,
-      spe: 0,
-    },
-    evs: {
-      hp: 0,
-      atk: 0,
-      def: 0,
-      spa: 0,
-      spd: 0,
-      spe: 0,
-    },
+    ivs,
+    evs,
     baseStats: species.baseStats,
     stats: {
       hp: stats.hp,
