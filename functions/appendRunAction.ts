@@ -39,6 +39,38 @@ const GENDER_RATIOS: Record<number, { male: number; female: number; genderless?:
   25: { male: 0.5, female: 0.5 },
 };
 
+const NATURE_EFFECTS: Record<string, { up: string | null; down: string | null }> = {
+  Hardy:   { up: null, down: null },
+  Lonely:  { up: "atk", down: "def" },
+  Brave:   { up: "atk", down: "spe" },
+  Adamant: { up: "atk", down: "spa" },
+  Naughty: { up: "atk", down: "spd" },
+
+  Bold:    { up: "def", down: "atk" },
+  Docile:  { up: null, down: null },
+  Relaxed: { up: "def", down: "spe" },
+  Impish:  { up: "def", down: "spa" },
+  Lax:     { up: "def", down: "spd" },
+
+  Timid:   { up: "spe", down: "atk" },
+  Hasty:   { up: "spe", down: "def" },
+  Serious: { up: null, down: null },
+  Jolly:   { up: "spe", down: "spa" },
+  Naive:   { up: "spe", down: "spd" },
+
+  Modest:  { up: "spa", down: "atk" },
+  Mild:    { up: "spa", down: "def" },
+  Quiet:   { up: "spa", down: "spe" },
+  Bashful: { up: null, down: null },
+  Rash:    { up: "spa", down: "spd" },
+
+  Calm:    { up: "spd", down: "atk" },
+  Gentle:  { up: "spd", down: "def" },
+  Sassy:   { up: "spd", down: "spe" },
+  Careful: { up: "spd", down: "spa" },
+  Quirky:  { up: null, down: null },
+};
+
 const speciesMap: Record<number, any> = {};
 for (const s of DB_SPECIES) speciesMap[s.id] = s;
 
@@ -76,38 +108,6 @@ function rollGender(speciesId: number, rng: () => number) {
   if (ratio.genderless) return "Genderless";
   return rng() < ratio.male ? "Male" : "Female";
 }
-
-const NATURE_EFFECTS: Record<string, { up: string | null; down: string | null }> = {
-  Hardy:   { up: null, down: null },
-  Lonely:  { up: "atk", down: "def" },
-  Brave:   { up: "atk", down: "spe" },
-  Adamant: { up: "atk", down: "spa" },
-  Naughty: { up: "atk", down: "spd" },
-
-  Bold:    { up: "def", down: "atk" },
-  Docile:  { up: null, down: null },
-  Relaxed: { up: "def", down: "spe" },
-  Impish:  { up: "def", down: "spa" },
-  Lax:     { up: "def", down: "spd" },
-
-  Timid:   { up: "spe", down: "atk" },
-  Hasty:   { up: "spe", down: "def" },
-  Serious: { up: null, down: null },
-  Jolly:   { up: "spe", down: "spa" },
-  Naive:   { up: "spe", down: "spd" },
-
-  Modest:  { up: "spa", down: "atk" },
-  Mild:    { up: "spa", down: "def" },
-  Quiet:   { up: "spa", down: "spe" },
-  Bashful: { up: null, down: null },
-  Rash:    { up: "spa", down: "spd" },
-
-  Calm:    { up: "spd", down: "atk" },
-  Gentle:  { up: "spd", down: "def" },
-  Sassy:   { up: "spd", down: "spe" },
-  Careful: { up: "spd", down: "spa" },
-  Quirky:  { up: null, down: null },
-};
 
 function getNatureModifier(nature: string, statKey: string) {
   const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
@@ -284,6 +284,7 @@ Deno.serve(async (req) => {
           progress: {
             ...existingProgress,
             partyState: initialPartyState,
+            boxState: existingProgress.boxState ?? [],
             money: existingProgress.money ?? 0,
             inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
           },
@@ -306,6 +307,31 @@ Deno.serve(async (req) => {
           progress: {
             ...existingProgress,
             partyState: nextPartyState,
+            boxState: existingProgress.boxState ?? [],
+            money: existingProgress.money ?? 0,
+            inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
+          },
+        },
+      });
+    }
+
+    if (actionType === "party_box_update") {
+      const nextPartyState = Array.isArray(payload?.partyState) ? payload.partyState : null;
+      const nextBoxState = Array.isArray(payload?.boxState) ? payload.boxState : null;
+
+      if (!nextPartyState || !nextBoxState) {
+        return Response.json({ error: "party_box_update requires payload.partyState and payload.boxState" }, { status: 400 });
+      }
+
+      const existingProgress = run.results?.progress ?? {};
+
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(run.results ?? {}),
+          progress: {
+            ...existingProgress,
+            partyState: nextPartyState,
+            boxState: nextBoxState,
             money: existingProgress.money ?? 0,
             inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
           },
