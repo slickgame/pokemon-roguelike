@@ -900,6 +900,10 @@ Deno.serve(async (req) => {
                     level: prompt.level,
                   });
                 }
+                // EV hook — currently grants zero EVs from battle.
+                // Future sources (events, relics, camp training, shops) can call
+                // applyEvsToPoke(poke, { atk: 2 }, log) from their own code paths.
+                applyEvsToPoke(recipient, {}, log);
               }
             }
           } else {
