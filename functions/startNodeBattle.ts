@@ -271,15 +271,14 @@ function hydrateFromPartyState(partySnap, speciesMap) {
   const baseStats = partySnap.baseStats ?? sp.baseStats;
   const freshStats = computeStats(baseStats, level, ivs, evs, partySnap.nature ?? "Hardy");
 
-  const storedStats = partySnap.stats ?? null;
-  const resolvedStats = {
-    hp: storedStats?.hp ?? freshStats.hp,
-    atk: storedStats?.atk ?? freshStats.atk,
-    def: storedStats?.def ?? freshStats.def,
-    spa: storedStats?.spa ?? freshStats.spa,
-    spd: storedStats?.spd ?? freshStats.spd,
-    spe: storedStats?.spe ?? freshStats.spe,
-  };
+const resolvedStats = {
+  hp: freshStats.hp,
+  atk: freshStats.atk,
+  def: freshStats.def,
+  spa: freshStats.spa,
+  spd: freshStats.spd,
+  spe: freshStats.spe,
+};
 
   const maxHp = resolvedStats.hp;
   const currentHp = partySnap.fainted
