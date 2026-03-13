@@ -1591,6 +1591,53 @@ saveBannerError: {
   fontWeight: 700,
 },
 
+cardNatureText: {
+  marginTop: "10px",
+  fontSize: "12px",
+  color: "#93c5fd",
+  lineHeight: 1.4,
+},
+
+cardMovesPreview: {
+  marginTop: "10px",
+  background: "#0f172a",
+  border: "1px solid #334155",
+  borderRadius: "10px",
+  padding: "10px",
+},
+
+cardMovesPreviewLabel: {
+  display: "block",
+  marginBottom: "4px",
+  fontSize: "12px",
+  color: "#cbd5e1",
+},
+
+cardMovesPreviewList: {
+  fontSize: "12px",
+  color: "#94a3b8",
+  lineHeight: 1.4,
+},
+
+moveTextBlock: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+  minWidth: 0,
+},
+
+moveNameText: {
+  fontWeight: 600,
+  color: "#e2e8f0",
+},
+
+moveSubText: {
+  fontSize: "12px",
+  color: "#94a3b8",
+  lineHeight: 1.35,
+  textAlign: "left",
+},
+
   statsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
