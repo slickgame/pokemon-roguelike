@@ -85,16 +85,18 @@ function computeAllStats(mon) {
   const b = mon.baseStats;
   const lv = mon.level;
   const ivs = mon.ivs ?? {};
-  const evs = mon.evs ?? {};
+  // Always normalize EVs before stat computation to prevent any corrupted
+  // or over-granted values from inflating stats.
+  const evs = normalizeEvs(mon.evs ?? {});
   const nature = mon.nature ?? "Hardy";
 
   return {
-    hp:  computeStatValue(b.hp,  lv, ivs.hp ?? 0,  evs.hp ?? 0,  1, true),
-    atk: computeStatValue(b.atk, lv, ivs.atk ?? 0, evs.atk ?? 0, getNatureModifier(nature, "atk")),
-    def: computeStatValue(b.def, lv, ivs.def ?? 0, evs.def ?? 0, getNatureModifier(nature, "def")),
-    spa: computeStatValue(b.spa, lv, ivs.spa ?? 0, evs.spa ?? 0, getNatureModifier(nature, "spa")),
-    spd: computeStatValue(b.spd, lv, ivs.spd ?? 0, evs.spd ?? 0, getNatureModifier(nature, "spd")),
-    spe: computeStatValue(b.spe, lv, ivs.spe ?? 0, evs.spe ?? 0, getNatureModifier(nature, "spe")),
+    hp:  computeStatValue(b.hp,  lv, ivs.hp ?? 0,  evs.hp,  1, true),
+    atk: computeStatValue(b.atk, lv, ivs.atk ?? 0, evs.atk, getNatureModifier(nature, "atk")),
+    def: computeStatValue(b.def, lv, ivs.def ?? 0, evs.def, getNatureModifier(nature, "def")),
+    spa: computeStatValue(b.spa, lv, ivs.spa ?? 0, evs.spa, getNatureModifier(nature, "spa")),
+    spd: computeStatValue(b.spd, lv, ivs.spd ?? 0, evs.spd, getNatureModifier(nature, "spd")),
+    spe: computeStatValue(b.spe, lv, ivs.spe ?? 0, evs.spe, getNatureModifier(nature, "spe")),
   };
 }
 
