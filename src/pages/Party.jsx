@@ -1702,4 +1702,3 @@ moveSubText: {
 
 
 
-styles.moveRowWithTooltip[":hover"] = {};
