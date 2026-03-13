@@ -4,23 +4,8 @@ import { createPageUrl } from "@/utils";
 import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { runApi } from "../components/api/runApi";
 
-const DEFAULT_IVS = {
-  hp: 0,
-  atk: 0,
-  def: 0,
-  spa: 0,
-  spd: 0,
-  spe: 0,
-};
-
-const DEFAULT_EVS = {
-  hp: 0,
-  atk: 0,
-  def: 0,
-  spa: 0,
-  spd: 0,
-  spe: 0,
-};
+const DEFAULT_IVS = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+const DEFAULT_EVS = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 
 const STAT_LABELS = {
   hp: "HP",
@@ -29,99 +14,6 @@ const STAT_LABELS = {
   spa: "Sp. Atk",
   spd: "Sp. Def",
   spe: "Speed",
-};
-
-const MOVE_DETAILS = {
-  tackle: {
-    name: "Tackle",
-    type: "Normal",
-    category: "Physical",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A basic physical attack with no additional effect.",
-  },
-  scratch: {
-    name: "Scratch",
-    type: "Normal",
-    category: "Physical",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A basic physical attack with no additional effect.",
-  },
-  ember: {
-    name: "Ember",
-    type: "Fire",
-    category: "Special",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A small burst of fire that damages one enemy. May burn in future versions.",
-  },
-  growl: {
-    name: "Growl",
-    type: "Normal",
-    category: "Status",
-    power: null,
-    accuracy: 100,
-    targetText: "All enemies",
-    effectText: "Lowers the Attack stat of all opposing Pokémon.",
-  },
-  vine_whip: {
-    name: "Vine Whip",
-    type: "Grass",
-    category: "Physical",
-    power: 45,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "Strikes one enemy with whipping vines.",
-  },
-  water_gun: {
-    name: "Water Gun",
-    type: "Water",
-    category: "Special",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "Shoots water at one enemy. No added effect.",
-  },
-  thunder_shock: {
-    name: "ThunderShock",
-    type: "Electric",
-    category: "Special",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A weak electric blast that damages one enemy. May paralyze in future versions.",
-  },
-  quick_attack: {
-    name: "Quick Attack",
-    type: "Normal",
-    category: "Physical",
-    power: 40,
-    accuracy: 100,
-    targetText: "One enemy",
-    effectText: "A fast strike that usually acts before normal-priority moves.",
-  },
-  string_shot: {
-    name: "String Shot",
-    type: "Bug",
-    category: "Status",
-    power: null,
-    accuracy: 95,
-    targetText: "All enemies",
-    effectText: "Lowers the Speed stat of all opposing Pokémon.",
-  },
-  tail_whip: {
-    name: "Tail Whip",
-    type: "Normal",
-    category: "Status",
-    power: null,
-    accuracy: 100,
-    targetText: "All enemies",
-    effectText: "Lowers the Defense stat of all opposing Pokémon.",
-  },
 };
 
 const STARTER_SPECIES = {
@@ -190,6 +82,14 @@ const PARTY_NATURES = [
   "Calm","Gentle","Sassy","Careful","Quirky"
 ];
 
+const PARTY_GENDER_RATIOS = {
+  1: { male: 0.875, female: 0.125 },
+  4: { male: 0.875, female: 0.125 },
+  7: { male: 0.875, female: 0.125 },
+  10: { male: 0.5, female: 0.5 },
+  25: { male: 0.5, female: 0.5 },
+};
+
 const NATURE_EFFECTS = {
   Hardy:   { up: null, down: null },
   Lonely:  { up: "atk", down: "def" },
@@ -222,12 +122,77 @@ const NATURE_EFFECTS = {
   Quirky:  { up: null, down: null },
 };
 
-const PARTY_GENDER_RATIOS = {
-  1: { male: 0.875, female: 0.125 },
-  4: { male: 0.875, female: 0.125 },
-  7: { male: 0.875, female: 0.125 },
-  10: { male: 0.5, female: 0.5 },
-  25: { male: 0.5, female: 0.5 },
+const MOVE_DATA = {
+  tackle: {
+    name: "Tackle",
+    power: 40,
+    accuracy: 100,
+    target: "One enemy",
+    description: "A physical attack in which the user charges into the target.",
+  },
+  scratch: {
+    name: "Scratch",
+    power: 40,
+    accuracy: 100,
+    target: "One enemy",
+    description: "Hard, pointed claws rake the target to inflict damage.",
+  },
+  growl: {
+    name: "Growl",
+    power: null,
+    accuracy: 100,
+    target: "All enemies",
+    description: "The user growls in an endearing way, making opposing Pokémon less wary. Lowers Attack.",
+  },
+  ember: {
+    name: "Ember",
+    power: 40,
+    accuracy: 100,
+    target: "One enemy",
+    description: "The target is attacked with small flames. May inflict a burn later if you expand status effects.",
+  },
+  vine_whip: {
+    name: "Vine Whip",
+    power: 45,
+    accuracy: 100,
+    target: "One enemy",
+    description: "The target is struck with slender, whiplike vines.",
+  },
+  water_gun: {
+    name: "Water Gun",
+    power: 40,
+    accuracy: 100,
+    target: "One enemy",
+    description: "The target is blasted with a forceful shot of water.",
+  },
+  thunder_shock: {
+    name: "ThunderShock",
+    power: 40,
+    accuracy: 100,
+    target: "One enemy",
+    description: "A jolt of electricity crashes down on the target. May inflict paralysis later if expanded.",
+  },
+  quick_attack: {
+    name: "Quick Attack",
+    power: 40,
+    accuracy: 100,
+    target: "One enemy",
+    description: "An almost invisibly fast attack that usually strikes first.",
+  },
+  string_shot: {
+    name: "String Shot",
+    power: null,
+    accuracy: 95,
+    target: "All enemies",
+    description: "The targets are bound with silk blown from the user’s mouth. Lowers Speed.",
+  },
+  tail_whip: {
+    name: "Tail Whip",
+    power: null,
+    accuracy: 100,
+    target: "All enemies",
+    description: "The user wags its tail cutely, making opposing Pokémon less wary. Lowers Defense.",
+  },
 };
 
 function hashString(str) {
@@ -334,54 +299,12 @@ function buildFallbackPartyFromRun(run, actions) {
     .filter(Boolean);
 }
 
-function getPartyStateFromRun(run) {
-  return run?.results?.progress?.partyState ?? [];
-}
-
 function formatAbilityName(abilityId) {
   if (!abilityId) return "None";
   return abilityId
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
-}
-
-function formatStatName(statKey) {
-  const map = {
-    hp: "HP",
-    atk: "Attack",
-    def: "Defense",
-    spa: "Sp. Atk",
-    spd: "Sp. Def",
-    spe: "Speed",
-  };
-  return map[statKey] ?? statKey;
-}
-
-function getNatureEffectText(nature) {
-  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
-
-  if (!effect.up || !effect.down) {
-    return "Neutral nature";
-  }
-
-  return `+${formatStatName(effect.up)}, -${formatStatName(effect.down)}`;
-}
-
-function getNatureStatStyle(nature, statKey, statView) {
-  if (statView !== "total") return {};
-
-  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
-
-  if (effect.up === statKey) {
-    return styles.natureBoostStat;
-  }
-
-  if (effect.down === statKey) {
-    return styles.natureLowerStat;
-  }
-
-  return {};
 }
 
 function getGrowthRateForSpecies(speciesId) {
@@ -443,10 +366,7 @@ function getXpData(mon) {
   const progressIntoLevel = Math.max(0, currentExp - currentLevelExp);
   const expNeededForNext = Math.max(0, nextLevelExp - currentExp);
   const levelSpan = Math.max(1, nextLevelExp - currentLevelExp);
-  const progressPercent = Math.max(
-    0,
-    Math.min(100, (progressIntoLevel / levelSpan) * 100)
-  );
+  const progressPercent = Math.max(0, Math.min(100, (progressIntoLevel / levelSpan) * 100));
 
   return {
     currentExp,
@@ -475,63 +395,50 @@ function getPartyRole(index) {
   return index < 3 ? "Active" : "Bench";
 }
 
-function getPokemonSpriteUrl(speciesId, shiny = false) {
-  if (!speciesId) return "";
-  if (shiny) {
-    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${speciesId}.png`;
-  }
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${speciesId}.png`;
+function getNatureText(nature) {
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+  if (!effect.up || !effect.down) return `${nature} is neutral.`;
+  return `${nature} raises ${STAT_LABELS[effect.up]} and lowers ${STAT_LABELS[effect.down]}.`;
 }
 
-function SpriteWithFallback({ speciesId, shiny, alt, style: imgStyle }) {
-  const [useFallback, setUseFallback] = React.useState(false);
-  const src = useFallback
-    ? getPokemonSpriteUrl(speciesId, false)
-    : getPokemonSpriteUrl(speciesId, shiny);
+function getStatColor(nature, statKey) {
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+  if (effect.up === statKey) return "#22c55e";
+  if (effect.down === statKey) return "#ef4444";
+  return "#e2e8f0";
+}
+
+function getSpriteUrl(speciesId, shiny = false) {
+  const dex = String(speciesId).padStart(3, "0");
+  if (shiny) {
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${speciesId}.png`;
+  }
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${speciesId}.png`;
+}
+
+function MoveTooltip({ move }) {
+  const moveInfo = MOVE_DATA[move?.id] ?? {
+    name: move?.name ?? "Unknown Move",
+    power: null,
+    accuracy: null,
+    target: "Unknown",
+    description: "No move details available.",
+  };
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      style={imgStyle}
-      onError={() => { if (!useFallback) setUseFallback(true); }}
-    />
+    <div style={styles.moveTooltip}>
+      <div style={styles.moveTooltipTitle}>{moveInfo.name}</div>
+      <div style={styles.moveTooltipLine}>Power: {moveInfo.power ?? "—"}</div>
+      <div style={styles.moveTooltipLine}>Accuracy: {moveInfo.accuracy ?? "—"}</div>
+      <div style={styles.moveTooltipLine}>Target: {moveInfo.target}</div>
+      <div style={styles.moveTooltipDescription}>{moveInfo.description}</div>
+    </div>
   );
-}
-
-function getMoveDetails(move) {
-  if (!move) {
-    return {
-      name: "Unknown Move",
-      type: "Unknown",
-      category: "Unknown",
-      power: null,
-      accuracy: null,
-      pp: 0,
-      ppMax: 0,
-      targetText: "Unknown",
-      effectText: "No description available.",
-    };
-  }
-
-  const dbMove = MOVE_DETAILS[move.id] ?? {};
-
-  return {
-    name: move.name ?? dbMove.name ?? "Unknown Move",
-    type: dbMove.type ?? "Unknown",
-    category: dbMove.category ?? "Unknown",
-    power: dbMove.power ?? null,
-    accuracy: dbMove.accuracy ?? null,
-    pp: move.pp ?? 0,
-    ppMax: move.ppMax ?? move.pp ?? 0,
-    targetText: dbMove.targetText ?? "Unknown",
-    effectText: dbMove.effectText ?? "No description available.",
-  };
 }
 
 function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   const [statView, setStatView] = useState("total");
-  const [hoveredMoveId, setHoveredMoveId] = useState(null);
+  const [spriteErrored, setSpriteErrored] = useState(false);
 
   if (!pokemon) return null;
 
@@ -549,56 +456,49 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
   };
 
   const selectedStats = statSets[statView] ?? totalStats;
+  const spriteUrl = !spriteErrored
+    ? getSpriteUrl(pokemon.speciesId, pokemon.shiny)
+    : getSpriteUrl(pokemon.speciesId, false);
 
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-      <div style={styles.modalHeader}>
-        <div style={styles.modalHeaderLeft}>
-          <div style={{
-            ...styles.modalSpriteWrap,
-            ...(pokemon.shiny ? styles.shinySpriteWrap : {}),
-          }}>
-            <SpriteWithFallback
-              speciesId={pokemon.speciesId}
-              shiny={pokemon.shiny}
+        <div style={styles.modalHeader}>
+          <div style={styles.modalIdentityRow}>
+            <img
+              src={spriteUrl}
               alt={pokemon.name}
               style={styles.modalSprite}
+              onError={() => {
+                if (pokemon.shiny && !spriteErrored) setSpriteErrored(true);
+              }}
             />
-          </div>
-
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div>
               <h2 style={styles.modalTitle}>
                 {pokemon.name} {pokemon.gender ? `(${pokemon.gender})` : ""}
               </h2>
-              {pokemon.shiny && (
-                <span style={styles.shinyModalBadge}>✨ Shiny</span>
-              )}
-            </div>
-            <div style={styles.subText}>
-              Lv. {pokemon.level} • {(pokemon.types ?? []).join(" / ") || "Unknown"}
+              <div style={styles.subText}>
+                Lv. {pokemon.level} • {(pokemon.types ?? []).join(" / ") || "Unknown"}
+              </div>
+              {pokemon.shiny ? <div style={styles.shinyModalBadge}>✨ Shiny</div> : null}
             </div>
           </div>
+          <button style={styles.closeButton} onClick={onClose}>
+            X
+          </button>
         </div>
-
-        <button style={styles.closeButton} onClick={onClose}>
-          X
-        </button>
-      </div>
 
         <div style={styles.infoGrid}>
           <div><strong>Party Slot:</strong> {slotIndex !== null && slotIndex !== undefined ? slotIndex + 1 : "-"}</div>
-          <div><strong>Role:</strong> {slotIndex !== null && slotIndex !== undefined ? getPartyRole(slotIndex) : "-"}</div>
-          <div>
-            <strong>Nature:</strong> {pokemon.nature ?? "Hardy"}{" "}
-            <span style={styles.natureEffectText}>
-              ({getNatureEffectText(pokemon.nature ?? "Hardy")})
-            </span>
-          </div>
+          <div><strong>Role:</strong> {slotIndex !== null && slotIndex !== undefined ? getPartyRole(slotIndex) : "Box"}</div>
+          <div><strong>Nature:</strong> {pokemon.nature ?? "Hardy"}</div>
           <div><strong>Ability:</strong> {formatAbilityName(pokemon.abilityId)}</div>
           <div><strong>Held Item:</strong> {pokemon.heldItem ?? "None"}</div>
           <div><strong>Status:</strong> {pokemon.fainted ? "FNT" : (pokemon.status ?? "Normal")}</div>
+        </div>
+
+        <div style={styles.natureBox}>
+          {getNatureText(pokemon.nature ?? "Hardy")}
         </div>
 
         <div style={styles.section}>
@@ -619,12 +519,8 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
 
         <div style={styles.section}>
           <div style={styles.sectionTitle}>XP</div>
-          <div style={styles.valueText}>
-            Current XP: {xp.currentExp}
-          </div>
-          <div style={styles.valueText}>
-            Next Level In: {xp.expNeededForNext} XP
-          </div>
+          <div style={styles.valueText}>Current XP: {xp.currentExp}</div>
+          <div style={styles.valueText}>Next Level In: {xp.expNeededForNext} XP</div>
           <div style={styles.barOuter}>
             <div
               style={{
@@ -646,26 +542,14 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
           </div>
 
           <div style={styles.statsGrid}>
-            {Object.keys(STAT_LABELS).map((key) => {
-              const natureStatStyle = getNatureStatStyle(
-                pokemon.nature ?? "Hardy",
-                key,
-                statView
-              );
-
-              return (
-                <div
-                  key={key}
-                  style={{
-                    ...styles.statRow,
-                    ...natureStatStyle,
-                  }}
-                >
-                  <span>{STAT_LABELS[key]}</span>
-                  <strong>{selectedStats?.[key] ?? 0}</strong>
-                </div>
-              );
-            })}
+            {Object.keys(STAT_LABELS).map((key) => (
+              <div key={key} style={styles.statRow}>
+                <span>{STAT_LABELS[key]}</span>
+                <strong style={{ color: statView === "total" ? getStatColor(pokemon.nature ?? "Hardy", key) : "#e2e8f0" }}>
+                  {selectedStats?.[key] ?? 0}
+                </strong>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -675,57 +559,184 @@ function PartyDetailModal({ pokemon, slotIndex, onClose }) {
             {(pokemon.moves ?? []).length === 0 ? (
               <div style={styles.subText}>No moves found.</div>
             ) : (
-              pokemon.moves.map((move) => {
-                const details = getMoveDetails(move);
-
-                return (
-              <div
-                key={move.id}
-                style={styles.moveTooltipWrap}
-                onMouseEnter={() => setHoveredMoveId(move.id)}
-                onMouseLeave={() => setHoveredMoveId(null)}
-              >
-                <div style={styles.moveCard}>
-                  <div style={styles.moveTopRow}>
-                    <strong style={styles.moveName}>{details.name}</strong>
-                    <span style={styles.movePp}>
-                      PP {details.pp}/{details.ppMax}
-                    </span>
+              pokemon.moves.map((move) => (
+                <div key={move.id} style={styles.moveRowWithTooltip}>
+                  <div style={styles.moveRow}>
+                    <span>{move.name ?? MOVE_DATA[move.id]?.name ?? move.id}</span>
+                    <strong>PP {move.pp ?? 0}/{move.ppMax ?? move.pp ?? 0}</strong>
                   </div>
-
-                  <div style={styles.moveMetaRow}>
-                    <span style={styles.moveMetaBadge}>{details.type}</span>
-                    <span style={styles.moveMetaBadge}>{details.category}</span>
-                  </div>
-
-                  <div style={styles.moveStatsRow}>
-                    <span>Power: {details.power ?? "--"}</span>
-                    <span>Accuracy: {details.accuracy ?? "--"}</span>
-                  </div>
+                  <MoveTooltip move={move} />
                 </div>
-
-                <div
-                  style={{
-                    ...styles.moveTooltip,
-                    opacity: hoveredMoveId === move.id ? 1 : 0,
-                  }}
-                >
-                  <div style={styles.moveTooltipTitle}>{details.name}</div>
-                  <div style={styles.moveTooltipText}>
-                    <strong>Target:</strong> {details.targetText}
-                  </div>
-                  <div style={styles.moveTooltipText}>
-                    <strong>Effect:</strong> {details.effectText}
-                  </div>
-                </div>
-              </div>
-                );
-              })
+              ))
             )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function PokemonCard({
+  mon,
+  index,
+  roleLabel,
+  isBench = false,
+  isBox = false,
+  draggedIndex,
+  dragOverIndex,
+  onDragStart,
+  onDragEnter,
+  onDragEnd,
+  onDrop,
+  onClick,
+  onMoveLeft,
+  onMoveRight,
+  onMoveToBox,
+  onAddToParty,
+  disableLeft,
+  disableRight,
+}) {
+  const xp = getXpData(mon);
+  const [spriteErrored, setSpriteErrored] = useState(false);
+
+  const spriteUrl = !spriteErrored
+    ? getSpriteUrl(mon.speciesId, mon.shiny)
+    : getSpriteUrl(mon.speciesId, false);
+
+  const baseStyle = isBox ? styles.boxCard : isBench ? styles.benchCard : styles.card;
+
+  return (
+    <button
+      key={`${mon.speciesId}-${index}`}
+      style={{
+        ...baseStyle,
+        ...(dragOverIndex === index ? styles.dragOverCard : {}),
+        ...(draggedIndex === index ? styles.draggingCard : {}),
+        ...(mon.shiny ? styles.shinyCardAccent : {}),
+      }}
+      draggable
+      onDragStart={() => onDragStart(index)}
+      onDragEnter={() => onDragEnter(index)}
+      onDragOver={(e) => e.preventDefault()}
+      onDragEnd={onDragEnd}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop(index);
+      }}
+      onClick={onClick}
+    >
+      <div style={styles.cardTopRow}>
+        <div style={styles.cardIdentityRow}>
+          <img
+            src={spriteUrl}
+            alt={mon.name}
+            style={styles.cardSprite}
+            onError={() => {
+              if (mon.shiny && !spriteErrored) setSpriteErrored(true);
+            }}
+          />
+          <div>
+            <div style={styles.cardName}>
+              {mon.name} {mon.gender ? `(${mon.gender})` : ""}
+            </div>
+            <div style={styles.subText}>
+              Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.badgeColumn}>
+          <div style={styles.slotBadge}>Slot {index + 1}</div>
+          <div style={roleLabel === "Active" ? styles.activeBadge : roleLabel === "Bench" ? styles.benchBadge : styles.boxBadge}>
+            {roleLabel}
+          </div>
+          {mon.shiny ? <div style={styles.shinyBadge}>✨ Shiny</div> : null}
+        </div>
+      </div>
+
+      <div style={styles.infoLine}>
+        HP: {mon.currentHP ?? 0} / {mon.maxHP ?? 0}
+      </div>
+      <div style={styles.barOuter}>
+        <div
+          style={{
+            ...styles.barInner,
+            width: `${getHpPercent(mon)}%`,
+            backgroundColor: getHpBarColor(mon),
+          }}
+        />
+      </div>
+
+      <div style={{ ...styles.infoLine, marginTop: 10 }}>
+        XP: {xp.currentExp} • Next in {xp.expNeededForNext}
+      </div>
+      <div style={styles.barOuter}>
+        <div
+          style={{
+            ...styles.barInner,
+            width: `${xp.progressPercent}%`,
+            backgroundColor: "#2563eb",
+          }}
+        />
+      </div>
+
+      <div style={styles.metaRow}>
+        <span>Nature: {mon.nature ?? "Hardy"}</span>
+        <span>Status: {mon.fainted ? "FNT" : (mon.status ?? "Normal")}</span>
+      </div>
+
+      {!isBox ? (
+        <div style={styles.reorderRow}>
+          <button
+            type="button"
+            style={disableLeft ? styles.disabledReorderButton : styles.reorderButton}
+            disabled={disableLeft}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveLeft(index);
+            }}
+          >
+            ← Move Left
+          </button>
+
+          <button
+            type="button"
+            style={disableRight ? styles.disabledReorderButton : styles.reorderButton}
+            disabled={disableRight}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveRight(index);
+            }}
+          >
+            Move Right →
+          </button>
+
+          <button
+            type="button"
+            style={styles.secondaryButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveToBox(mon, index);
+            }}
+          >
+            Send to Box
+          </button>
+        </div>
+      ) : (
+        <div style={styles.reorderRow}>
+          <button
+            type="button"
+            style={styles.secondaryButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToParty(mon, index);
+            }}
+          >
+            Add to Party
+          </button>
+        </div>
+      )}
+    </button>
   );
 }
 
@@ -736,10 +747,11 @@ export default function Party() {
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [savingOrder, setSavingOrder] = useState(false);
   const [partyOverride, setPartyOverride] = useState(null);
+  const [boxOverride, setBoxOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [saveMessage, setSaveMessage] = useState("");
 
   const { runId, handleInvalidRun } = useRequiredRunId({ page: "Party" });
 
@@ -752,12 +764,10 @@ export default function Party() {
       try {
         setLoading(true);
 
-        // This is the only required call.
         const loadedRun = await runApi.getRun(runId);
         if (!mounted) return;
         setRun(loadedRun);
 
-        // This is optional fallback support only.
         try {
           const loadedActions = await runApi.listRunActions(runId);
           if (!mounted) return;
@@ -767,13 +777,11 @@ export default function Party() {
           if (!mounted) return;
           setActions([]);
         }
-        } catch (err) {
-          console.error("Failed to load Party page run:", err);
-          if (!mounted) return;
-
-          // Only kick out if the run truly cannot be loaded.
-          handleInvalidRun?.();
-        } finally {
+      } catch (err) {
+        console.error("Failed to load Party page run:", err);
+        if (!mounted) return;
+        handleInvalidRun?.();
+      } finally {
         if (mounted) setLoading(false);
       }
     }
@@ -783,415 +791,289 @@ export default function Party() {
     return () => {
       mounted = false;
     };
-    }, [runId]);
+  }, [runId, handleInvalidRun]);
 
   const baseParty = useMemo(() => {
     return buildFallbackPartyFromRun(run, actions);
   }, [run, actions]);
+
+  const baseBox = useMemo(() => {
+    return run?.results?.progress?.boxState ?? [];
+  }, [run]);
+
   const party = partyOverride ?? baseParty;
+  const box = boxOverride ?? baseBox;
+
   const activeParty = party.slice(0, 3);
   const benchParty = party.slice(3);
 
-async function persistPartyOrder(nextParty) {
-  if (!runId || !Array.isArray(nextParty)) return;
+  async function savePartyAndBox(nextParty, nextBox, message = "Saved.") {
+    setPartyOverride(nextParty);
+    setBoxOverride(nextBox);
+    setSaveMessage("Saving...");
 
-  try {
-    setSavingOrder(true);
+    try {
+      await runApi.appendRunAction(runId, "party_box_update", {
+        partyState: nextParty,
+        boxState: nextBox,
+      });
+      setSaveMessage(message);
+    } catch (err) {
+      console.error("Failed to save party/box update:", err);
+      setSaveMessage("Save failed.");
+    }
 
-    await runApi.appendAction(runId, "party_reorder", {
-      partyState: nextParty,
-    });
-
-    setRun((prev) => {
-      if (!prev) return prev;
-
-      return {
-        ...prev,
-        results: {
-          ...(prev.results ?? {}),
-          progress: {
-            ...(prev.results?.progress ?? {}),
-            partyState: nextParty,
-          },
-        },
-      };
-    });
-  } catch (err) {
-    console.error("Failed to save party order:", err);
-  } finally {
-    setSavingOrder(false);
-  }
-}
-
-function reorderParty(fromIndex, toIndex) {
-  if (
-    fromIndex === null ||
-    toIndex === null ||
-    fromIndex === undefined ||
-    toIndex === undefined ||
-    fromIndex === toIndex
-  ) {
-    return;
+    setTimeout(() => {
+      setSaveMessage("");
+    }, 1800);
   }
 
-  const nextParty = [...party];
-  const [moved] = nextParty.splice(fromIndex, 1);
-  nextParty.splice(toIndex, 0, moved);
+  function reorderParty(fromIndex, toIndex) {
+    if (
+      fromIndex === null ||
+      toIndex === null ||
+      fromIndex === undefined ||
+      toIndex === undefined ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
 
-  setPartyOverride(nextParty);
-  persistPartyOrder(nextParty);
+    const nextParty = [...party];
+    const [moved] = nextParty.splice(fromIndex, 1);
+    nextParty.splice(toIndex, 0, moved);
 
-  if (selectedPokemonIndex === fromIndex) {
-    setSelectedPokemon(moved);
-    setSelectedPokemonIndex(toIndex);
-  } else if (
-    selectedPokemonIndex !== null &&
-    selectedPokemonIndex !== undefined
-  ) {
-    const movedSelected = nextParty[selectedPokemonIndex];
-    if (movedSelected) {
-      setSelectedPokemon(movedSelected);
+    savePartyAndBox(nextParty, box, "Party order saved.");
+
+    if (selectedPokemonIndex === fromIndex) {
+      setSelectedPokemon(moved);
+      setSelectedPokemonIndex(toIndex);
+    } else if (selectedPokemonIndex !== null && selectedPokemonIndex !== undefined) {
+      const movedSelected = nextParty[selectedPokemonIndex];
+      if (movedSelected) {
+        setSelectedPokemon(movedSelected);
+      }
     }
   }
-}
 
-function handleDragStart(index) {
-  setDraggedIndex(index);
-}
+  function handleDragStart(index) {
+    setDraggedIndex(index);
+  }
 
-function handleDragEnter(index) {
-  setDragOverIndex(index);
-}
+  function handleDragEnter(index) {
+    setDragOverIndex(index);
+  }
 
-function handleDragEnd() {
-  setDraggedIndex(null);
-  setDragOverIndex(null);
-}
+  function handleDragEnd() {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }
 
-function handleDrop(index) {
-  if (draggedIndex === null || draggedIndex === undefined) return;
-  reorderParty(draggedIndex, index);
-  setDraggedIndex(null);
-  setDragOverIndex(null);
-}
+  function handleDrop(index) {
+    if (draggedIndex === null || draggedIndex === undefined) return;
+    reorderParty(draggedIndex, index);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }
 
   function movePartyMemberLeft(index) {
-  if (index <= 0) return;
+    if (index <= 0) return;
+    const nextParty = [...party];
+    [nextParty[index - 1], nextParty[index]] = [nextParty[index], nextParty[index - 1]];
+    savePartyAndBox(nextParty, box, "Party order saved.");
 
-  const nextParty = [...party];
-  [nextParty[index - 1], nextParty[index]] = [nextParty[index], nextParty[index - 1]];
-  setPartyOverride(nextParty);
-  persistPartyOrder(nextParty);
-
-  if (selectedPokemonIndex === index) {
-    setSelectedPokemon(nextParty[index - 1]);
-    setSelectedPokemonIndex(index - 1);
-  } else if (selectedPokemonIndex === index - 1) {
-    setSelectedPokemon(nextParty[index]);
-    setSelectedPokemonIndex(index);
+    if (selectedPokemonIndex === index) {
+      setSelectedPokemon(nextParty[index - 1]);
+      setSelectedPokemonIndex(index - 1);
+    } else if (selectedPokemonIndex === index - 1) {
+      setSelectedPokemon(nextParty[index]);
+      setSelectedPokemonIndex(index);
+    }
   }
-}
 
-function movePartyMemberRight(index) {
-  if (index >= party.length - 1) return;
+  function movePartyMemberRight(index) {
+    if (index >= party.length - 1) return;
+    const nextParty = [...party];
+    [nextParty[index], nextParty[index + 1]] = [nextParty[index + 1], nextParty[index]];
+    savePartyAndBox(nextParty, box, "Party order saved.");
 
-  const nextParty = [...party];
-  [nextParty[index], nextParty[index + 1]] = [nextParty[index + 1], nextParty[index]];
-  setPartyOverride(nextParty);
-  persistPartyOrder(nextParty);
-
-  if (selectedPokemonIndex === index) {
-    setSelectedPokemon(nextParty[index + 1]);
-    setSelectedPokemonIndex(index + 1);
-  } else if (selectedPokemonIndex === index + 1) {
-    setSelectedPokemon(nextParty[index]);
-    setSelectedPokemonIndex(index);
+    if (selectedPokemonIndex === index) {
+      setSelectedPokemon(nextParty[index + 1]);
+      setSelectedPokemonIndex(index + 1);
+    } else if (selectedPokemonIndex === index + 1) {
+      setSelectedPokemon(nextParty[index]);
+      setSelectedPokemonIndex(index);
+    }
   }
-}
+
+  function sendToBox(mon, index) {
+    if (party.length <= 1) return;
+    const nextParty = [...party];
+    const [moved] = nextParty.splice(index, 1);
+    const nextBox = [...box, moved];
+    savePartyAndBox(nextParty, nextBox, `${mon.name} sent to Box.`);
+
+    if (selectedPokemonIndex === index) {
+      setSelectedPokemon(null);
+      setSelectedPokemonIndex(null);
+    }
+  }
+
+  function addToParty(mon, boxIndex) {
+    if (party.length >= 6) {
+      setSaveMessage("Party is full.");
+      setTimeout(() => setSaveMessage(""), 1800);
+      return;
+    }
+
+    const nextBox = [...box];
+    const [moved] = nextBox.splice(boxIndex, 1);
+    const nextParty = [...party, moved];
+    savePartyAndBox(nextParty, nextBox, `${mon.name} added to Party.`);
+  }
 
   return (
     <div style={styles.page}>
       <div style={styles.headerRow}>
         <div>
-        <h1 style={styles.pageTitle}>Party</h1>
-        <p style={styles.subText}>View your current team and Pokémon details.</p>
-        {savingOrder && (
-          <p style={styles.savingText}>Saving party order...</p>
-        )}
-      </div>
-        <button
-          style={styles.backButton}
-          onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
-        >
-          Back
-        </button>
+          <h1 style={styles.pageTitle}>Party</h1>
+          <p style={styles.subText}>View your current team, Pokémon details, and storage box.</p>
+        </div>
+        <div style={styles.headerButtonStack}>
+          {saveMessage ? <div style={styles.saveToast}>{saveMessage}</div> : null}
+          <button
+            style={styles.backButton}
+            onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
+          >
+            Back
+          </button>
+        </div>
       </div>
 
       {loading ? (
-  <div style={styles.emptyBox}>Loading party...</div>
-) : party.length === 0 ? (
-  <div style={styles.emptyBox}>No party data found.</div>
-) : (
-  <div style={styles.partySections}>
-    <div style={styles.partySection}>
-      <div style={styles.sectionHeader}>
-        <h2 style={styles.sectionTitleText}>Active Team</h2>
-        <div style={styles.sectionSubtitle}>These are your current battle slots.</div>
-      </div>
-
-      <div style={styles.cardGrid}>
-        {activeParty.map((mon, localIndex) => {
-          const index = localIndex;
-          const xp = getXpData(mon);
-
-          return (
-              <button
-      key={`${mon.speciesId}-${index}`}
-      style={{
-        ...styles.card,
-        ...(mon.shiny ? styles.shinyCard : {}),
-        ...(dragOverIndex === index ? styles.dragOverCard : {}),
-        ...(draggedIndex === index ? styles.draggingCard : {}),
-      }}
-      draggable
-      onDragStart={() => handleDragStart(index)}
-      onDragEnter={() => handleDragEnter(index)}
-      onDragOver={(e) => e.preventDefault()}
-      onDragEnd={handleDragEnd}
-      onDrop={(e) => {
-        e.preventDefault();
-        handleDrop(index);
-      }}
-      onClick={() => {
-        setSelectedPokemon(mon);
-        setSelectedPokemonIndex(index);
-      }}
-    >
-              <div style={styles.cardTopRow}>
-                <div style={styles.cardTopLeft}>
-                  <div style={{
-                    ...styles.cardSpriteWrap,
-                    ...(mon.shiny ? styles.shinySpriteWrap : {}),
-                  }}>
-                    <SpriteWithFallback
-                      speciesId={mon.speciesId}
-                      shiny={mon.shiny}
-                      alt={mon.name}
-                      style={styles.cardSprite}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={styles.cardName}>
-                      {mon.name} {mon.gender ? `(${mon.gender})` : ""}
-                    </div>
-                    <div style={styles.subText}>
-                      Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={styles.badgeColumn}>
-                  <div style={styles.slotBadge}>Slot {index + 1}</div>
-                  <div style={styles.activeBadge}>Active</div>
-                  {mon.shiny && <div style={styles.shinyBadge}>✨ Shiny</div>}
-                </div>
-              </div>
-
-              <div style={styles.infoLine}>
-                HP: {mon.currentHP ?? 0} / {mon.maxHP ?? 0}
-              </div>
-              <div style={styles.barOuter}>
-                <div
-                  style={{
-                    ...styles.barInner,
-                    width: `${getHpPercent(mon)}%`,
-                    backgroundColor: getHpBarColor(mon),
-                  }}
-                />
-              </div>
-
-              <div style={{ ...styles.infoLine, marginTop: 10 }}>
-                XP: {xp.currentExp} • Next in {xp.expNeededForNext}
-              </div>
-              <div style={styles.barOuter}>
-                <div
-                  style={{
-                    ...styles.barInner,
-                    width: `${xp.progressPercent}%`,
-                    backgroundColor: "#2563eb",
-                  }}
-                />
-              </div>
-
-              <div style={styles.metaRow}>
-                <span>Nature: {mon.nature ?? "Hardy"}</span>
-                <span>Status: {mon.fainted ? "FNT" : (mon.status ?? "Normal")}</span>
-              </div>
-
-              <div style={styles.reorderRow}>
-                <button
-                  type="button"
-                  style={index === 0 ? styles.disabledReorderButton : styles.reorderButton}
-                  disabled={index === 0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    movePartyMemberLeft(index);
-                  }}
-                >
-                  ← Move Left
-                </button>
-
-                <button
-                  type="button"
-                  style={index === party.length - 1 ? styles.disabledReorderButton : styles.reorderButton}
-                  disabled={index === party.length - 1}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    movePartyMemberRight(index);
-                  }}
-                >
-                  Move Right →
-                </button>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-
-    <div style={styles.partySection}>
-      <div style={styles.sectionHeader}>
-        <h2 style={styles.sectionTitleText}>Bench</h2>
-        <div style={styles.sectionSubtitle}>Reserve Pokémon outside the current front 3.</div>
-      </div>
-
-      {benchParty.length === 0 ? (
-        <div style={styles.emptyBenchBox}>No bench Pokémon.</div>
+        <div style={styles.emptyBox}>Loading party...</div>
+      ) : party.length === 0 ? (
+        <div style={styles.emptyBox}>No party data found.</div>
       ) : (
-        <div style={styles.cardGrid}>
-          {benchParty.map((mon, localIndex) => {
-            const index = localIndex + 3;
-            const xp = getXpData(mon);
+        <div style={styles.partySections}>
+          <div style={styles.partySection}>
+            <div style={styles.sectionHeader}>
+              <h2 style={styles.sectionTitleText}>Active Team</h2>
+              <div style={styles.sectionSubtitle}>These are your current battle slots.</div>
+            </div>
 
-            return (
-              <button
-  key={`${mon.speciesId}-${index}`}
-  style={{
-    ...styles.benchCard,
-    ...(mon.shiny ? styles.shinyBenchCard : {}),
-    ...(dragOverIndex === index ? styles.dragOverCard : {}),
-    ...(draggedIndex === index ? styles.draggingCard : {}),
-  }}
-  draggable
-  onDragStart={() => handleDragStart(index)}
-  onDragEnter={() => handleDragEnter(index)}
-  onDragOver={(e) => e.preventDefault()}
-  onDragEnd={handleDragEnd}
-  onDrop={(e) => {
-    e.preventDefault();
-    handleDrop(index);
-  }}
-  onClick={() => {
-    setSelectedPokemon(mon);
-    setSelectedPokemonIndex(index);
-  }}
->
-                <div style={styles.cardTopRow}>
-                  <div style={styles.cardTopLeft}>
-                    <div style={{
-                      ...styles.cardSpriteWrap,
-                      ...(mon.shiny ? styles.shinySpriteWrapMuted : {}),
-                    }}>
-                      <SpriteWithFallback
-                        speciesId={mon.speciesId}
-                        shiny={mon.shiny}
-                        alt={mon.name}
-                        style={styles.cardSprite}
-                      />
-                    </div>
-
-                    <div>
-                      <div style={styles.cardName}>
-                        {mon.name} {mon.gender ? `(${mon.gender})` : ""}
-                      </div>
-                      <div style={styles.subText}>
-                        Lv. {mon.level} • {(mon.types ?? []).join(" / ") || "Unknown"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={styles.badgeColumn}>
-                    <div style={styles.slotBadge}>Slot {index + 1}</div>
-                    <div style={styles.benchBadge}>Bench</div>
-                    {mon.shiny && <div style={styles.shinyBenchBadge}>✨ Shiny</div>}
-                  </div>
-                </div>
-
-                <div style={styles.infoLine}>
-                  HP: {mon.currentHP ?? 0} / {mon.maxHP ?? 0}
-                </div>
-                <div style={styles.barOuter}>
-                  <div
-                    style={{
-                      ...styles.barInner,
-                      width: `${getHpPercent(mon)}%`,
-                      backgroundColor: getHpBarColor(mon),
+            <div style={styles.cardGrid}>
+              {activeParty.map((mon, localIndex) => {
+                const index = localIndex;
+                return (
+                  <PokemonCard
+                    key={`${mon.speciesId}-${index}`}
+                    mon={mon}
+                    index={index}
+                    roleLabel="Active"
+                    draggedIndex={draggedIndex}
+                    dragOverIndex={dragOverIndex}
+                    onDragStart={handleDragStart}
+                    onDragEnter={handleDragEnter}
+                    onDragEnd={handleDragEnd}
+                    onDrop={handleDrop}
+                    onClick={() => {
+                      setSelectedPokemon(mon);
+                      setSelectedPokemonIndex(index);
                     }}
+                    onMoveLeft={movePartyMemberLeft}
+                    onMoveRight={movePartyMemberRight}
+                    onMoveToBox={sendToBox}
+                    disableLeft={index === 0}
+                    disableRight={index === party.length - 1}
                   />
-                </div>
+                );
+              })}
+            </div>
+          </div>
 
-                <div style={{ ...styles.infoLine, marginTop: 10 }}>
-                  XP: {xp.currentExp} • Next in {xp.expNeededForNext}
-                </div>
-                <div style={styles.barOuter}>
-                  <div
-                    style={{
-                      ...styles.barInner,
-                      width: `${xp.progressPercent}%`,
-                      backgroundColor: "#2563eb",
+          <div style={styles.partySection}>
+            <div style={styles.sectionHeader}>
+              <h2 style={styles.sectionTitleText}>Bench</h2>
+              <div style={styles.sectionSubtitle}>Reserve Pokémon outside the current front 3.</div>
+            </div>
+
+            {benchParty.length === 0 ? (
+              <div style={styles.emptyBenchBox}>No bench Pokémon.</div>
+            ) : (
+              <div style={styles.cardGrid}>
+                {benchParty.map((mon, localIndex) => {
+                  const index = localIndex + 3;
+                  return (
+                    <PokemonCard
+                      key={`${mon.speciesId}-${index}`}
+                      mon={mon}
+                      index={index}
+                      roleLabel="Bench"
+                      isBench
+                      draggedIndex={draggedIndex}
+                      dragOverIndex={dragOverIndex}
+                      onDragStart={handleDragStart}
+                      onDragEnter={handleDragEnter}
+                      onDragEnd={handleDragEnd}
+                      onDrop={handleDrop}
+                      onClick={() => {
+                        setSelectedPokemon(mon);
+                        setSelectedPokemonIndex(index);
+                      }}
+                      onMoveLeft={movePartyMemberLeft}
+                      onMoveRight={movePartyMemberRight}
+                      onMoveToBox={sendToBox}
+                      disableLeft={index === 0}
+                      disableRight={index === party.length - 1}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div style={styles.partySection}>
+            <div style={styles.sectionHeader}>
+              <h2 style={styles.sectionTitleText}>Box</h2>
+              <div style={styles.sectionSubtitle}>Stored Pokémon outside your active party.</div>
+            </div>
+
+            {box.length === 0 ? (
+              <div style={styles.emptyBenchBox}>No boxed Pokémon yet.</div>
+            ) : (
+              <div style={styles.cardGrid}>
+                {box.map((mon, index) => (
+                  <PokemonCard
+                    key={`box-${mon.speciesId}-${index}`}
+                    mon={mon}
+                    index={index}
+                    roleLabel="Box"
+                    isBox
+                    draggedIndex={null}
+                    dragOverIndex={null}
+                    onDragStart={() => {}}
+                    onDragEnter={() => {}}
+                    onDragEnd={() => {}}
+                    onDrop={() => {}}
+                    onClick={() => {
+                      setSelectedPokemon(mon);
+                      setSelectedPokemonIndex(null);
                     }}
+                    onMoveLeft={() => {}}
+                    onMoveRight={() => {}}
+                    onMoveToBox={() => {}}
+                    onAddToParty={addToParty}
+                    disableLeft
+                    disableRight
                   />
-                </div>
-
-                <div style={styles.metaRow}>
-                  <span>Nature: {mon.nature ?? "Hardy"}</span>
-                  <span>Status: {mon.fainted ? "FNT" : (mon.status ?? "Normal")}</span>
-                </div>
-
-                <div style={styles.reorderRow}>
-                  <button
-                    type="button"
-                    style={index === 0 ? styles.disabledReorderButton : styles.reorderButton}
-                    disabled={index === 0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      movePartyMemberLeft(index);
-                    }}
-                  >
-                    ← Move Left
-                  </button>
-
-                  <button
-                    type="button"
-                    style={index === party.length - 1 ? styles.disabledReorderButton : styles.reorderButton}
-                    disabled={index === party.length - 1}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      movePartyMemberRight(index);
-                    }}
-                  >
-                    Move Right →
-                  </button>
-                </div>
-              </button>
-            );
-          })}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
+
       <PartyDetailModal
         pokemon={selectedPokemon}
         slotIndex={selectedPokemonIndex}
@@ -1217,6 +1099,20 @@ const styles = {
     alignItems: "flex-start",
     gap: "16px",
     marginBottom: "24px",
+  },
+  headerButtonStack: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    alignItems: "flex-end",
+  },
+  saveToast: {
+    background: "#1d4ed8",
+    color: "#ffffff",
+    borderRadius: "10px",
+    padding: "8px 12px",
+    fontSize: "13px",
+    fontWeight: 700,
   },
   pageTitle: {
     margin: 0,
@@ -1244,7 +1140,7 @@ const styles = {
   },
   cardGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     gap: "16px",
   },
   card: {
@@ -1255,6 +1151,31 @@ const styles = {
     textAlign: "left",
     cursor: "pointer",
     color: "#e2e8f0",
+    position: "relative",
+  },
+  benchCard: {
+    background: "#111827",
+    border: "1px solid #374151",
+    borderRadius: "16px",
+    padding: "16px",
+    textAlign: "left",
+    cursor: "pointer",
+    color: "#cbd5e1",
+    opacity: 0.9,
+    position: "relative",
+  },
+  boxCard: {
+    background: "#172033",
+    border: "1px solid #475569",
+    borderRadius: "16px",
+    padding: "16px",
+    textAlign: "left",
+    cursor: "pointer",
+    color: "#dbeafe",
+    position: "relative",
+  },
+  shinyCardAccent: {
+    boxShadow: "0 0 0 1px #facc15 inset, 0 0 18px rgba(250, 204, 21, 0.18)",
   },
   cardTopRow: {
     display: "flex",
@@ -1262,6 +1183,28 @@ const styles = {
     alignItems: "flex-start",
     gap: "10px",
     marginBottom: "12px",
+  },
+  cardIdentityRow: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "center",
+  },
+  cardSprite: {
+    width: "72px",
+    height: "72px",
+    objectFit: "contain",
+    imageRendering: "auto",
+  },
+  modalIdentityRow: {
+    display: "flex",
+    gap: "14px",
+    alignItems: "center",
+  },
+  modalSprite: {
+    width: "120px",
+    height: "120px",
+    objectFit: "contain",
+    imageRendering: "auto",
   },
   cardName: {
     fontSize: "20px",
@@ -1273,39 +1216,59 @@ const styles = {
     padding: "6px 10px",
     borderRadius: "999px",
   },
-
   badgeColumn: {
-  display: "flex",
-  flexDirection: "column",
-  gap: "6px",
-  alignItems: "flex-end",
-},
-
-activeBadge: {
-  fontSize: "11px",
-  background: "#14532d",
-  color: "#bbf7d0",
-  padding: "4px 8px",
-  borderRadius: "999px",
-  border: "1px solid #166534",
-  fontWeight: 700,
-},
-
-natureEffectText: {
-  color: "#93c5fd",
-  fontSize: "12px",
-},
-
-benchBadge: {
-  fontSize: "11px",
-  background: "#3f3f46",
-  color: "#e4e4e7",
-  padding: "4px 8px",
-  borderRadius: "999px",
-  border: "1px solid #52525b",
-  fontWeight: 700,
-},
-
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    alignItems: "flex-end",
+  },
+  activeBadge: {
+    fontSize: "11px",
+    background: "#14532d",
+    color: "#bbf7d0",
+    padding: "4px 8px",
+    borderRadius: "999px",
+    border: "1px solid #166534",
+    fontWeight: 700,
+  },
+  benchBadge: {
+    fontSize: "11px",
+    background: "#3f3f46",
+    color: "#e4e4e7",
+    padding: "4px 8px",
+    borderRadius: "999px",
+    border: "1px solid #52525b",
+    fontWeight: 700,
+  },
+  boxBadge: {
+    fontSize: "11px",
+    background: "#1e3a8a",
+    color: "#bfdbfe",
+    padding: "4px 8px",
+    borderRadius: "999px",
+    border: "1px solid #2563eb",
+    fontWeight: 700,
+  },
+  shinyBadge: {
+    fontSize: "11px",
+    background: "#f59e0b",
+    color: "#1f2937",
+    padding: "4px 8px",
+    borderRadius: "999px",
+    border: "1px solid #facc15",
+    fontWeight: 800,
+  },
+  shinyModalBadge: {
+    display: "inline-block",
+    marginTop: "8px",
+    background: "#f59e0b",
+    color: "#1f2937",
+    padding: "6px 10px",
+    borderRadius: "999px",
+    border: "1px solid #facc15",
+    fontWeight: 800,
+    fontSize: "12px",
+  },
   infoLine: {
     fontSize: "14px",
     marginBottom: "6px",
@@ -1319,247 +1282,81 @@ benchBadge: {
     color: "#cbd5e1",
     flexWrap: "wrap",
   },
-
-reorderRow: {
-  display: "flex",
-  gap: "8px",
-  marginTop: "12px",
-  flexWrap: "wrap",
-},
-
-reorderButton: {
-  background: "#1d4ed8",
-  color: "#ffffff",
-  border: "none",
-  borderRadius: "10px",
-  padding: "8px 10px",
-  fontSize: "12px",
-  fontWeight: 700,
-  cursor: "pointer",
-},
-
-disabledReorderButton: {
-  background: "#334155",
-  color: "#94a3b8",
-  border: "none",
-  borderRadius: "10px",
-  padding: "8px 10px",
-  fontSize: "12px",
-  fontWeight: 700,
-  cursor: "not-allowed",
-},
-
-dragOverCard: {
-  outline: "2px solid #60a5fa",
-  transform: "scale(1.01)",
-},
-
-draggingCard: {
-  opacity: 0.55,
-},
-
-savingText: {
-  color: "#93c5fd",
-  fontSize: "13px",
-  marginTop: "6px",
-},
-
-partySections: {
-  display: "flex",
-  flexDirection: "column",
-  gap: "28px",
-},
-
-partySection: {
-  display: "flex",
-  flexDirection: "column",
-  gap: "14px",
-},
-
-sectionHeader: {
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-},
-
-sectionTitleText: {
-  margin: 0,
-  fontSize: "22px",
-  fontWeight: 700,
-  color: "#f8fafc",
-},
-
-sectionSubtitle: {
-  fontSize: "13px",
-  color: "#94a3b8",
-},
-
-emptyBenchBox: {
-  background: "#111827",
-  border: "1px solid #374151",
-  borderRadius: "16px",
-  padding: "20px",
-  color: "#9ca3af",
-},
-
-benchCard: {
-  background: "#111827",
-  border: "1px solid #374151",
-  borderRadius: "16px",
-  padding: "16px",
-  textAlign: "left",
-  cursor: "pointer",
-  color: "#cbd5e1",
-  opacity: 0.88,
-},
-
-cardTopLeft: {
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  minWidth: 0,
-},
-
-cardSpriteWrap: {
-  width: "68px",
-  height: "68px",
-  borderRadius: "12px",
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid #334155",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-},
-
-cardSprite: {
-  width: "56px",
-  height: "56px",
-  imageRendering: "pixelated",
-},
-
-modalHeaderLeft: {
-  display: "flex",
-  alignItems: "center",
-  gap: "16px",
-},
-
-modalSpriteWrap: {
-  width: "96px",
-  height: "96px",
-  borderRadius: "16px",
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid #334155",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-},
-
-modalSprite: {
-  width: "84px",
-  height: "84px",
-  imageRendering: "pixelated",
-},
-
-moveCard: {
-  background: "#1e293b",
-  border: "1px solid #334155",
-  borderRadius: "12px",
-  padding: "12px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-},
-
-moveTopRow: {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "12px",
-  alignItems: "center",
-},
-
-moveName: {
-  fontSize: "15px",
-  color: "#f8fafc",
-},
-
-movePp: {
-  fontSize: "13px",
-  color: "#cbd5e1",
-  fontWeight: 700,
-},
-
-moveMetaRow: {
-  display: "flex",
-  gap: "8px",
-  flexWrap: "wrap",
-},
-
-moveMetaBadge: {
-  fontSize: "12px",
-  background: "#334155",
-  color: "#e2e8f0",
-  borderRadius: "999px",
-  padding: "4px 8px",
-},
-
-moveStatsRow: {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "12px",
-  fontSize: "13px",
-  color: "#cbd5e1",
-  flexWrap: "wrap",
-},
-
-moveTooltipWrap: {
-  position: "relative",
-},
-
-moveTooltip: {
-  position: "absolute",
-  left: "0",
-  top: "100%",
-  marginTop: "8px",
-  width: "260px",
-  background: "#020617",
-  color: "#e2e8f0",
-  border: "1px solid #334155",
-  borderRadius: "12px",
-  padding: "10px 12px",
-  zIndex: 20,
-  boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-  opacity: 0,
-  pointerEvents: "none",
-  transition: "opacity 0.15s ease",
-},
-
-moveTooltipTitle: {
-  fontSize: "14px",
-  fontWeight: 700,
-  marginBottom: "6px",
-  color: "#f8fafc",
-},
-
-moveTooltipText: {
-  fontSize: "12px",
-  lineHeight: 1.45,
-  color: "#cbd5e1",
-},
-
-natureBoostStat: {
-  border: "1px solid #166534",
-  background: "rgba(22, 101, 52, 0.22)",
-  color: "#bbf7d0",
-},
-
-natureLowerStat: {
-  border: "1px solid #991b1b",
-  background: "rgba(153, 27, 27, 0.20)",
-  color: "#fecaca",
-},
-
+  reorderRow: {
+    display: "flex",
+    gap: "8px",
+    marginTop: "12px",
+    flexWrap: "wrap",
+  },
+  reorderButton: {
+    background: "#1d4ed8",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "10px",
+    padding: "8px 10px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    background: "#475569",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "10px",
+    padding: "8px 10px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  disabledReorderButton: {
+    background: "#334155",
+    color: "#94a3b8",
+    border: "none",
+    borderRadius: "10px",
+    padding: "8px 10px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "not-allowed",
+  },
+  dragOverCard: {
+    outline: "2px solid #60a5fa",
+    transform: "scale(1.01)",
+  },
+  draggingCard: {
+    opacity: 0.55,
+  },
+  partySections: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "28px",
+  },
+  partySection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+  },
+  sectionHeader: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  sectionTitleText: {
+    margin: 0,
+    fontSize: "22px",
+    fontWeight: 700,
+    color: "#f8fafc",
+  },
+  sectionSubtitle: {
+    fontSize: "13px",
+    color: "#94a3b8",
+  },
+  emptyBenchBox: {
+    background: "#111827",
+    border: "1px solid #374151",
+    borderRadius: "16px",
+    padding: "20px",
+    color: "#9ca3af",
+  },
   barOuter: {
     width: "100%",
     height: "10px",
@@ -1583,7 +1380,7 @@ natureLowerStat: {
   },
   modal: {
     width: "100%",
-    maxWidth: "700px",
+    maxWidth: "760px",
     background: "#0f172a",
     border: "1px solid #334155",
     borderRadius: "20px",
@@ -1617,6 +1414,15 @@ natureLowerStat: {
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: "12px",
     marginBottom: "20px",
+  },
+  natureBox: {
+    background: "#132033",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+    padding: "12px",
+    marginBottom: "20px",
+    color: "#cbd5e1",
+    fontSize: "14px",
   },
   section: {
     marginBottom: "20px",
@@ -1671,6 +1477,9 @@ natureLowerStat: {
     flexDirection: "column",
     gap: "10px",
   },
+  moveRowWithTooltip: {
+    position: "relative",
+  },
   moveRow: {
     background: "#1e293b",
     border: "1px solid #334155",
@@ -1680,58 +1489,36 @@ natureLowerStat: {
     justifyContent: "space-between",
     gap: "12px",
   },
-
-  // ── Shiny styles ────────────────────────────────────────────────────────────
-  shinyCard: {
-    border: "1px solid #a16207",
-    background: "linear-gradient(135deg, #1e293b 0%, #1c1a0e 100%)",
-    boxShadow: "0 0 10px rgba(234, 179, 8, 0.12)",
+  moveTooltip: {
+    display: "none",
+    position: "absolute",
+    left: "0",
+    top: "100%",
+    marginTop: "6px",
+    zIndex: 50,
+    width: "260px",
+    background: "#0f172a",
+    border: "1px solid #475569",
+    borderRadius: "12px",
+    padding: "10px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
+    color: "#e2e8f0",
   },
-
-  shinyBenchCard: {
-    border: "1px solid #78350f",
-    background: "linear-gradient(135deg, #111827 0%, #17130a 100%)",
-    boxShadow: "0 0 8px rgba(161, 98, 7, 0.10)",
-  },
-
-  shinySpriteWrap: {
-    border: "1px solid #ca8a04",
-    background: "rgba(234, 179, 8, 0.07)",
-  },
-
-  shinySpriteWrapMuted: {
-    border: "1px solid #92400e",
-    background: "rgba(161, 98, 7, 0.07)",
-  },
-
-  shinyBadge: {
-    fontSize: "11px",
-    background: "#713f12",
-    color: "#fde68a",
-    padding: "4px 8px",
-    borderRadius: "999px",
-    border: "1px solid #ca8a04",
+  moveTooltipTitle: {
     fontWeight: 700,
+    marginBottom: "6px",
   },
-
-  shinyBenchBadge: {
-    fontSize: "11px",
-    background: "#451a03",
-    color: "#fcd34d",
-    padding: "4px 8px",
-    borderRadius: "999px",
-    border: "1px solid #78350f",
-    fontWeight: 700,
+  moveTooltipLine: {
+    fontSize: "12px",
+    color: "#cbd5e1",
+    marginBottom: "4px",
   },
-
-  shinyModalBadge: {
-    fontSize: "14px",
-    background: "#713f12",
-    color: "#fde68a",
-    padding: "5px 12px",
-    borderRadius: "999px",
-    border: "1px solid #ca8a04",
-    fontWeight: 700,
-    letterSpacing: "0.02em",
+  moveTooltipDescription: {
+    fontSize: "12px",
+    color: "#94a3b8",
+    marginTop: "6px",
+    lineHeight: 1.4,
   },
 };
+
+styles.moveRowWithTooltip[":hover"] = {};
