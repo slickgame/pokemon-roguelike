@@ -103,20 +103,19 @@ function computeAllStats(mon) {
 function getStat(mon, key) {
   const val = mon.stats?.[key];
   if (typeof val === "number" && isFinite(val) && val > 0) return val;
-  // Emergency recompute fallback
+  // Emergency recompute fallback — normalize EVs to prevent inflation
   if (!mon.stats) mon.stats = {};
-const ivs = mon.ivs ?? {};
-const evs = mon.evs ?? {};
-const nature = mon.nature ?? "Hardy";
-
-const computed = computeStatValue(
-  mon.baseStats[key],
-  mon.level,
-  ivs[key] ?? 0,
-  evs[key] ?? 0,
-  key === "hp" ? 1 : getNatureModifier(nature, key),
-  key === "hp"
-);
+  const ivs = mon.ivs ?? {};
+  const evs = normalizeEvs(mon.evs ?? {});
+  const nature = mon.nature ?? "Hardy";
+  const computed = computeStatValue(
+    mon.baseStats[key],
+    mon.level,
+    ivs[key] ?? 0,
+    evs[key] ?? 0,
+    key === "hp" ? 1 : getNatureModifier(nature, key),
+    key === "hp"
+  );
   mon.stats[key] = computed;
   return computed;
 }
