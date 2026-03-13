@@ -747,51 +747,59 @@ export default function Party() {
   const [run, setRun] = useState(null);
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [savingOrder, setSavingOrder] = useState(false);
   const [partyOverride, setPartyOverride] = useState(null);
-  const [boxOverride, setBoxOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [saveMessage, setSaveMessage] = useState("");
 
   const { runId, handleInvalidRun } = useRequiredRunId({ page: "Party" });
 
-  useEffect(() => {
-    if (!runId) return;
+useEffect(() => {
+  if (!runId) return;
 
-    let mounted = true;
+  let mounted = true;
 
-    async function loadPartyData() {
+  async function loadPartyData() {
+    try {
+      setLoading(true);
+      setLoadError("");
+
+      const loadedRun = await runApi.getRun(runId);
+      if (!mounted) return;
+      setRun(loadedRun);
+
       try {
-        setLoading(true);
-
-        const loadedRun = await runApi.getRun(runId);
+        const loadedActions = await runApi.listRunActions(runId);
         if (!mounted) return;
-        setRun(loadedRun);
-
-        try {
-          const loadedActions = await runApi.listRunActions(runId);
-          if (!mounted) return;
-          setActions(Array.isArray(loadedActions) ? loadedActions : []);
-        } catch (actionsErr) {
-          console.warn("Party page could not load run actions fallback:", actionsErr);
-          if (!mounted) return;
-          setActions([]);
-        }
-      } catch (err) {
-        console.error("Failed to load Party page run:", err);
+        setActions(Array.isArray(loadedActions) ? loadedActions : []);
+      } catch (actionsErr) {
+        console.warn("Party page could not load run actions fallback:", actionsErr);
         if (!mounted) return;
-        handleInvalidRun?.();
-      } finally {
-        if (mounted) setLoading(false);
+        setActions([]);
       }
+    } catch (err) {
+      console.error("Failed to load Party page run:", err);
+      if (!mounted) return;
+
+      const message =
+        err?.message ||
+        err?.response?.data?.error ||
+        "Failed to load Party page.";
+
+      setLoadError(String(message));
+    } finally {
+      if (mounted) setLoading(false);
     }
+  }
 
-    loadPartyData();
+  loadPartyData();
 
-    return () => {
-      mounted = false;
-    };
-  }, [runId, handleInvalidRun]);
+  return () => {
+    mounted = false;
+  };
+}, [runId]);
 
   const baseParty = useMemo(() => {
     return buildFallbackPartyFromRun(run, actions);
@@ -950,11 +958,19 @@ export default function Party() {
         </div>
       </div>
 
-      {loading ? (
-        <div style={styles.emptyBox}>Loading party...</div>
-      ) : party.length === 0 ? (
-        <div style={styles.emptyBox}>No party data found.</div>
-      ) : (
+        {loading ? (
+          <div style={styles.emptyBox}>Loading party...</div>
+        ) : loadError ? (
+          <div style={styles.errorBox}>
+            <div style={styles.errorTitle}>Party failed to load.</div>
+            <div>{loadError}</div>
+            <div style={{ marginTop: 12, color: "#94a3b8", fontSize: "13px" }}>
+              This helps us see the real problem instead of redirecting away.
+            </div>
+          </div>
+        ) : party.length === 0 ? (
+          <div style={styles.emptyBox}>No party data found.</div>
+        ) : (
         <div style={styles.partySections}>
           <div style={styles.partySection}>
             <div style={styles.sectionHeader}>
@@ -1093,6 +1109,22 @@ const styles = {
     color: "#e2e8f0",
     padding: "24px",
   },
+
+  errorBox: {
+  background: "#3b0a0a",
+  border: "1px solid #7f1d1d",
+  borderRadius: "16px",
+  padding: "24px",
+  color: "#fecaca",
+},
+
+errorTitle: {
+  fontSize: "18px",
+  fontWeight: 700,
+  marginBottom: "8px",
+  color: "#ffffff",
+},
+
   headerRow: {
     display: "flex",
     justifyContent: "space-between",
