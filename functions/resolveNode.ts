@@ -453,11 +453,76 @@ Deno.serve(async (req) => {
       };
     }
     // ── Event ──────────────────────────────────────────────────────────────────
-        else if (resolution.type === 'event' || resolution.type === 'event_item' || resolution.type === 'event_recruit') {
+      else if (resolution.type === 'event' || resolution.type === 'event_item' || resolution.type === 'event_recruit' || resolution.type === 'event_ev') {
       const currentInv = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
       const newInventory = { ...currentInv };
 
-      if (resolution.type === 'event_recruit') {
+      if (resolution.type === 'event_ev') {
+        const incomingParty = Array.isArray(partyState) ? [...partyState] : [];
+        const targetIndex =
+          resolution.targetMode === 'lead'
+            ? incomingParty.findIndex(Boolean)
+            : 0;
+
+        let evDeltaApplied = {};
+        let evTargetName = null;
+
+        if (targetIndex >= 0 && incomingParty[targetIndex]) {
+          const poke = { ...incomingParty[targetIndex] };
+          const beforeStats = poke.stats ?? {};
+          const beforeMaxHp = poke.maxHP ?? beforeStats.hp ?? poke.currentHP ?? 1;
+
+          const nextEvs = applyEvGain(poke.evs ?? {}, resolution.evDelta ?? {});
+          const nextStats = computeStats(
+            poke.baseStats ?? {},
+            poke.level ?? 1,
+            poke.ivs ?? {},
+            nextEvs,
+            poke.nature ?? "Hardy"
+          );
+
+          const nextMaxHp = nextStats.hp ?? beforeMaxHp;
+          const hpDiff = nextMaxHp - beforeMaxHp;
+
+          poke.evs = nextEvs;
+          poke.stats = nextStats;
+          poke.maxHP = nextMaxHp;
+          poke.currentHP = Math.min(
+            nextMaxHp,
+            Math.max(0, (poke.currentHP ?? nextMaxHp) + hpDiff)
+          );
+
+          incomingParty[targetIndex] = poke;
+          evDeltaApplied = resolution.evDelta ?? {};
+          evTargetName = poke.name ?? "Pokémon";
+        }
+
+        nodeCompleteSummary = {
+          nodeId,
+          nodeType,
+          nodeLabel: NODE_LABELS[nodeType] ?? 'Event',
+          outcome: 'trained',
+          outcomeLabel: 'Training Complete!',
+          moneyDelta: 0,
+          itemsDelta: {},
+          faintCount: 0,
+          evDelta: evDeltaApplied,
+          evTargetName,
+          evLabel: resolution.evLabel ?? null,
+        };
+
+        updatedProgress = {
+          ...existingProgress,
+          routeId: existingProgress.routeId ?? 'route1',
+          currentNodeId: nodeId,
+          completedNodeIds,
+          pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
+          inventory: newInventory,
+          partyState: incomingParty,
+          boxState: Array.isArray(existingProgress.boxState) ? existingProgress.boxState : [],
+          pendingReward: null,
+        };
+      } else if (resolution.type === 'event_recruit') {
         const itemCost = resolution.itemCost ?? { bait: 1 };
         for (const [item, qty] of Object.entries(itemCost)) {
           newInventory[item] = Math.max(0, (newInventory[item] ?? 0) - (qty ?? 0));
@@ -469,6 +534,7 @@ Deno.serve(async (req) => {
         const succeeded = Boolean(resolution.success);
         const total = Number(resolution.total ?? resolution.roll ?? 0);
         const target = Number(resolution.target ?? 99);
+        const roll = Number(resolution.roll ?? 0);
         const consumedItemId = Object.keys(itemCost)[0] ?? "bait";
         let recruitedPokemon = null;
         let outcome = 'collected';
@@ -568,6 +634,7 @@ Deno.serve(async (req) => {
           pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
           inventory: newInventory,
           partyState,
+          boxState: Array.isArray(existingProgress.boxState) ? existingProgress.boxState : [],
           pendingReward: null,
         };
 
