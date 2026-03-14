@@ -287,7 +287,7 @@ export default function Battle() {
 
   const lastRngUsed = state.lastRngUsed ?? 0;
   const lastActionOrder = state.lastActionOrder ?? [];
-  const inventory = run?.results?.progress?.inventory ?? { potion: 0, revive: 0 };
+  const inventory = run?.results?.progress?.inventory ?? { potion: 0, revive: 0, bait: 0 };
   const money = run?.results?.progress?.money ?? 0;
   const allPartyForBag = [...playerActive, ...playerBench];
 
