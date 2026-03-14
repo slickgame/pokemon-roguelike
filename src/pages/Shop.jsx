@@ -73,7 +73,7 @@ export default function Shop() {
 
   const progress = run?.results?.progress ?? {};
   const money = progress.money ?? 0;
-  const inventory = progress.inventory ?? { potion: 0, revive: 0 };
+  const inventory = progress.inventory ?? { potion: 0, revive: 0, bait: 0 };
   const relics = progress.relics ?? [];
   const shopState = progress.shopState ?? {};
   const currentShopState = shopState[shopNodeKey] ?? { firstPurchaseDiscountUsed: false };
