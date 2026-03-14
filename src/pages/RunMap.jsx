@@ -349,7 +349,7 @@ export default function RunMap() {
   const isInUncompletedNode = pendingEncounter !== null || (currentNodeId && !completedNodeIds.includes(currentNodeId));
   const battlesWon = actions.filter(a => a.actionType === "node_resolved" && a.payload?.outcome === "win").length;
   const money = runProgress?.money ?? 0;
-  const inventory = runProgress?.inventory ?? { potion: 0, revive: 0 };
+  const inventory = runProgress?.inventory ?? { potion: 0, revive: 0, bait: 0 };
   const partyForBag = (runProgress?.partyState ?? []);
 
   const handleSurrenderRun = async () => {
