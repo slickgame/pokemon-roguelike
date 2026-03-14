@@ -82,7 +82,9 @@ export default function EventNode() {
       <div className="space-y-2">
         <p className="text-5xl">✨</p>
         <h1 className="text-2xl font-black text-white">Supply Cache</h1>
-        <p className="text-white/40 text-sm">You found an abandoned bag on the road.</p>
+        <p className="text-white/40 text-sm">
+          You found an abandoned bag on the roadside. There may be something useful inside.
+        </p>
       </div>
 
       <GameCard className="py-8">
