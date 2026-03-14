@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
+import { runApi } from "../components/api/runApi";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Star, Package } from "lucide-react";
+import { Star, Package, Wand2 } from "lucide-react";
+import { EMPTY_INVENTORY, withInventoryDefaults } from "@/lib/inventory";
+import { selectEventForNode } from "@/lib/eventPool";
 
 export default function EventNode() {
   const navigate = useNavigate();
@@ -18,81 +21,210 @@ export default function EventNode() {
   const [resolving, setResolving] = useState(false);
   const [run, setRun] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [eventView, setEventView] = useState(null);
+  const [showOverflowChoice, setShowOverflowChoice] = useState(false);
 
   useEffect(() => {
-    if (!runId) { setLoading(false); return; }
-    base44.entities.Run.filter({ id: runId })
-      .then(rows => { if (rows[0]) setRun(rows[0]); else handleInvalidRun(); })
-      .catch(() => handleInvalidRun()).finally(() => setLoading(false));
-  }, [runId]);
-
-  const cacheReward = useMemo(() => {
-    const key = `${run?.seed ?? runId ?? "event"}:${nodeId ?? "node"}:cache_reward`;
-    let hash = 0;
-    for (let i = 0; i < key.length; i++) {
-      hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    if (!runId) {
+      setLoading(false);
+      return;
     }
 
-    if (hash % 100 < 30) {
-      return {
-        itemId: "bait",
-        qty: 1,
-        title: "Bait ×1",
-        description: "Useful for certain Pokémon recruitment events.",
-      };
+    let isMounted = true;
+
+    async function load() {
+      try {
+        const rows = await base44.entities.Run.filter({ id: runId });
+        const nextRun = rows[0];
+        if (!nextRun) {
+          handleInvalidRun();
+          return;
+        }
+        if (!isMounted) return;
+
+        setRun(nextRun);
+
+        const progress = nextRun.results?.progress ?? {};
+        const pending = progress.pendingEncounter ?? {};
+        const inventory = withInventoryDefaults(progress.inventory ?? EMPTY_INVENTORY);
+        const routeId = pending.routeId ?? progress.routeId ?? "route1";
+
+        let selected = null;
+        if (
+          pending?.nodeId === nodeId &&
+          pending?.eventId &&
+          pending?.eventState
+        ) {
+          selected = {
+            eventId: pending.eventId,
+            title: pending.eventTitle ?? "Event",
+            description: pending.eventDescription ?? "",
+            kind: pending.eventKind ?? "event",
+            eventState: pending.eventState,
+          };
+        } else {
+          selected = selectEventForNode({
+            runSeed: nextRun.seed,
+            nodeId,
+            routeId,
+            inventory,
+          });
+
+          await base44.entities.Run.update(runId, {
+            results: {
+              ...(nextRun.results ?? {}),
+              progress: {
+                ...progress,
+                pendingEncounter: {
+                  ...(pending ?? {}),
+                  nodeId,
+                  nodeType: pending?.nodeType ?? "event",
+                  status: pending?.status ?? "pending",
+                  routeId,
+                  eventId: selected.eventId,
+                  eventTitle: selected.title,
+                  eventDescription: selected.description,
+                  eventKind: selected.kind,
+                  eventState: selected.eventState,
+                },
+              },
+            },
+          });
+
+          const refreshedRows = await base44.entities.Run.filter({ id: runId });
+          if (refreshedRows[0] && isMounted) {
+            setRun(refreshedRows[0]);
+          }
+        }
+
+        if (isMounted) setEventView(selected);
+      } catch (_) {
+        handleInvalidRun();
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     }
 
-    return {
-      itemId: "potion",
-      qty: 1,
-      title: "Potion ×1",
-      description: "Restores 20 HP to one Pokémon.",
+    load();
+    return () => {
+      isMounted = false;
     };
-  }, [run?.seed, runId, nodeId]);
+  }, [runId, nodeId, handleInvalidRun]);
+
+  const progress = run?.results?.progress ?? {};
+  const inventory = withInventoryDefaults(progress.inventory ?? EMPTY_INVENTORY);
+  const party = progress.partyState ?? [];
+  const box = progress.boxState ?? [];
+  const hasPartySpace = party.length < 6;
+
+  const eventId = eventView?.eventId ?? null;
+  const eventState = eventView?.eventState ?? null;
+
+  const handleResolveResult = (res) => {
+    const data = res?.data ?? {};
+    const cacheKey = `nodeCompleteSummary:${runId}:${nodeId ?? "unknown"}`;
+
+    if (data?.nodeCompleteSummary) {
+      sessionStorage.setItem(cacheKey, JSON.stringify(data.nodeCompleteSummary));
+    }
+
+    if (data.nextScreen === "relic_reward" && data.relicSource) {
+      navigate(
+        createPageUrl(
+          `RelicReward?runId=${runId}&nodeId=${nodeId ?? ""}&source=${data.relicSource}`
+        )
+      );
+      return;
+    }
+
+    navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
+  };
 
   const handleCollect = async () => {
+    if (!eventState?.reward) return;
+
     setResolving(true);
     try {
       const res = await base44.functions.invoke("resolveNode", {
         runId,
         resolution: {
           type: "event_item",
-          itemsDelta: { [cacheReward.itemId]: cacheReward.qty },
+          itemsDelta: { [eventState.reward.itemId]: eventState.reward.qty },
         },
       });
-      const data = res.data ?? {};
-      if (data.nextScreen === "relic_reward" && data.relicSource) {
-        navigate(createPageUrl(`RelicReward?runId=${runId}&nodeId=${nodeId ?? ""}&source=${data.relicSource}`));
-      } else {
-        navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
-      }
+      handleResolveResult(res);
     } finally {
       setResolving(false);
     }
   };
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="animate-spin w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full" />
-    </div>
-  );
+  const finalizeBaitedClearing = async (overflowChoice = null) => {
+    if (!eventState) return;
 
-  return (
-    <div className="max-w-md mx-auto px-4 py-16 space-y-6 text-center">
-      <div className="space-y-2">
-        <p className="text-5xl">✨</p>
-        <h1 className="text-2xl font-black text-white">Supply Cache</h1>
-        <p className="text-white/40 text-sm">
-          You found an abandoned bag on the roadside. There may be something useful inside.
-        </p>
+    setResolving(true);
+    try {
+      const res = await base44.functions.invoke("resolveNode", {
+        runId,
+        resolution: {
+          type: "event_recruit",
+          eventId,
+          itemCost: eventState.itemCost ?? { bait: 1 },
+          speciesId: eventState.speciesId,
+          speciesName: eventState.speciesName,
+          level: eventState.level ?? 4,
+          target: eventState.target,
+          roll: eventState.roll,
+          modifier: eventState.modifier ?? 0,
+          total: eventState.total ?? eventState.roll,
+          success: Boolean(eventState.success),
+          overflowChoice,
+        },
+      });
+      handleResolveResult(res);
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const handleUseBait = async () => {
+    if (!eventState) return;
+    if ((inventory.bait ?? 0) < 1) return;
+
+    if (eventState.success && !hasPartySpace) {
+      setShowOverflowChoice(true);
+      return;
+    }
+
+    await finalizeBaitedClearing(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full" />
       </div>
+    );
+  }
 
+  if (!eventView) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <GameCard className="py-8">
+          <p className="text-white/60">Event data could not be loaded.</p>
+        </GameCard>
+        <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      </div>
+    );
+  }
+
+  const renderSupplyCache = () => (
+    <>
       <GameCard className="py-8">
         <div className="flex items-center justify-center gap-3 mb-4">
           <Package className="w-8 h-8 text-violet-400" />
           <div className="text-left">
-            <p className="text-white font-bold">{cacheReward.title}</p>
-            <p className="text-white/40 text-xs">{cacheReward.description}</p>
+            <p className="text-white font-bold">{eventState.reward.title}</p>
+            <p className="text-white/40 text-xs">{eventState.reward.description}</p>
           </div>
         </div>
         <p className="text-white/50 text-sm">Take the items?</p>
@@ -109,6 +241,121 @@ export default function EventNode() {
         <Star className="w-4 h-4" />
         Take Items
       </GameButton>
+    </>
+  );
+
+  const renderBaitedClearing = () => {
+    const hasBait = (inventory.bait ?? 0) >= 1;
+
+    return (
+      <>
+        <GameCard className="py-8 border border-emerald-500/20 bg-emerald-500/5">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Wand2 className="w-8 h-8 text-emerald-300" />
+            <div className="text-left">
+              <p className="text-white font-bold">{eventState.speciesName} may appear</p>
+              <p className="text-white/40 text-xs">Use 1 Bait to lure it closer.</p>
+            </div>
+          </div>
+
+          <div className="space-y-1 text-sm text-white/70 text-left max-w-xs mx-auto">
+            <div className="flex justify-between">
+              <span>Required item</span>
+              <span className="font-bold text-white">Bait ×1</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Roll</span>
+              <span className="font-bold text-white">1d20 + 0</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Target</span>
+              <span className="font-bold text-white">{eventState.target}+</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Pre-rolled result</span>
+              <span className="font-bold text-white">
+                {eventState.roll} → {eventState.total}
+              </span>
+            </div>
+          </div>
+
+          {!hasBait ? (
+            <p className="text-amber-300 text-xs mt-4">Requires Bait.</p>
+          ) : null}
+        </GameCard>
+
+        <div className="space-y-3">
+          <GameButton
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={handleUseBait}
+            loading={resolving}
+            disabled={resolving || !hasBait}
+          >
+            <Star className="w-4 h-4" />
+            Use Bait
+          </GameButton>
+
+          <GameButton
+            variant="secondary"
+            size="lg"
+            className="w-full"
+            onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
+            disabled={resolving}
+          >
+            Leave
+          </GameButton>
+        </div>
+
+        {showOverflowChoice ? (
+          <GameCard className="py-6 border border-cyan-500/20 bg-cyan-500/5">
+            <div className="space-y-3">
+              <div>
+                <p className="text-white font-bold">Party Full</p>
+                <p className="text-white/50 text-sm mt-1">
+                  {eventState.speciesName} is willing to join, but your party already has 6 Pokémon.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <GameButton
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => finalizeBaitedClearing("send_to_storage")}
+                  disabled={resolving}
+                >
+                  Send to Storage
+                </GameButton>
+
+                <GameButton
+                  variant="secondary"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => finalizeBaitedClearing("decline")}
+                  disabled={resolving}
+                >
+                  Decline
+                </GameButton>
+              </div>
+            </div>
+          </GameCard>
+        ) : null}
+      </>
+    );
+  };
+
+  return (
+    <div className="max-w-md mx-auto px-4 py-16 space-y-6 text-center">
+      <div className="space-y-2">
+        <p className="text-5xl">✨</p>
+        <h1 className="text-2xl font-black text-white">{eventView.title}</h1>
+        <p className="text-white/40 text-sm">{eventView.description}</p>
+      </div>
+
+      {eventId === "baited_clearing" ? renderBaitedClearing() : renderSupplyCache()}
+
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
