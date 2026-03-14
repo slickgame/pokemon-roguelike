@@ -616,6 +616,7 @@ function PokemonCard({
   disableLeft,
   disableRight,
   savingOrder = false,
+  canManageStorage = false,
 }) {
   const xp = getXpData(mon);
   const [spriteErrored, setSpriteErrored] = useState(false);
@@ -752,20 +753,40 @@ function PokemonCard({
 
           <button
             type="button"
-            style={styles.secondaryButton}
+            style={
+              canManageStorage
+                ? styles.secondaryButton
+                : styles.disabledSecondaryButton
+            }
+            disabled={!canManageStorage}
+            title={
+              !canManageStorage
+                ? "Available only at a Pokémon Center"
+                : "Send to Storage"
+            }
             onClick={(e) => {
               e.stopPropagation();
               onMoveToBox(mon, index);
             }}
           >
-            Send to Box
+            Send to Storage
           </button>
         </div>
       ) : (
         <div style={styles.reorderRow}>
           <button
             type="button"
-            style={styles.secondaryButton}
+            style={
+              canManageStorage
+                ? styles.secondaryButton
+                : styles.disabledSecondaryButton
+            }
+            disabled={!canManageStorage}
+            title={
+              !canManageStorage
+                ? "Available only at a Pokémon Center"
+                : "Add to Party"
+            }
             onClick={(e) => {
               e.stopPropagation();
               onAddToParty(mon, index);
@@ -870,6 +891,15 @@ useEffect(() => {
 
   const party = partyOverride ?? baseParty;
   const box = boxOverride ?? baseBox;
+
+  const currentNodeId = run?.results?.progress?.currentNodeId ?? null;
+  const routeGraph = run?.results?.progress?.routeGraph ?? null;
+  const currentNode =
+    routeGraph?.nodes?.find((node) => node.id === currentNodeId) ?? null;
+
+  const canManageStorage =
+    currentNode?.type === "center" ||
+    run?.results?.progress?.pendingEncounter?.nodeType === "center";
 
   const activeParty = party.slice(0, 3);
   const benchParty = party.slice(3);
@@ -996,20 +1026,34 @@ async function savePartyAndBox(nextParty, nextBox, message = "Saved.") {
     }
   }
 
-  function sendToBox(mon, index) {
-    if (party.length <= 1) return;
-    const nextParty = [...party];
-    const [moved] = nextParty.splice(index, 1);
-    const nextBox = [...box, moved];
-    savePartyAndBox(nextParty, nextBox, `${mon.name} sent to Box.`);
-
-    if (selectedPokemonIndex === index) {
-      setSelectedPokemon(null);
-      setSelectedPokemonIndex(null);
-    }
+function sendToBox(mon, index) {
+  if (!canManageStorage) {
+    showSaveFeedback("warning", "You can only send Pokémon to Storage at a Pokémon Center.");
+    return;
   }
 
+  if (party.length <= 1) {
+    showSaveFeedback("warning", "You must keep at least one Pokémon in your party.");
+    return;
+  }
+
+  const nextParty = [...party];
+  const [moved] = nextParty.splice(index, 1);
+  const nextBox = [...box, moved];
+  savePartyAndBox(nextParty, nextBox, `${mon.name} sent to Storage.`);
+
+  if (selectedPokemonIndex === index) {
+    setSelectedPokemon(null);
+    setSelectedPokemonIndex(null);
+  }
+}
+
 function addToParty(mon, boxIndex) {
+  if (!canManageStorage) {
+    showSaveFeedback("warning", "You can only move Pokémon from Storage at a Pokémon Center.");
+    return;
+  }
+
   if (party.length >= 6) {
     showSaveFeedback("warning", "Party is full.");
     return;
@@ -1097,6 +1141,7 @@ function addToParty(mon, boxIndex) {
                     disableLeft={index === 0}
                     disableRight={index === party.length - 1}
                     savingOrder={savingOrder}
+                    canManageStorage={canManageStorage}
                   />
                 );
               })}
@@ -1138,6 +1183,7 @@ function addToParty(mon, boxIndex) {
                       disableLeft={index === 0}
                       disableRight={index === party.length - 1}
                       savingOrder={savingOrder}
+                      canManageStorage={canManageStorage}
                     />
                   );
                 })}
@@ -1149,6 +1195,11 @@ function addToParty(mon, boxIndex) {
             <div style={styles.sectionHeader}>
               <h2 style={styles.sectionTitleText}>Box</h2>
               <div style={styles.sectionSubtitle}>Stored Pokémon outside your active party.</div>
+              <div style={styles.sectionHint}>
+                {canManageStorage
+                  ? "You are at a Pokémon Center. Party/storage swapping is enabled."
+                  : "Storage can be viewed here, but party/storage swapping is only available at a Pokémon Center."}
+              </div>
             </div>
 
             {box.length === 0 ? (
@@ -1178,6 +1229,7 @@ function addToParty(mon, boxIndex) {
                     onAddToParty={addToParty}
                     disableLeft
                     disableRight
+                    canManageStorage={canManageStorage}
                   />
                 ))}
               </div>
@@ -1426,16 +1478,29 @@ errorTitle: {
     fontWeight: 700,
     cursor: "pointer",
   },
+
   secondaryButton: {
-    background: "#475569",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "10px",
-    padding: "8px 10px",
-    fontSize: "12px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
+  background: "#475569",
+  color: "#ffffff",
+  border: "none",
+  borderRadius: "10px",
+  padding: "8px 10px",
+  fontSize: "12px",
+  fontWeight: 700,
+  cursor: "pointer",
+},
+
+disabledSecondaryButton: {
+  background: "#334155",
+  color: "#94a3b8",
+  border: "none",
+  borderRadius: "10px",
+  padding: "8px 10px",
+  fontSize: "12px",
+  fontWeight: 700,
+  cursor: "not-allowed",
+  opacity: 0.7,
+},
   disabledReorderButton: {
     background: "#334155",
     color: "#94a3b8",
@@ -1475,9 +1540,15 @@ errorTitle: {
     color: "#f8fafc",
   },
   sectionSubtitle: {
-    fontSize: "13px",
-    color: "#94a3b8",
-  },
+  fontSize: "13px",
+  color: "#94a3b8",
+},
+
+sectionHint: {
+  fontSize: "12px",
+  color: "#cbd5e1",
+  marginTop: "6px",
+},
   emptyBenchBox: {
     background: "#111827",
     border: "1px solid #374151",
