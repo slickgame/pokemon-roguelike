@@ -820,8 +820,6 @@ export default function Party() {
   const [boxOverride, setBoxOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
-  const [saveMessage, setSaveMessage] = useState("");
-
   const { runId } = useRequiredRunId({ page: "Party" });
 
 useEffect(() => {
