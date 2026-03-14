@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
       const dropsPotion = rewardRng() < dropChance ? 1 : 0;
 
       const currentMoney = existingProgress.money ?? 0;
-      const currentInventory = existingProgress.inventory ?? { potion: 0, revive: 0 };
+      const currentInventory = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
       const newInventory = {
         ...currentInventory,
         potion: (currentInventory.potion ?? 0) + dropsPotion,
