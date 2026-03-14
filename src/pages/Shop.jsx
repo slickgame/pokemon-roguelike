@@ -72,7 +72,7 @@ export default function Shop() {
     load().catch(() => handleInvalidRun()).finally(() => setLoading(false));
   }, [runId, load, handleInvalidRun]);
 
-  const progress = run?.results?.progress ?? {};
+  const progress = run?.results?.progress ?? { inventory: EMPTY_INVENTORY };
   const money = progress.money ?? 0;
   const inventory = progress.inventory ?? { potion: 0, revive: 0, bait: 0 };
   const relics = progress.relics ?? [];
