@@ -628,28 +628,37 @@ function PokemonCard({
   const baseStyle = isBox ? styles.boxCard : isBench ? styles.benchCard : styles.card;
 
   return (
-    <button
-      key={`${mon.speciesId}-${index}`}
-      style={{
-        ...baseStyle,
-        ...(dragOverIndex === index ? styles.dragOverCard : {}),
-        ...(draggedIndex === index ? styles.draggingCard : {}),
-        ...(mon.shiny ? styles.shinyCardAccent : {}),
-      }}
-      draggable={!savingOrder}
-      onDragStart={() => {
-        if (savingOrder) return;
-        onDragStart(index);
-      }}
-      onDragEnter={() => onDragEnter(index)}
-      onDragOver={(e) => e.preventDefault()}
-      onDragEnd={onDragEnd}
-      onDrop={(e) => {
+  <div
+    key={`${mon.speciesId}-${index}`}
+    role="button"
+    tabIndex={0}
+    style={{
+      ...baseStyle,
+      ...(dragOverIndex === index ? styles.dragOverCard : {}),
+      ...(draggedIndex === index ? styles.draggingCard : {}),
+      ...(mon.shiny ? styles.shinyCardAccent : {}),
+      cursor: "pointer",
+    }}
+    draggable={!savingOrder}
+    onDragStart={() => {
+      if (savingOrder) return;
+      onDragStart(index);
+    }}
+    onDragEnter={() => onDragEnter(index)}
+    onDragOver={(e) => e.preventDefault()}
+    onDragEnd={onDragEnd}
+    onDrop={(e) => {
+      e.preventDefault();
+      onDrop(index);
+    }}
+    onClick={onClick}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        onDrop(index);
-      }}
-      onClick={onClick}
-    >
+        onClick?.();
+      }
+    }}
+  >
       <div style={styles.cardTopRow}>
         <div style={styles.cardIdentityRow}>
           <img
@@ -796,7 +805,75 @@ function PokemonCard({
           </button>
         </div>
       )}
-    </button>
+    </div>
+  );
+}
+
+function OverflowPokemonModal({
+  pokemon,
+  sourceLabel,
+  onSendToStorage,
+  onDecline,
+}) {
+  const [spriteErrored, setSpriteErrored] = useState(false);
+
+  if (!pokemon) return null;
+
+  const spriteUrl = !spriteErrored
+    ? getSpriteUrl(pokemon.speciesId, pokemon.shiny)
+    : getSpriteUrl(pokemon.speciesId, false);
+
+  return (
+    <div style={styles.modalOverlay} onClick={onDecline}>
+      <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalHeaderRow}>
+          <div>
+            <div style={styles.modalTitle}>Party Full</div>
+            <div style={styles.subText}>
+              {sourceLabel ? `${sourceLabel} reward` : "New Pokémon reward"}
+            </div>
+          </div>
+          <button style={styles.closeButton} onClick={onDecline}>
+            ✕
+          </button>
+        </div>
+
+        <div style={styles.overflowSummary}>
+          <img
+            src={spriteUrl}
+            alt={pokemon.name}
+            style={styles.overflowSprite}
+            onError={() => {
+              if (pokemon.shiny && !spriteErrored) setSpriteErrored(true);
+            }}
+          />
+          <div>
+            <div style={styles.overflowName}>
+              {pokemon.name} {pokemon.gender ? `(${pokemon.gender})` : ""}
+            </div>
+            <div style={styles.subText}>
+              Lv. {pokemon.level ?? 1} • {(pokemon.types ?? []).join(" / ") || "Unknown"}
+            </div>
+            {pokemon.shiny ? <div style={styles.shinyBadge}>✨ Shiny</div> : null}
+          </div>
+        </div>
+
+        <div style={styles.section}>
+          <div style={styles.subText}>
+            Your party already has 6 Pokémon. Choose what to do with this reward.
+          </div>
+        </div>
+
+        <div style={styles.overflowButtonRow}>
+          <button style={styles.secondaryButton} onClick={onDecline}>
+            Decline
+          </button>
+          <button style={styles.primaryButton} onClick={onSendToStorage}>
+            Send to Storage
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -820,6 +897,8 @@ export default function Party() {
   const [boxOverride, setBoxOverride] = useState(null);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [overflowPokemon, setOverflowPokemon] = useState(null);
+  const [overflowSource, setOverflowSource] = useState("");
   const { runId } = useRequiredRunId({ page: "Party" });
 
 useEffect(() => {
@@ -1062,6 +1141,34 @@ function addToParty(mon, boxIndex) {
   const nextParty = [...party, moved];
   savePartyAndBox(nextParty, nextBox, `${mon.name} added to Party.`);
 }
+
+function queueOverflowPokemon(mon, sourceLabel = "Reward") {
+  setOverflowPokemon(mon);
+  setOverflowSource(sourceLabel);
+}
+
+async function sendOverflowPokemonToStorage() {
+  if (!overflowPokemon) return;
+
+  const nextBox = [...box, overflowPokemon];
+  const monName = overflowPokemon.name ?? "Pokémon";
+
+  setOverflowPokemon(null);
+  setOverflowSource("");
+
+  await savePartyAndBox(
+    party,
+    nextBox,
+    `${monName} was sent to Storage.`
+  );
+}
+
+function declineOverflowPokemon() {
+  const monName = overflowPokemon?.name ?? "Pokémon";
+  setOverflowPokemon(null);
+  setOverflowSource("");
+  showSaveFeedback("warning", `${monName} was declined.`);
+}
   return (
     <div style={styles.page}>
       <div style={styles.headerRow}>
@@ -1085,6 +1192,26 @@ function addToParty(mon, boxIndex) {
               {saveMessage}
             </div>
           ) : null}
+
+          <button
+            style={styles.secondaryButton}
+            onClick={() =>
+              queueOverflowPokemon(
+                {
+                  speciesId: 25,
+                  name: "Pikachu",
+                  level: 8,
+                  gender: "Male",
+                  shiny: false,
+                  types: ["electric"],
+                },
+                "Test Reward"
+              )
+            }
+          >
+            Test Overflow Modal
+          </button>
+
           <button
             style={styles.backButton}
             onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
@@ -1244,6 +1371,13 @@ function addToParty(mon, boxIndex) {
           setSelectedPokemonIndex(null);
         }}
       />
+
+      <OverflowPokemonModal
+        pokemon={overflowPokemon}
+        sourceLabel={overflowSource}
+        onSendToStorage={sendOverflowPokemonToStorage}
+        onDecline={declineOverflowPokemon}
+      />
     </div>
   );
 }
@@ -1278,6 +1412,38 @@ errorTitle: {
     gap: "16px",
     marginBottom: "24px",
   },
+
+overflowSummary: {
+  display: "flex",
+  alignItems: "center",
+  gap: "14px",
+  marginBottom: "18px",
+  padding: "12px",
+  borderRadius: "14px",
+  background: "#0f172a",
+  border: "1px solid #334155",
+},
+
+overflowSprite: {
+  width: "72px",
+  height: "72px",
+  objectFit: "contain",
+},
+
+overflowName: {
+  fontSize: "18px",
+  fontWeight: 800,
+  color: "#f8fafc",
+  marginBottom: "4px",
+},
+
+overflowButtonRow: {
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: "10px",
+  marginTop: "20px",
+},
+
   headerButtonStack: {
     display: "flex",
     flexDirection: "column",
