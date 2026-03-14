@@ -15,6 +15,16 @@ export const SHOP_ITEMS = [
     description: "Revives a fainted Pokémon to 50% HP.",
     icon: "💫",
   },
+  {
+    id: "bait",
+    name: "Bait",
+    buyPrice: 40,
+    sellPrice: 20,
+    description: "A lure item used in certain event encounters.",
+    icon: "🪤",
+  },
 ];
 
-export const SHOP_ITEM_BY_ID = Object.fromEntries(SHOP_ITEMS.map((item) => [item.id, item]));
+export const SHOP_ITEM_BY_ID = Object.fromEntries(
+  SHOP_ITEMS.map((item) => [item.id, item])
+);
