@@ -725,7 +725,7 @@ Deno.serve(async (req) => {
     const runs = await base44.asServiceRole.entities.Run.filter({ id: runId });
     const run = runs[0];
     if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
-    const inventory = run.results?.progress?.inventory ?? { potion: 0, revive: 0 };
+    const inventory = run.results?.progress?.inventory ?? { potion: 0, revive: 0, bait: 0 };
     const runRelics = run.results?.progress?.relics ?? [];
 
     // XP share: xp_share_on is default; bench gets XP unless xp_share_off is explicitly set
