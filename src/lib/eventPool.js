@@ -27,8 +27,8 @@ export const STARTER_EVENT_DEFS = [
     kind: "ev_training",
     title: "Training Spot",
     description: "A calm stretch of road offers time for focused training.",
-    weight: 0,
-    implemented: false,
+    weight: 20,
+    implemented: true,
   },
   {
     id: "injured_pidgey",
@@ -140,6 +140,27 @@ export function buildSupplyCacheState({ runSeed, nodeId }) {
   };
 }
 
+export function buildTrainingSpotState({ runSeed, nodeId }) {
+  const stats = [
+    { id: "hp", label: "HP" },
+    { id: "atk", label: "Attack" },
+    { id: "def", label: "Defense" },
+    { id: "spa", label: "Sp. Atk" },
+    { id: "spd", label: "Sp. Def" },
+    { id: "spe", label: "Speed" },
+  ];
+
+  const rng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:training_stat`);
+  const chosen = stats[Math.floor(rng() * stats.length)] ?? stats[0];
+
+  return {
+    evStat: chosen.id,
+    evLabel: chosen.label,
+    evAmount: 16,
+  };
+}
+
+
 export function buildBaitedClearingState({ runSeed, nodeId, routeId = "route1" }) {
   const routePool =
     ROUTE_EVENT_POOLS[routeId]?.baited_clearing ??
@@ -191,9 +212,12 @@ export function selectEventForNode({
   let eventState = {};
   if (chosen.id === "supply_cache") {
     eventState = buildSupplyCacheState({ runSeed, nodeId });
+  } else if (chosen.id === "training_spot") {
+    eventState = buildTrainingSpotState({ runSeed, nodeId });
   } else if (chosen.id === "baited_clearing") {
     eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
   }
+
 
   return {
     eventId: chosen.id,
