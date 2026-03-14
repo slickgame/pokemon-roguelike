@@ -7,7 +7,7 @@ import { runApi } from "../components/api/runApi";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Star, Package, Wand2 } from "lucide-react";
+import { Star, Package, Wand2, Dumbbell } from "lucide-react";
 import { EMPTY_INVENTORY, withInventoryDefaults } from "@/lib/inventory";
 import { selectEventForNode } from "@/lib/eventPool";
 
@@ -158,6 +158,27 @@ export default function EventNode() {
     }
   };
 
+  const handleTraining = async () => {
+    if (!eventState?.evStat) return;
+
+    setResolving(true);
+    try {
+      const res = await base44.functions.invoke("resolveNode", {
+        runId,
+        resolution: {
+          type: "event_ev",
+          evDelta: { [eventState.evStat]: eventState.evAmount ?? 16 },
+          evLabel: eventState.evLabel,
+          targetMode: "lead",
+        },
+      });
+      handleResolveResult(res);
+    } finally {
+      setResolving(false);
+    }
+  };
+
+
   const finalizeBaitedClearing = async (overflowChoice = null) => {
     if (!eventState) return;
 
@@ -243,6 +264,55 @@ export default function EventNode() {
       </GameButton>
     </>
   );
+
+  const renderTrainingSpot = () => {
+    return (
+      <>
+        <GameCard className="py-8 border border-cyan-500/20 bg-cyan-500/5">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Dumbbell className="w-8 h-8 text-cyan-300" />
+            <div className="text-left">
+              <p className="text-white font-bold">
+                Lead Pokémon gains +{eventState.evAmount} {eventState.evLabel} EV
+              </p>
+              <p className="text-white/40 text-xs">
+                Focused training for your first party member.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-white/50 text-sm">
+            Spend a little time drilling technique and form.
+          </p>
+        </GameCard>
+
+        <div className="space-y-3">
+          <GameButton
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={handleTraining}
+            loading={resolving}
+            disabled={resolving || party.length === 0}
+          >
+            <Dumbbell className="w-4 h-4" />
+            Train Lead Pokémon
+          </GameButton>
+
+          <GameButton
+            variant="secondary"
+            size="lg"
+            className="w-full"
+            onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
+            disabled={resolving}
+          >
+            Leave
+          </GameButton>
+        </div>
+      </>
+    );
+  };
+
 
   const renderBaitedClearing = () => {
     const hasBait = (inventory.bait ?? 0) >= 1;
@@ -354,7 +424,12 @@ export default function EventNode() {
         <p className="text-white/40 text-sm">{eventView.description}</p>
       </div>
 
-      {eventId === "baited_clearing" ? renderBaitedClearing() : renderSupplyCache()}
+            {eventId === "training_spot"
+              ? renderTrainingSpot()
+              : eventId === "baited_clearing"
+              ? renderBaitedClearing()
+              : renderSupplyCache()}
+
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
