@@ -453,49 +453,135 @@ Deno.serve(async (req) => {
       };
     }
     // ── Event ──────────────────────────────────────────────────────────────────
-    else if (resolution.type === 'event' || resolution.type === 'event_item') {
-      const itemsDelta   = resolution.itemsDelta ?? { potion: 1 };
-      const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
+        else if (resolution.type === 'event' || resolution.type === 'event_item' || resolution.type === 'event_recruit') {
+      const currentInv = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
       const newInventory = { ...currentInv };
 
-      for (const [item, qty] of Object.entries(itemsDelta)) {
-        newInventory[item] = (newInventory[item] ?? 0) + (qty ?? 0);
-      }
+      if (resolution.type === 'event_recruit') {
+        const itemCost = resolution.itemCost ?? { bait: 1 };
+        for (const [item, qty] of Object.entries(itemCost)) {
+          newInventory[item] = Math.max(0, (newInventory[item] ?? 0) - (qty ?? 0));
+        }
 
-      // ration_pack: chance of +1 extra potion
-      const rationExtra = applyRationPack(relics, makeRng(`${run.seed}:ration:${nodeId}`));
-      for (const [item, qty] of Object.entries(rationExtra)) {
-        newInventory[item] = (newInventory[item] ?? 0) + qty;
-      }
-      const combinedDelta = { ...itemsDelta };
-      for (const [item, qty] of Object.entries(rationExtra)) {
-        combinedDelta[item] = (combinedDelta[item] ?? 0) + qty;
-      }
+        let nextParty = Array.isArray(partyState) ? [...partyState] : [];
+        let nextBox = Array.isArray(existingProgress.boxState) ? [...existingProgress.boxState] : [];
 
-      nodeCompleteSummary = { nodeId, nodeType, nodeLabel: NODE_LABELS[nodeType] ?? 'Event', outcome: 'collected', moneyDelta: 0, itemsDelta: combinedDelta, faintCount: 0 };
-      updatedProgress = {
-        ...existingProgress,
-        routeId: existingProgress.routeId ?? 'route1',
-        currentNodeId: nodeId,
-        completedNodeIds,
-        pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
-        inventory: newInventory,
-        partyState,
-        pendingReward: null,
-      };
+        const succeeded = Boolean(resolution.success);
+        const total = Number(resolution.total ?? resolution.roll ?? 0);
+        const target = Number(resolution.target ?? 99);
+        const consumedItemId = Object.keys(itemCost)[0] ?? "bait";
+        let recruitedPokemon = null;
+        let outcome = 'collected';
+        let outcomeLabel = 'Event';
+        let recruitedTo = null;
 
-      // Roll relic chance for event nodes (8%, or forced by devFlags)
-      const relicCap    = hasRelic(relics, "relic_of_mastery") ? 9 : 8;
-      const relicRng    = makeRng(`${run.seed}:relic_chance:${nodeId}`);
-      const devForced   = existingProgress.devFlags?.forceNextEventRelic === true;
-      const rolledRelic = (devForced || relicRng() < EVENT_RELIC_CHANCE) && relics.length < relicCap;
-      if (rolledRelic) {
-        nextScreen  = "relic_reward";
-        relicSource = "event";
-        updatedProgress.pendingReward = { type: 'relic', source: 'event', nodeId };
-        // Clear the one-time dev flag
-        if (devForced) {
-          updatedProgress.devFlags = { ...(updatedProgress.devFlags ?? existingProgress.devFlags ?? {}), forceNextEventRelic: false };
+        if (succeeded) {
+          if (resolution.overflowChoice === 'decline') {
+            outcome = 'collected';
+            outcomeLabel = 'Recruitment Declined';
+          } else {
+            recruitedPokemon = buildEventPokemon(
+              Number(resolution.speciesId),
+              Number(resolution.level ?? 4),
+              `${run.seed}:event_recruit:${nodeId}:${resolution.speciesId}`
+            );
+
+            if (recruitedPokemon) {
+              if (nextParty.length < 6) {
+                nextParty = [...nextParty, recruitedPokemon];
+                recruitedTo = 'party';
+              } else {
+                nextBox = [...nextBox, recruitedPokemon];
+                recruitedTo = 'storage';
+              }
+              outcome = 'recruited';
+              outcomeLabel = 'Pokémon Recruited!';
+            }
+          }
+        } else {
+          outcome = 'collected';
+          outcomeLabel = 'Recruitment Failed';
+        }
+
+        nodeCompleteSummary = {
+          nodeId,
+          nodeType,
+          nodeLabel: NODE_LABELS[nodeType] ?? 'Event',
+          outcome,
+          outcomeLabel,
+          moneyDelta: 0,
+          itemsDelta: {},
+          consumedItemId,
+          consumedItemQty: itemCost[consumedItemId] ?? 1,
+          faintCount: 0,
+          roll,
+          modifier: Number(resolution.modifier ?? 0),
+          total,
+          target,
+          recruitedPokemonName: recruitedPokemon?.name ?? resolution.speciesName ?? null,
+          recruitedTo,
+        };
+
+        updatedProgress = {
+          ...existingProgress,
+          routeId: existingProgress.routeId ?? 'route1',
+          currentNodeId: nodeId,
+          completedNodeIds,
+          pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
+          inventory: newInventory,
+          partyState: nextParty,
+          boxState: nextBox,
+          pendingReward: null,
+        };
+      } else {
+        const itemsDelta = resolution.itemsDelta ?? { potion: 1 };
+
+        for (const [item, qty] of Object.entries(itemsDelta)) {
+          newInventory[item] = (newInventory[item] ?? 0) + (qty ?? 0);
+        }
+
+        const rationExtra = applyRationPack(relics, makeRng(`${run.seed}:ration:${nodeId}`));
+        for (const [item, qty] of Object.entries(rationExtra)) {
+          newInventory[item] = (newInventory[item] ?? 0) + qty;
+        }
+
+        const combinedDelta = { ...itemsDelta };
+        for (const [item, qty] of Object.entries(rationExtra)) {
+          combinedDelta[item] = (combinedDelta[item] ?? 0) + qty;
+        }
+
+        nodeCompleteSummary = {
+          nodeId,
+          nodeType,
+          nodeLabel: NODE_LABELS[nodeType] ?? 'Event',
+          outcome: 'collected',
+          moneyDelta: 0,
+          itemsDelta: combinedDelta,
+          faintCount: 0
+        };
+
+        updatedProgress = {
+          ...existingProgress,
+          routeId: existingProgress.routeId ?? 'route1',
+          currentNodeId: nodeId,
+          completedNodeIds,
+          pendingEncounter: { ...pending, status: 'resolved', lastSummary: nodeCompleteSummary },
+          inventory: newInventory,
+          partyState,
+          pendingReward: null,
+        };
+
+        const relicCap    = hasRelic(relics, "relic_of_mastery") ? 9 : 8;
+        const relicRng    = makeRng(`${run.seed}:relic_chance:${nodeId}`);
+        const devForced   = existingProgress.devFlags?.forceNextEventRelic === true;
+        const rolledRelic = (devForced || relicRng() < EVENT_RELIC_CHANCE) && relics.length < relicCap;
+        if (rolledRelic) {
+          nextScreen  = "relic_reward";
+          relicSource = "event";
+          updatedProgress.pendingReward = { type: 'relic', source: 'event', nodeId };
+          if (devForced) {
+            updatedProgress.devFlags = { ...(updatedProgress.devFlags ?? existingProgress.devFlags ?? {}), forceNextEventRelic: false };
+          }
         }
       }
     }
