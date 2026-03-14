@@ -23,11 +23,12 @@ const NODE_ICONS = {
 };
 
 const OUTCOME_CONFIG = {
-  win:      { icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", label: "Victory!" },
-  loss:     { icon: Frown,  color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",         label: "Defeated..." },
-  healed:   { icon: Heart,  color: "text-pink-400",    bg: "bg-pink-500/10 border-pink-500/20",        label: "Healed!" },
-  collected:{ icon: Star,   color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",      label: "Items Found!" },
-  visited:  { icon: Package,color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20",   label: "Shop Left" },
+  win:       { icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", label: "Victory!" },
+  loss:      { icon: Frown,  color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",         label: "Defeated..." },
+  healed:    { icon: Heart,  color: "text-pink-400",    bg: "bg-pink-500/10 border-pink-500/20",       label: "Healed!" },
+  collected: { icon: Star,   color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",     label: "Items Found!" },
+  recruited: { icon: Wand2,  color: "text-cyan-300",    bg: "bg-cyan-500/10 border-cyan-500/20",       label: "Pokémon Recruited!" },
+  visited:   { icon: Package,color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20",   label: "Shop Left" },
 };
 
 export default function NodeComplete() {
@@ -241,11 +242,13 @@ export default function NodeComplete() {
   );
 
   const outcome = summary.outcome ?? "visited";
-  const cfg = OUTCOME_CONFIG[outcome] ?? OUTCOME_CONFIG.visited;
-  const OutcomeIcon = cfg.icon;
+  const config = OUTCOME_CONFIG[summary.outcome] ?? OUTCOME_CONFIG.visited;
+  const Icon = config.icon;
+  const outcomeLabel = summary.outcomeLabel ?? config.label;
   const nodeIcon = NODE_ICONS[summary.nodeType] ?? "📍";
   const hasItems = summary.itemsDelta && Object.keys(summary.itemsDelta).length > 0;
   const hasMoney = summary.moneyDelta && summary.moneyDelta > 0;
+  const hasRecruitRoll = typeof summary.roll === "number" && typeof summary.target === "number";
   const isBattleLoss = outcome === "loss";
   const isRunFinished = summary.runFinished;
   const routeAdvancedTo = summary.routeAdvancedTo ?? null;
@@ -284,8 +287,55 @@ export default function NodeComplete() {
         )}
       </GameCard>
 
+      {hasRecruitRoll && (
+  <>
+    {summary.consumedItemId ? (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-white/70">
+          <Package className="w-4 h-4 text-amber-300" />
+          {summary.consumedItemId}
+        </div>
+        <span className="text-amber-300 font-bold text-sm">
+          -{summary.consumedItemQty ?? 1}
+        </span>
+      </div>
+    ) : null}
+
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-sm text-white/70">
+        <Sparkles className="w-4 h-4 text-cyan-300" />
+        Roll
+      </div>
+      <span className="text-cyan-300 font-bold text-sm">
+        {summary.roll} {summary.modifier ? `${summary.modifier >= 0 ? "+" : ""}${summary.modifier}` : ""} = {summary.total}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-sm text-white/70">
+        <ArrowRight className="w-4 h-4 text-white/50" />
+        Target
+      </div>
+      <span className="text-white font-bold text-sm">{summary.target}+</span>
+    </div>
+  </>
+)}
+
+{summary.recruitedPokemonName ? (
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2 text-sm text-white/70">
+      <Wand2 className="w-4 h-4 text-cyan-300" />
+      Pokémon
+    </div>
+    <span className="text-cyan-300 font-bold text-sm">
+      {summary.recruitedPokemonName}
+      {summary.recruitedTo ? ` → ${summary.recruitedTo === "storage" ? "Storage" : "Party"}` : ""}
+    </span>
+  </div>
+) : null}
+
       {/* Rewards */}
-      {(hasMoney || hasItems || summary.faintCount > 0) && (
+      {(hasMoney || hasItems || hasRecruitRoll || summary.faintCount > 0 || summary.recruitedPokemonName) && (
         <GameCard>
           <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-3">Results</p>
           <div className="space-y-2">
