@@ -272,9 +272,9 @@ export default function NodeComplete() {
       </div>
 
       {/* Outcome badge */}
-      <GameCard className={`text-center py-6 border ${cfg.bg}`}>
-        <OutcomeIcon className={`w-10 h-10 mx-auto mb-3 ${cfg.color}`} />
-        <p className={`text-xl font-black ${cfg.color}`}>{cfg.label}</p>
+      <GameCard className={`text-center py-6 border ${config.bg}`}>
+        <Icon className={`w-10 h-10 mx-auto mb-3 ${config.color}`} />
+        <p className={`text-xl font-black ${config.color}`}>{outcomeLabel}</p>
         {isBattleLoss && (
           <p className="text-white/40 text-sm mt-1">Your run has ended.</p>
         )}
@@ -282,7 +282,9 @@ export default function NodeComplete() {
           <p className="text-emerald-300/80 text-sm mt-1">Run complete!</p>
         )}
         {routeAdvancedTo && (
-          <p className="text-cyan-300/80 text-sm mt-1">Gym cleared! Proceed to Route {routeAdvancedTo.routeIndex}.</p>
+          <p className="text-cyan-300/80 text-sm mt-1">
+            Gym cleared! Proceed to Route {routeAdvancedTo.routeIndex}.
+          </p>
         )}
       </GameCard>
 
