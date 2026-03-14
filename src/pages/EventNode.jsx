@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useRequiredRunId } from "@/hooks/useRequiredRunId";
@@ -26,12 +26,39 @@ export default function EventNode() {
       .catch(() => handleInvalidRun()).finally(() => setLoading(false));
   }, [runId]);
 
+  const cacheReward = useMemo(() => {
+    const key = `${run?.seed ?? runId ?? "event"}:${nodeId ?? "node"}:cache_reward`;
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    }
+
+    if (hash % 100 < 30) {
+      return {
+        itemId: "bait",
+        qty: 1,
+        title: "Bait ×1",
+        description: "Useful for certain Pokémon recruitment events.",
+      };
+    }
+
+    return {
+      itemId: "potion",
+      qty: 1,
+      title: "Potion ×1",
+      description: "Restores 20 HP to one Pokémon.",
+    };
+  }, [run?.seed, runId, nodeId]);
+
   const handleCollect = async () => {
     setResolving(true);
     try {
       const res = await base44.functions.invoke("resolveNode", {
         runId,
-        resolution: { type: "event_item", itemsDelta: { potion: 1 } },
+        resolution: {
+          type: "event_item",
+          itemsDelta: { [cacheReward.itemId]: cacheReward.qty },
+        },
       });
       const data = res.data ?? {};
       if (data.nextScreen === "relic_reward" && data.relicSource) {
@@ -62,8 +89,8 @@ export default function EventNode() {
         <div className="flex items-center justify-center gap-3 mb-4">
           <Package className="w-8 h-8 text-violet-400" />
           <div className="text-left">
-            <p className="text-white font-bold">Potion ×1</p>
-            <p className="text-white/40 text-xs">Restores 20 HP to one Pokémon</p>
+            <p className="text-white font-bold">{cacheReward.title}</p>
+            <p className="text-white/40 text-xs">{cacheReward.description}</p>
           </div>
         </div>
         <p className="text-white/50 text-sm">Take the items?</p>
