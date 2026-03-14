@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { clearActiveRunId, getActiveRunId, setActiveRunId } from "@/lib/activeRun";
+import { EMPTY_INVENTORY, withInventoryDefaults } from "@/lib/inventory";
 import { base44 } from "@/api/base44Client";
 import { runApi } from "../components/api/runApi";
 import { generateRouteGraph, serializeGraph, hashGraph } from "../components/engine/routeGen";
@@ -349,7 +350,7 @@ export default function RunMap() {
   const isInUncompletedNode = pendingEncounter !== null || (currentNodeId && !completedNodeIds.includes(currentNodeId));
   const battlesWon = actions.filter(a => a.actionType === "node_resolved" && a.payload?.outcome === "win").length;
   const money = runProgress?.money ?? 0;
-  const inventory = runProgress?.inventory ?? { potion: 0, revive: 0, bait: 0 };
+  const inventory = withInventoryDefaults(runProgress?.inventory ?? EMPTY_INVENTORY);
   const partyForBag = (runProgress?.partyState ?? []);
 
   const handleSurrenderRun = async () => {
