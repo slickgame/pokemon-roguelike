@@ -286,7 +286,7 @@ Deno.serve(async (req) => {
             partyState: initialPartyState,
             boxState: existingProgress.boxState ?? [],
             money: existingProgress.money ?? 0,
-            inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
+            inventory: existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 },
           },
         },
       });
@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
             partyState: nextPartyState,
             boxState: existingProgress.boxState ?? [],
             money: existingProgress.money ?? 0,
-            inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
+            inventory: existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 },
           },
         },
       });
@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
             partyState: nextPartyState,
             boxState: nextBoxState,
             money: existingProgress.money ?? 0,
-            inventory: existingProgress.inventory ?? { potion: 0, revive: 0 },
+            inventory: existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 },
           },
         },
       });
