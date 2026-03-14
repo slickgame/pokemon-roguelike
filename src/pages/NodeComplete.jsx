@@ -6,7 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight, Sparkles, Wand2 } from "lucide-react";
+import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight, Sparkles, Wand2, Dumbbell } from "lucide-react";
 import { SHOP_ITEM_BY_ID } from "@/lib/shopItems";
 
 const NODE_ICONS = {
@@ -22,12 +22,13 @@ const NODE_ICONS = {
 };
 
 const OUTCOME_CONFIG = {
-  win:       { icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", label: "Victory!" },
-  loss:      { icon: Frown,  color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",         label: "Defeated..." },
-  healed:    { icon: Heart,  color: "text-pink-400",    bg: "bg-pink-500/10 border-pink-500/20",       label: "Healed!" },
-  collected: { icon: Star,   color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",     label: "Items Found!" },
-  recruited: { icon: Wand2,  color: "text-cyan-300",    bg: "bg-cyan-500/10 border-cyan-500/20",       label: "Pokémon Recruited!" },
-  visited:   { icon: Package,color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20",   label: "Shop Left" },
+  win:       { icon: Trophy,  color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", label: "Victory!" },
+  loss:      { icon: Frown,   color: "text-red-400",     bg: "bg-red-500/10 border-red-500/20",         label: "Defeated..." },
+  healed:    { icon: Heart,   color: "text-pink-400",    bg: "bg-pink-500/10 border-pink-500/20",       label: "Healed!" },
+  collected: { icon: Star,    color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20",     label: "Items Found!" },
+  recruited: { icon: Wand2,   color: "text-cyan-300",    bg: "bg-cyan-500/10 border-cyan-500/20",       label: "Pokémon Recruited!" },
+  trained:   { icon: Dumbbell,color: "text-sky-300",     bg: "bg-sky-500/10 border-sky-500/20",         label: "Training Complete!" },
+  visited:   { icon: Package, color: "text-violet-400",  bg: "bg-violet-500/10 border-violet-500/20",   label: "Shop Left" },
 };
 
 export default function NodeComplete() {
@@ -248,6 +249,7 @@ export default function NodeComplete() {
   const hasItems = summary.itemsDelta && Object.keys(summary.itemsDelta).length > 0;
   const hasMoney = summary.moneyDelta && summary.moneyDelta > 0;
   const hasRecruitRoll = typeof summary.roll === "number" && typeof summary.target === "number";
+  const hasEvDelta = summary.evDelta && Object.keys(summary.evDelta).length > 0;
   const isBattleLoss = outcome === "loss";
   const isRunFinished = summary.runFinished;
   const routeAdvancedTo = summary.routeAdvancedTo ?? null;
@@ -336,7 +338,7 @@ export default function NodeComplete() {
 ) : null}
 
       {/* Rewards */}
-      {(hasMoney || hasItems || hasRecruitRoll || summary.faintCount > 0 || summary.recruitedPokemonName) && (
+      {(hasMoney || hasItems || hasRecruitRoll || hasEvDelta || summary.faintCount > 0 || summary.recruitedPokemonName) && (
         <GameCard>
           <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-3">Results</p>
           <div className="space-y-2">
@@ -431,6 +433,19 @@ export default function NodeComplete() {
           )}
         </GameCard>
       )}
+
+      {hasEvDelta &&
+  Object.entries(summary.evDelta).map(([stat, qty]) => (
+    <div key={`ev-${stat}`} className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-sm text-white/70">
+        <Dumbbell className="w-4 h-4 text-sky-300" />
+        {summary.evTargetName
+          ? `${summary.evTargetName} ${summary.evLabel ?? stat.toUpperCase()} EV`
+          : `${summary.evLabel ?? stat.toUpperCase()} EV`}
+      </div>
+      <span className="text-sky-300 font-bold text-sm">+{qty}</span>
+    </div>
+  ))}
 
       {/* Relic count footer */}
       {relicCount !== null && relicCount > 0 && (
