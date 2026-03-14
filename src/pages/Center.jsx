@@ -6,7 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Heart } from "lucide-react";
+import { Heart, Archive } from "lucide-react";
 
 export default function Center() {
   const navigate = useNavigate();
@@ -39,6 +39,10 @@ export default function Center() {
     }
   };
 
+  const handleAccessStorage = () => {
+    navigate(createPageUrl(`Party?runId=${runId}`));
+  };
+
   const party = run?.results?.progress?.partyState ?? [];
 
   if (loading) return (
@@ -52,7 +56,9 @@ export default function Center() {
       <div className="space-y-2">
         <p className="text-5xl">💊</p>
         <h1 className="text-2xl font-black text-white">Pokémon Center</h1>
-        <p className="text-white/40 text-sm">Welcome! We restore your Pokémon to full health.</p>
+        <p className="text-white/40 text-sm">
+          Welcome! Heal your party or access Storage while you are at this node.
+        </p>
       </div>
 
       {party.length > 0 && (
@@ -82,23 +88,44 @@ export default function Center() {
         </GameCard>
       )}
 
-      <GameCard className="py-6 border border-emerald-500/20 bg-emerald-500/5">
-        <Heart className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-        <p className="text-white/70 text-sm">All Pokémon will be fully restored.</p>
-        <p className="text-white/30 text-xs mt-1">HP, PP, and status conditions.</p>
-      </GameCard>
+      <div className="space-y-3">
+        <GameCard className="py-6 border border-emerald-500/20 bg-emerald-500/5">
+          <Heart className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+          <p className="text-white/70 text-sm">All Pokémon will be fully restored.</p>
+          <p className="text-white/30 text-xs mt-1">HP, PP, and status conditions.</p>
+        </GameCard>
 
-      <GameButton
-        variant="success"
-        size="lg"
-        className="w-full"
-        onClick={handleHeal}
-        loading={resolving}
-        disabled={resolving}
-      >
-        <Heart className="w-4 h-4" />
-        Heal Party
-      </GameButton>
+        <GameCard className="py-5 border border-violet-500/20 bg-violet-500/5">
+          <Archive className="w-7 h-7 text-violet-300 mx-auto mb-2" />
+          <p className="text-white/70 text-sm">Storage access is available here.</p>
+          <p className="text-white/30 text-xs mt-1">Swap Pokémon between party and box at Pokémon Centers.</p>
+        </GameCard>
+      </div>
+
+      <div className="space-y-3">
+        <GameButton
+          variant="success"
+          size="lg"
+          className="w-full"
+          onClick={handleHeal}
+          loading={resolving}
+          disabled={resolving}
+        >
+          <Heart className="w-4 h-4" />
+          Heal Party
+        </GameButton>
+
+        <GameButton
+          variant="secondary"
+          size="lg"
+          className="w-full"
+          onClick={handleAccessStorage}
+          disabled={resolving || !runId}
+        >
+          <Archive className="w-4 h-4" />
+          Access Storage
+        </GameButton>
+      </div>
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   );
