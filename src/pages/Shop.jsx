@@ -9,6 +9,7 @@ import GameButton from "../components/ui/GameButton";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import { ShoppingBag, Coins, ArrowLeft } from "lucide-react";
 import { SHOP_ITEMS } from "@/lib/shopItems";
+import { EMPTY_INVENTORY, withInventoryDefaults } from "@/lib/inventory";
 import { onShopBuy } from "@/components/engine/relicHooks";
 
 
