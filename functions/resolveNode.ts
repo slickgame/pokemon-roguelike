@@ -311,10 +311,28 @@ Deno.serve(async (req) => {
         const baseMoney  = TIER_MONEY_BASE[tier] ?? 50;
         const moneyDelta = applyMoneyRelics(relics, baseMoney, nodeType);
         const dropChance = TIER_DROP_CHANCE[tier] ?? 0.6;
-        const dropsPotion = rewardRng() < dropChance ? 1 : 0;
-        const currentMoney    = existingProgress.money ?? 0;
-        const currentInv      = existingProgress.inventory ?? { potion: 0, revive: 0 };
-        const newInventory    = { ...currentInv, potion: (currentInv.potion ?? 0) + dropsPotion };
+
+        let itemsDelta: Record<string, number> = {};
+        if (rewardRng() < dropChance) {
+          const baitChance =
+            tier === 'skilled' ? 0.35 :
+            tier === 'avg' ? 0.25 :
+            0.15;
+
+          if (rewardRng() < baitChance) {
+            itemsDelta = { bait: 1 };
+          } else {
+            itemsDelta = { potion: 1 };
+          }
+        }
+
+        const currentMoney = existingProgress.money ?? 0;
+        const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
+        const newInventory = { ...currentInv };
+
+        for (const [item, qty] of Object.entries(itemsDelta)) {
+          newInventory[item] = (newInventory[item] ?? 0) + (qty ?? 0);
+        }
 
         // field_medic_patch: heal party after battle
         const healedParty = applyAfterBattleHeal(partyState, relics);
@@ -323,7 +341,7 @@ Deno.serve(async (req) => {
           nodeId, nodeType, nodeLabel,
           outcome: 'win',
           moneyDelta,
-          itemsDelta: dropsPotion > 0 ? { potion: dropsPotion } : {},
+          itemsDelta,
           faintCount: faintCount ?? 0,
         };
 
@@ -406,7 +424,7 @@ Deno.serve(async (req) => {
     // ── Event ──────────────────────────────────────────────────────────────────
     else if (resolution.type === 'event' || resolution.type === 'event_item') {
       const itemsDelta   = resolution.itemsDelta ?? { potion: 1 };
-      const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0 };
+      const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
       const newInventory = { ...currentInv };
 
       for (const [item, qty] of Object.entries(itemsDelta)) {
