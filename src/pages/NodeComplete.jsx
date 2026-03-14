@@ -7,7 +7,7 @@ import { runApi } from "../components/api/runApi";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight, Sparkles } from "lucide-react";
+import { Trophy, Frown, Heart, Star, Coins, Package, ArrowRight, Sparkles, Wand2 } from "lucide-react";
 import { SHOP_ITEM_BY_ID } from "@/lib/shopItems";
 
 const NODE_ICONS = {
