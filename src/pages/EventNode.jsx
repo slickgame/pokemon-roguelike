@@ -115,7 +115,6 @@ export default function EventNode() {
   const progress = run?.results?.progress ?? {};
   const inventory = withInventoryDefaults(progress.inventory ?? EMPTY_INVENTORY);
   const party = progress.partyState ?? [];
-  const box = progress.boxState ?? [];
   const hasPartySpace = party.length < 6;
 
   const eventId = eventView?.eventId ?? null;
