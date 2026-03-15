@@ -323,7 +323,7 @@ export default function NodeComplete() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-sm text-white/70">
                       <Package className="w-4 h-4 text-amber-300" />
-                      {summary.consumedItemId}
+                      {SHOP_ITEM_BY_ID[summary.consumedItemId]?.name ?? summary.consumedItemId}
                     </div>
                     <span className="text-amber-300 font-bold text-sm">
                       -{summary.consumedItemQty ?? 1}
