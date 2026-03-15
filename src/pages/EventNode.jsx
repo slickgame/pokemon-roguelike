@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useRequiredRunId } from "@/hooks/useRequiredRunId";
 import { base44 } from "@/api/base44Client";
-import { runApi } from "../components/api/runApi";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
@@ -23,6 +22,8 @@ export default function EventNode() {
   const [loading, setLoading] = useState(true);
   const [eventView, setEventView] = useState(null);
   const [showOverflowChoice, setShowOverflowChoice] = useState(false);
+  const [selectedTrainingIndex, setSelectedTrainingIndex] = useState(0);
+
 
   useEffect(() => {
     if (!runId) {
@@ -160,6 +161,7 @@ export default function EventNode() {
 
   const handleTraining = async () => {
     if (!eventState?.evStat) return;
+    if (!party[selectedTrainingIndex]) return;
 
     setResolving(true);
     try {
@@ -169,7 +171,8 @@ export default function EventNode() {
           type: "event_ev",
           evDelta: { [eventState.evStat]: eventState.evAmount ?? 16 },
           evLabel: eventState.evLabel,
-          targetMode: "lead",
+          targetMode: "party_index",
+          targetIndex: selectedTrainingIndex,
         },
       });
       handleResolveResult(res);
@@ -177,6 +180,7 @@ export default function EventNode() {
       setResolving(false);
     }
   };
+
 
 
   const finalizeBaitedClearing = async (overflowChoice = null) => {
@@ -273,10 +277,10 @@ export default function EventNode() {
             <Dumbbell className="w-8 h-8 text-cyan-300" />
             <div className="text-left">
               <p className="text-white font-bold">
-                Lead Pokémon gains +{eventState.evAmount} {eventState.evLabel} EV
+                Selected Pokémon gains +{eventState.evAmount} {eventState.evLabel} EV
               </p>
               <p className="text-white/40 text-xs">
-                Focused training for your first party member.
+                Choose any party Pokémon from the active team or bench.
               </p>
             </div>
           </div>
@@ -286,6 +290,41 @@ export default function EventNode() {
           </p>
         </GameCard>
 
+        <GameCard className="py-6">
+          <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-3">
+            Choose Training Target
+          </p>
+
+          <div className="grid grid-cols-1 gap-2">
+            {party.map((mon, index) => (
+              <button
+                key={`${mon.speciesId}-${index}`}
+                type="button"
+                onClick={() => setSelectedTrainingIndex(index)}
+                className={`w-full rounded-xl border px-3 py-3 text-left transition ${
+                  selectedTrainingIndex === index
+                    ? "border-cyan-400 bg-cyan-500/10"
+                    : "border-white/10 bg-white/5 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white font-semibold">
+                      {mon.name} {index < 3 ? "(Active)" : "(Bench)"}
+                    </p>
+                    <p className="text-white/40 text-xs">
+                      Lv. {mon.level} • HP {mon.currentHP}/{mon.maxHP}
+                    </p>
+                  </div>
+                  <div className="text-cyan-300 text-sm font-bold">
+                    +{eventState.evAmount} {eventState.evLabel}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </GameCard>
+
         <div className="space-y-3">
           <GameButton
             variant="primary"
@@ -293,10 +332,10 @@ export default function EventNode() {
             className="w-full"
             onClick={handleTraining}
             loading={resolving}
-            disabled={resolving || party.length === 0}
+            disabled={resolving || party.length === 0 || !party[selectedTrainingIndex]}
           >
             <Dumbbell className="w-4 h-4" />
-            Train Lead Pokémon
+            Train Selected Pokémon
           </GameButton>
 
           <GameButton
@@ -312,6 +351,7 @@ export default function EventNode() {
       </>
     );
   };
+
 
 
   const renderBaitedClearing = () => {
