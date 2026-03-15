@@ -226,6 +226,55 @@ function computeEventStats(baseStats, level, ivs = {}, evs = {}, nature = "Hardy
   return computeStats(baseStats, level, ivs, evs, nature);
 }
 
+function buildEventPokemon(speciesId, level, seedStr) {
+  const species = EVENT_SPECIES[speciesId];
+  if (!species) return null;
+
+  const rng = makeRng(seedStr);
+  const nature = EVENT_NATURES[rngInt(rng, EVENT_NATURES.length)];
+  const shiny = rngInt(rng, 1024) === 0;
+  const gender = rng() < 0.5 ? "Male" : "Female";
+
+  const ivs = {
+    hp: rngInt(rng, 32),
+    atk: rngInt(rng, 32),
+    def: rngInt(rng, 32),
+    spa: rngInt(rng, 32),
+    spd: rngInt(rng, 32),
+    spe: rngInt(rng, 32),
+  };
+
+  const evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+  const stats = computeEventStats(species.baseStats, level, ivs, evs, nature);
+  const moveIds = EVENT_LEARNSETS[speciesId] ?? ["tackle"];
+
+  return {
+    speciesId: species.id,
+    name: species.name,
+    level,
+    exp: 0,
+    gender,
+    types: species.types,
+    nature,
+    abilityId: species.abilities?.[0] ?? null,
+    shiny,
+    ivs,
+    evs,
+    baseStats: species.baseStats,
+    stats,
+    currentHP: stats.hp,
+    maxHP: stats.hp,
+    fainted: false,
+    status: null,
+    heldItem: null,
+    moves: moveIds.slice(0, 4).map((moveId) => ({
+      id: moveId,
+      pp: EVENT_MOVES[moveId]?.pp ?? 20,
+      ppMax: EVENT_MOVES[moveId]?.pp ?? 20,
+    })),
+  };
+}
+
 
 function postGymHealParty(partyState) {
   if (!Array.isArray(partyState)) return partyState;
