@@ -34,11 +34,12 @@ export const STARTER_EVENT_DEFS = [
     id: "injured_pidgey",
     kind: "recruitment",
     title: "Injured Pidgey",
-    description: "An injured Pidgey struggles by the roadside.",
-    weight: 0,
-    implemented: false,
+    description: "An injured Pidgey struggles by the roadside, too weak to fly.",
+    weight: 20,
+    implemented: true,
     requiresAny: ["potion"],
   },
+
   {
     id: "burnt_bellsprout",
     kind: "recruitment",
