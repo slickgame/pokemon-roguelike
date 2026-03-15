@@ -290,54 +290,6 @@ export default function NodeComplete() {
           </p>
         )}
       </GameCard>
-
-      {hasRecruitRoll && (
-  <>
-    {summary.consumedItemId ? (
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-white/70">
-          <Package className="w-4 h-4 text-amber-300" />
-          {summary.consumedItemId}
-        </div>
-        <span className="text-amber-300 font-bold text-sm">
-          -{summary.consumedItemQty ?? 1}
-        </span>
-      </div>
-    ) : null}
-
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2 text-sm text-white/70">
-        <Sparkles className="w-4 h-4 text-cyan-300" />
-        Roll
-      </div>
-      <span className="text-cyan-300 font-bold text-sm">
-        {summary.roll} {summary.modifier ? `${summary.modifier >= 0 ? "+" : ""}${summary.modifier}` : ""} = {summary.total}
-      </span>
-    </div>
-
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2 text-sm text-white/70">
-        <ArrowRight className="w-4 h-4 text-white/50" />
-        Target
-      </div>
-      <span className="text-white font-bold text-sm">{summary.target}+</span>
-    </div>
-  </>
-)}
-
-{summary.recruitedPokemonName ? (
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-2 text-sm text-white/70">
-      <Wand2 className="w-4 h-4 text-cyan-300" />
-      Pokémon
-    </div>
-    <span className="text-cyan-300 font-bold text-sm">
-      {summary.recruitedPokemonName}
-      {summary.recruitedTo ? ` → ${summary.recruitedTo === "storage" ? "Storage" : "Party"}` : ""}
-    </span>
-  </div>
-) : null}
-
       {/* Rewards */}
        {(hasMoney || hasItems || hasRecruitRoll || hasEvDelta || summary.faintCount > 0 || summary.recruitedPokemonName) && (
         <GameCard>
