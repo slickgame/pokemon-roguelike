@@ -182,7 +182,7 @@ export default function EventNode() {
 
 
 
-  const finalizeBaitedClearing = async (overflowChoice = null) => {
+  const finalizeRecruitEvent = async (overflowChoice = null) => {
     if (!eventState) return;
 
     setResolving(true);
@@ -209,6 +209,7 @@ export default function EventNode() {
       setResolving(false);
     }
   };
+
 
   const handleUseBait = async () => {
     if (!eventState) return;
