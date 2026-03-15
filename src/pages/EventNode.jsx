@@ -23,6 +23,7 @@ export default function EventNode() {
   const [eventView, setEventView] = useState(null);
   const [showOverflowChoice, setShowOverflowChoice] = useState(false);
   const [selectedTrainingIndex, setSelectedTrainingIndex] = useState(0);
+  const [selectedBallId, setSelectedBallId] = useState("pokeball");
 
 
   useEffect(() => {
