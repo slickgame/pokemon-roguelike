@@ -155,6 +155,77 @@ const EVENT_LEARNSETS = {
 
 const EVENT_NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
+const EV_STATS = ["hp", "atk", "def", "spa", "spd", "spe"];
+
+function getNatureModifier(nature, statKey) {
+  const NATURE_EFFECTS = {
+    Hardy:{up:null,down:null}, Lonely:{up:"atk",down:"def"}, Brave:{up:"atk",down:"spe"}, Adamant:{up:"atk",down:"spa"}, Naughty:{up:"atk",down:"spd"},
+    Bold:{up:"def",down:"atk"}, Docile:{up:null,down:null}, Relaxed:{up:"def",down:"spe"}, Impish:{up:"def",down:"spa"}, Lax:{up:"def",down:"spd"},
+    Timid:{up:"spe",down:"atk"}, Hasty:{up:"spe",down:"def"}, Serious:{up:null,down:null}, Jolly:{up:"spe",down:"spa"}, Naive:{up:"spe",down:"spd"},
+    Modest:{up:"spa",down:"atk"}, Mild:{up:"spa",down:"def"}, Quiet:{up:"spa",down:"spe"}, Bashful:{up:null,down:null}, Rash:{up:"spa",down:"spd"},
+    Calm:{up:"spd",down:"atk"}, Gentle:{up:"spd",down:"def"}, Sassy:{up:"spd",down:"spe"}, Careful:{up:"spd",down:"spa"}, Quirky:{up:null,down:null},
+  };
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+  if (effect.up === statKey) return 1.1;
+  if (effect.down === statKey) return 0.9;
+  return 1.0;
+}
+
+function normalizeEvs(evs = {}) {
+  const out = {};
+  for (const stat of EV_STATS) {
+    out[stat] = Math.max(0, Math.min(252, Math.floor(evs?.[stat] ?? 0)));
+  }
+
+  let total = EV_STATS.reduce((sum, stat) => sum + out[stat], 0);
+  if (total <= 510) return out;
+
+  let overflow = total - 510;
+  for (let i = EV_STATS.length - 1; i >= 0 && overflow > 0; i--) {
+    const stat = EV_STATS[i];
+    const cut = Math.min(out[stat], overflow);
+    out[stat] -= cut;
+    overflow -= cut;
+  }
+
+  return out;
+}
+
+function applyEvGain(currentEvs = {}, evDelta = {}) {
+  const next = normalizeEvs(currentEvs);
+  for (const stat of EV_STATS) {
+    const add = Math.max(0, Math.floor(evDelta?.[stat] ?? 0));
+    if (add > 0) {
+      next[stat] = Math.min(252, next[stat] + add);
+    }
+  }
+  return normalizeEvs(next);
+}
+
+function computeStats(baseStats, level, ivs = {}, evs = {}, nature = "Hardy") {
+  function hpStat(base, iv = 0, ev = 0) {
+    return Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + level + 10;
+  }
+
+  function otherStat(statKey, base, iv = 0, ev = 0) {
+    const raw = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100) + 5;
+    return Math.floor(raw * getNatureModifier(nature, statKey));
+  }
+
+  return {
+    hp: hpStat(baseStats.hp, ivs.hp ?? 0, evs.hp ?? 0),
+    atk: otherStat("atk", baseStats.atk, ivs.atk ?? 0, evs.atk ?? 0),
+    def: otherStat("def", baseStats.def, ivs.def ?? 0, evs.def ?? 0),
+    spa: otherStat("spa", baseStats.spa, ivs.spa ?? 0, evs.spa ?? 0),
+    spd: otherStat("spd", baseStats.spd, ivs.spd ?? 0, evs.spd ?? 0),
+    spe: otherStat("spe", baseStats.spe, ivs.spe ?? 0, evs.spe ?? 0),
+  };
+}
+
+function computeEventStats(baseStats, level, ivs = {}, evs = {}, nature = "Hardy") {
+  return computeStats(baseStats, level, ivs, evs, nature);
+}
+
 
 function postGymHealParty(partyState) {
   if (!Array.isArray(partyState)) return partyState;
