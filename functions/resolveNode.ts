@@ -460,9 +460,12 @@ Deno.serve(async (req) => {
       if (resolution.type === 'event_ev') {
         const incomingParty = Array.isArray(partyState) ? [...partyState] : [];
         const targetIndex =
-          resolution.targetMode === 'lead'
+          resolution.targetMode === 'party_index'
+            ? Number(resolution.targetIndex ?? 0)
+            : resolution.targetMode === 'lead'
             ? incomingParty.findIndex(Boolean)
             : 0;
+
 
         let evDeltaApplied = {};
         let evTargetName = null;
