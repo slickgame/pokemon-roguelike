@@ -137,10 +137,12 @@ const EVENT_MOVES = {
   poison_sting: { id: "poison_sting", pp: 35 },
   gust: { id: "gust", pp: 35 },
   peck: { id: "peck", pp: 35 },
+  growl: { id: "growl", pp: 40 },
   absorb: { id: "absorb", pp: 25 },
   growth: { id: "growth", pp: 20 },
   vine_whip: { id: "vine_whip", pp: 25 },
 };
+
 
 const EVENT_LEARNSETS = {
   10: ["tackle", "string_shot"],
