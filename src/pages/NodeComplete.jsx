@@ -364,7 +364,21 @@ export default function NodeComplete() {
               </div>
             ) : null}
 
+            {hasEvDelta &&
+              Object.entries(summary.evDelta).map(([stat, qty]) => (
+                <div key={`ev-${stat}`} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <Dumbbell className="w-4 h-4 text-sky-300" />
+                    {summary.evTargetName
+                      ? `${summary.evTargetName} ${summary.evLabel ?? stat.toUpperCase()} EV`
+                      : `${summary.evLabel ?? stat.toUpperCase()} EV`}
+                  </div>
+                  <span className="text-sky-300 font-bold text-sm">+{qty}</span>
+                </div>
+              ))}
+
             {summary.faintCount > 0 && (
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-white/70">
                   <Frown className="w-4 h-4 text-red-400" />
@@ -438,18 +452,6 @@ export default function NodeComplete() {
         </GameCard>
       )}
 
-      {hasEvDelta &&
-  Object.entries(summary.evDelta).map(([stat, qty]) => (
-    <div key={`ev-${stat}`} className="flex items-center justify-between">
-      <div className="flex items-center gap-2 text-sm text-white/70">
-        <Dumbbell className="w-4 h-4 text-sky-300" />
-        {summary.evTargetName
-          ? `${summary.evTargetName} ${summary.evLabel ?? stat.toUpperCase()} EV`
-          : `${summary.evLabel ?? stat.toUpperCase()} EV`}
-      </div>
-      <span className="text-sky-300 font-bold text-sm">+{qty}</span>
-    </div>
-  ))}
 
       {/* Relic count footer */}
       {relicCount !== null && relicCount > 0 && (
