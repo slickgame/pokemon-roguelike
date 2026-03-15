@@ -236,6 +236,8 @@ export function selectEventForNode({
     eventState = buildSupplyCacheState({ runSeed, nodeId });
   } else if (chosen.id === "training_spot") {
     eventState = buildTrainingSpotState({ runSeed, nodeId });
+  } else if (chosen.id === "injured_pidgey") {
+    eventState = buildInjuredPidgeyState({ runSeed, nodeId });
   } else if (chosen.id === "baited_clearing") {
     eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
   }
