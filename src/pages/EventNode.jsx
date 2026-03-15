@@ -236,6 +236,66 @@ export default function EventNode() {
     await finalizeRecruitEvent(null);
   };
 
+  const handleUseBall = async () => {
+    if (!eventState) return;
+    if ((inventory[selectedBallId] ?? 0) < 1) return;
+
+    const selectedBall =
+      (eventState.ballOptions ?? []).find((ball) => ball.itemId === selectedBallId) ??
+      { itemId: "pokeball", label: "Poké Ball", bonus: 0 };
+
+    const rollRngSeed = `${run?.seed ?? runId ?? "event"}:${nodeId ?? "node"}:wild_ball_roll:${selectedBall.itemId}`;
+    let hash = 0;
+    for (let i = 0; i < rollRngSeed.length; i++) {
+      hash = (hash * 31 + rollRngSeed.charCodeAt(i)) >>> 0;
+    }
+    const roll = (hash % 20) + 1;
+    const modifier = selectedBall.bonus ?? 0;
+    const total = roll + modifier;
+    const success = total >= eventState.target;
+
+    if (success && !hasPartySpace) {
+      setShowOverflowChoice(true);
+      setEventView((prev) => ({
+        ...prev,
+        eventState: {
+          ...prev.eventState,
+          selectedBall,
+          roll,
+          modifier,
+          total,
+          success,
+          itemCost: { [selectedBall.itemId]: 1 },
+        },
+      }));
+      return;
+    }
+
+    setResolving(true);
+    try {
+      const res = await base44.functions.invoke("resolveNode", {
+        runId,
+        resolution: {
+          type: "event_recruit",
+          eventId,
+          itemCost: { [selectedBall.itemId]: 1 },
+          speciesId: eventState.speciesId,
+          speciesName: eventState.speciesName,
+          level: eventState.level ?? 4,
+          target: eventState.target,
+          roll,
+          modifier,
+          total,
+          success,
+          overflowChoice: null,
+        },
+      });
+      handleResolveResult(res);
+    } finally {
+      setResolving(false);
+    }
+  };
+
 
   if (loading) {
     return (
