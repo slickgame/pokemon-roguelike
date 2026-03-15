@@ -359,7 +359,7 @@ export default function NodeComplete() {
               <div key={item} className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-white/70">
                   <Package className="w-4 h-4 text-violet-400" />
-                  {item.charAt(0).toUpperCase() + item.slice(1)}
+                  {SHOP_ITEM_BY_ID[item]?.name ?? item}
                 </div>
                 <span className="text-violet-400 font-bold text-sm">+{qty}</span>
               </div>
