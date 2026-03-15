@@ -339,9 +339,11 @@ export default function NodeComplete() {
 ) : null}
 
       {/* Rewards */}
-      {(hasMoney || hasItems || hasRecruitRoll || hasEvDelta || summary.faintCount > 0 || summary.recruitedPokemonName) && (
+       {(hasMoney || hasItems || hasRecruitRoll || hasEvDelta || summary.faintCount > 0 || summary.recruitedPokemonName) && (
         <GameCard>
-          <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-3">Results</p>
+          <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-3">
+            Results
+          </p>
           <div className="space-y-2">
             {hasMoney && (
               <div className="flex items-center justify-between">
@@ -352,6 +354,7 @@ export default function NodeComplete() {
                 <span className="text-amber-400 font-bold text-sm">+${summary.moneyDelta}</span>
               </div>
             )}
+
             {hasItems && Object.entries(summary.itemsDelta).map(([item, qty]) => (
               <div key={item} className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-white/70">
@@ -361,6 +364,67 @@ export default function NodeComplete() {
                 <span className="text-violet-400 font-bold text-sm">+{qty}</span>
               </div>
             ))}
+
+            {hasRecruitRoll && (
+              <>
+                {summary.consumedItemId ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-white/70">
+                      <Package className="w-4 h-4 text-amber-300" />
+                      {summary.consumedItemId}
+                    </div>
+                    <span className="text-amber-300 font-bold text-sm">
+                      -{summary.consumedItemQty ?? 1}
+                    </span>
+                  </div>
+                ) : null}
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <Sparkles className="w-4 h-4 text-cyan-300" />
+                    Roll
+                  </div>
+                  <span className="text-cyan-300 font-bold text-sm">
+                    {summary.roll} {summary.modifier ? `${summary.modifier >= 0 ? "+" : ""}${summary.modifier}` : ""} = {summary.total}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <ArrowRight className="w-4 h-4 text-white/50" />
+                    Target
+                  </div>
+                  <span className="text-white font-bold text-sm">{summary.target}+</span>
+                </div>
+              </>
+            )}
+
+            {summary.recruitedPokemonName ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-white/70">
+                  <Wand2 className="w-4 h-4 text-cyan-300" />
+                  Pokémon
+                </div>
+                <span className="text-cyan-300 font-bold text-sm">
+                  {summary.recruitedPokemonName}
+                  {summary.recruitedTo ? ` → ${summary.recruitedTo === "storage" ? "Storage" : "Party"}` : ""}
+                </span>
+              </div>
+            ) : null}
+
+            {hasEvDelta &&
+              Object.entries(summary.evDelta).map(([stat, qty]) => (
+                <div key={`ev-${stat}`} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <Dumbbell className="w-4 h-4 text-sky-300" />
+                    {summary.evTargetName
+                      ? `${summary.evTargetName} ${summary.evLabel ?? stat.toUpperCase()} EV`
+                      : `${summary.evLabel ?? stat.toUpperCase()} EV`}
+                  </div>
+                  <span className="text-sky-300 font-bold text-sm">+{qty}</span>
+                </div>
+              ))}
+
             {summary.faintCount > 0 && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-white/70">
