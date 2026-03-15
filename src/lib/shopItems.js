@@ -23,6 +23,15 @@ export const SHOP_ITEMS = [
     description: "A lure item used in certain event encounters.",
     icon: "🪤",
   },
+
+  {
+  id: "pokeball",
+  name: "Poké Ball",
+  buyPrice: 100,
+  sellPrice: 50,
+  description: "A ball used to capture Pokémon during certain event encounters.",
+  icon: "🔴",
+},
 ];
 
 export const SHOP_ITEM_BY_ID = Object.fromEntries(
