@@ -578,11 +578,13 @@ export default function EventNode() {
         <p className="text-white/40 text-sm">{eventView.description}</p>
       </div>
 
-            {eventId === "training_spot"
-              ? renderTrainingSpot()
-              : eventId === "baited_clearing"
-              ? renderBaitedClearing()
-              : renderSupplyCache()}
+          {eventId === "training_spot"
+            ? renderTrainingSpot()
+            : eventId === "injured_pidgey"
+            ? renderInjuredPidgey()
+            : eventId === "baited_clearing"
+            ? renderBaitedClearing()
+            : renderSupplyCache()}
 
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
