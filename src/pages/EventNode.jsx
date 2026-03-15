@@ -6,7 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Star, Package, Wand2, Dumbbell } from "lucide-react";
+import { Star, Package, Wand2, Dumbbell, Heart } from "lucide-react";
 import { EMPTY_INVENTORY, withInventoryDefaults } from "@/lib/inventory";
 import { selectEventForNode } from "@/lib/eventPool";
 
