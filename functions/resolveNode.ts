@@ -480,7 +480,7 @@ Deno.serve(async (req) => {
         }
 
         const currentMoney = existingProgress.money ?? 0;
-        const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
+        const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0, pokeball: 0 };
         const newInventory = { ...currentInv };
 
         for (const [item, qty] of Object.entries(itemsDelta)) {
@@ -576,7 +576,7 @@ Deno.serve(async (req) => {
     }
     // ── Event ──────────────────────────────────────────────────────────────────
       else if (resolution.type === 'event' || resolution.type === 'event_item' || resolution.type === 'event_recruit' || resolution.type === 'event_ev') {
-      const currentInv = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 };
+      const currentInv = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0, pokeball: 0 };
       const newInventory = { ...currentInv };
 
       if (resolution.type === 'event_ev') {
