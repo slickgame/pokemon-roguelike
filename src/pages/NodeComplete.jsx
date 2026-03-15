@@ -247,10 +247,10 @@ export default function NodeComplete() {
   const Icon = config.icon;
   const outcomeLabel = summary.outcomeLabel ?? config.label;
   const nodeIcon = NODE_ICONS[summary.nodeType] ?? "📍";
-  const hasItems = summary.itemsDelta && Object.keys(summary.itemsDelta).length > 0;
-  const hasMoney = summary.moneyDelta && summary.moneyDelta > 0;
+  const hasItems = Boolean(summary.itemsDelta && Object.keys(summary.itemsDelta).length > 0);
+  const hasMoney = Number(summary.moneyDelta ?? 0) > 0;
   const hasRecruitRoll = typeof summary.roll === "number" && typeof summary.target === "number";
-  const hasEvDelta = summary.evDelta && Object.keys(summary.evDelta).length > 0;
+  const hasEvDelta = Boolean(summary.evDelta && Object.keys(summary.evDelta).length > 0);
   const isBattleLoss = outcome === "loss";
   const isRunFinished = summary.runFinished;
   const routeAdvancedTo = summary.routeAdvancedTo ?? null;
