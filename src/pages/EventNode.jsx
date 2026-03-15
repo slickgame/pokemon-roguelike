@@ -220,8 +220,21 @@ export default function EventNode() {
       return;
     }
 
-    await finalizeBaitedClearing(null);
+    await finalizeRecruitEvent(null);
   };
+
+  const handleUsePotion = async () => {
+    if (!eventState) return;
+    if ((inventory.potion ?? 0) < 1) return;
+
+    if (eventState.success && !hasPartySpace) {
+      setShowOverflowChoice(true);
+      return;
+    }
+
+    await finalizeRecruitEvent(null);
+  };
+
 
   if (loading) {
     return (
