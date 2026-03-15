@@ -528,6 +528,154 @@ export default function EventNode() {
     );
   };
 
+const renderWildPokemonSpotted = () => {
+  const ballOptions = eventState.ballOptions ?? [
+    { itemId: "pokeball", label: "Poké Ball", bonus: 0 },
+  ];
+
+  const selectedBall =
+    ballOptions.find((ball) => ball.itemId === selectedBallId) ?? ballOptions[0];
+
+  const rollSeed = `${run?.seed ?? runId ?? "event"}:${nodeId ?? "node"}:wild_ball_roll:${selectedBall.itemId}`;
+  let hash = 0;
+  for (let i = 0; i < rollSeed.length; i++) {
+    hash = (hash * 31 + rollSeed.charCodeAt(i)) >>> 0;
+  }
+  const previewRoll = (hash % 20) + 1;
+  const previewTotal = previewRoll + (selectedBall?.bonus ?? 0);
+
+  const hasBall = (inventory[selectedBallId] ?? 0) >= 1;
+
+  return (
+    <>
+      <GameCard className="py-8 border border-red-500/20 bg-red-500/5">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <CircleDot className="w-8 h-8 text-red-300" />
+          <div className="text-left">
+            <p className="text-white font-bold">{eventState.speciesName} spotted</p>
+            <p className="text-white/40 text-xs">Choose a ball and try to catch it.</p>
+          </div>
+        </div>
+
+        <div className="space-y-3 max-w-xs mx-auto text-left">
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">
+              Choose Ball
+            </p>
+            {ballOptions.map((ball) => (
+              <button
+                key={ball.itemId}
+                type="button"
+                onClick={() => setSelectedBallId(ball.itemId)}
+                className={`w-full rounded-xl border px-3 py-3 text-left transition ${
+                  selectedBallId === ball.itemId
+                    ? "border-red-400 bg-red-500/10"
+                    : "border-white/10 bg-white/5 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white font-semibold">{ball.label}</p>
+                    <p className="text-white/40 text-xs">
+                      Owned: {inventory[ball.itemId] ?? 0}
+                    </p>
+                  </div>
+                  <div className="text-red-300 text-sm font-bold">
+                    +{ball.bonus ?? 0}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-1 text-sm text-white/70">
+            <div className="flex justify-between">
+              <span>Roll</span>
+              <span className="font-bold text-white">1d20 + {selectedBall?.bonus ?? 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Target</span>
+              <span className="font-bold text-white">{eventState.target}+</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Pre-rolled result</span>
+              <span className="font-bold text-white">
+                {previewRoll} → {previewTotal}
+              </span>
+            </div>
+          </div>
+
+          {!hasBall ? (
+            <p className="text-amber-300 text-xs">Requires a Poké Ball.</p>
+          ) : null}
+        </div>
+      </GameCard>
+
+      <div className="space-y-3">
+        <GameButton
+          variant="primary"
+          size="lg"
+          className="w-full"
+          onClick={handleUseBall}
+          loading={resolving}
+          disabled={resolving || !hasBall}
+        >
+          <CircleDot className="w-4 h-4" />
+          Throw Ball
+        </GameButton>
+
+        <GameButton
+          variant="secondary"
+          size="lg"
+          className="w-full"
+          onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
+          disabled={resolving}
+        >
+          Leave
+        </GameButton>
+      </div>
+
+      {showOverflowChoice ? (
+        <GameCard className="py-6 border border-cyan-500/20 bg-cyan-500/5">
+          <div className="space-y-3">
+            <div>
+              <p className="text-white font-bold">Party Full</p>
+              <p className="text-white/50 text-sm mt-1">
+                {eventState.speciesName} was caught, but your party already has 6 Pokémon.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <GameButton
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() =>
+                  finalizeRecruitEvent("send_to_storage")
+                }
+                disabled={resolving}
+              >
+                Send to Storage
+              </GameButton>
+
+              <GameButton
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                onClick={() =>
+                  finalizeRecruitEvent("decline")
+                }
+                disabled={resolving}
+              >
+                Decline
+              </GameButton>
+            </div>
+          </div>
+        </GameCard>
+      ) : null}
+    </>
+  );
+};
 
   const renderBaitedClearing = () => {
     const hasBait = (inventory.bait ?? 0) >= 1;
@@ -639,13 +787,15 @@ export default function EventNode() {
         <p className="text-white/40 text-sm">{eventView.description}</p>
       </div>
 
-          {eventId === "training_spot"
-            ? renderTrainingSpot()
-            : eventId === "injured_pidgey"
-            ? renderInjuredPidgey()
-            : eventId === "baited_clearing"
-            ? renderBaitedClearing()
-            : renderSupplyCache()}
+        {eventId === "training_spot"
+          ? renderTrainingSpot()
+          : eventId === "injured_pidgey"
+          ? renderInjuredPidgey()
+          : eventId === "wild_pokemon_spotted"
+          ? renderWildPokemonSpotted()
+          : eventId === "baited_clearing"
+          ? renderBaitedClearing()
+          : renderSupplyCache()}
 
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
