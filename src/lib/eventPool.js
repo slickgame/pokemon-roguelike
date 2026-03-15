@@ -53,10 +53,10 @@ export const STARTER_EVENT_DEFS = [
     id: "wild_pokemon_spotted",
     kind: "capture",
     title: "Wild Pokémon Spotted",
-    description: "A wary wild Pokémon appears ahead.",
-    weight: 0,
-    implemented: false,
-    requiresAny: ["pokeball", "great_ball", "ultra_ball"],
+    description: "A wary wild Pokémon appears nearby, watching your every move.",
+    weight: 20,
+    implemented: true,
+    requiresAny: ["pokeball"],
   },
 ];
 
@@ -69,9 +69,21 @@ export const ROUTE_EVENT_POOLS = {
       { speciesId: 69, name: "Bellsprout", dc: 9, weight: 16, level: 5 },
       { speciesId: 16, name: "Pidgey", dc: 8, weight: 6, level: 4 },
       { speciesId: 21, name: "Spearow", dc: 10, weight: 6, level: 5 },
+
+    
+    ],
+    wild_pokemon_spotted: [
+        { speciesId: 10, name: "Caterpie", dc: 3, weight: 28, level: 4 },
+        { speciesId: 13, name: "Weedle", dc: 3, weight: 28, level: 4 },
+        { speciesId: 16, name: "Pidgey", dc: 5, weight: 18, level: 4 },
+        { speciesId: 21, name: "Spearow", dc: 7, weight: 14, level: 5 },
+        { speciesId: 43, name: "Oddish", dc: 8, weight: 6, level: 5 },
+        { speciesId: 69, name: "Bellsprout", dc: 8, weight: 6, level: 5 },
     ],
   },
 };
+
+
 
 function hashString(str) {
   let h = 2166136261;
@@ -182,6 +194,24 @@ export function buildInjuredPidgeyState({ runSeed, nodeId }) {
   };
 }
 
+export function buildWildPokemonSpottedState({ runSeed, nodeId, routeId = "route1" }) {
+  const routePool =
+    ROUTE_EVENT_POOLS[routeId]?.wild_pokemon_spotted ??
+    ROUTE_EVENT_POOLS.route1.wild_pokemon_spotted;
+
+  const speciesRng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:wild_species`);
+  const candidate = pickWeighted(routePool, speciesRng) ?? routePool[0];
+
+  return {
+    speciesId: candidate.speciesId,
+    speciesName: candidate.name,
+    level: candidate.level ?? 4,
+    target: candidate.dc,
+    ballOptions: [
+      { itemId: "pokeball", label: "Poké Ball", bonus: 0 },
+    ],
+  };
+}
 
 export function buildBaitedClearingState({ runSeed, nodeId, routeId = "route1" }) {
   const routePool =
@@ -238,6 +268,8 @@ export function selectEventForNode({
     eventState = buildTrainingSpotState({ runSeed, nodeId });
   } else if (chosen.id === "injured_pidgey") {
     eventState = buildInjuredPidgeyState({ runSeed, nodeId });
+  } else if (chosen.id === "wild_pokemon_spotted") {
+    eventState = buildWildPokemonSpottedState({ runSeed, nodeId, routeId });
   } else if (chosen.id === "baited_clearing") {
     eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
   }
