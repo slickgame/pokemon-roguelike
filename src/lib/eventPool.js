@@ -161,6 +161,27 @@ export function buildTrainingSpotState({ runSeed, nodeId }) {
   };
 }
 
+export function buildInjuredPidgeyState({ runSeed, nodeId }) {
+  const rollRng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:injured_pidgey_roll`);
+  const roll = Math.floor(rollRng() * 20) + 1;
+  const target = 9;
+  const modifier = 0;
+  const total = roll + modifier;
+  const success = total >= target;
+
+  return {
+    speciesId: 16,
+    speciesName: "Pidgey",
+    level: 4,
+    target,
+    roll,
+    modifier,
+    total,
+    success,
+    itemCost: { potion: 1 },
+  };
+}
+
 
 export function buildBaitedClearingState({ runSeed, nodeId, routeId = "route1" }) {
   const routePool =
