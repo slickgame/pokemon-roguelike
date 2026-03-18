@@ -7,7 +7,7 @@ export const STARTER_EVENT_DEFS = [
     title: "Supply Cache",
     description:
       "You found an abandoned bag on the roadside. There may be something useful inside.",
-    weight: 65,
+    weight: 0,
     implemented: true,
   },
   {
@@ -16,7 +16,7 @@ export const STARTER_EVENT_DEFS = [
     title: "Baited Clearing",
     description:
       "You find a quiet clearing marked by chewed berries, flower petals, and fresh tracks. Something nearby seems drawn to food.",
-    weight: 30,
+    weight: 0,
     implemented: true,
     requiresAny: ["bait"],
   },
@@ -27,7 +27,7 @@ export const STARTER_EVENT_DEFS = [
     kind: "ev_training",
     title: "Training Spot",
     description: "A calm stretch of road offers time for focused training.",
-    weight: 20,
+    weight: 0,
     implemented: true,
   },
   {
@@ -35,7 +35,7 @@ export const STARTER_EVENT_DEFS = [
     kind: "recruitment",
     title: "Injured Pidgey",
     description: "An injured Pidgey struggles by the roadside, too weak to fly.",
-    weight: 20,
+    weight: 0,
     implemented: true,
     requiresAny: ["potion"],
   },
