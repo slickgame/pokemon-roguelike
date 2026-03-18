@@ -17,8 +17,9 @@ export default function BagModal({ inventory, party, onUse, onClose, context = "
   const [using, setUsing] = useState(false);
 
   const ITEMS = [
-    { id: "potion",  name: "Potion",  icon: "💊", desc: "Heals 20 HP",             count: inventory?.potion ?? 0 },
-    { id: "revive",  name: "Revive",  icon: "💫", desc: "Revives to 50% HP",        count: inventory?.revive ?? 0 },
+    { id: "potion",   name: "Potion",   icon: "💊", desc: "Heals 20 HP",                         count: inventory?.potion ?? 0 },
+    { id: "revive",   name: "Revive",   icon: "💫", desc: "Revives to 50% HP",                    count: inventory?.revive ?? 0 },
+    { id: "pokeball", name: "Poké Ball", icon: "🔴", desc: "Used in wild capture event encounters", count: inventory?.pokeball ?? 0 },
   ];
 
   // Normalize poke HP fields (partyState uses currentHP/maxHP, battle uses currentHp/maxHp)
@@ -34,6 +35,7 @@ export default function BagModal({ inventory, party, onUse, onClose, context = "
     const p = normalize(poke);
     if (item === "revive")  return p.fainted;
     if (item === "potion")  return !p.fainted && p.currentHp < p.maxHp;
+    if (item === "pokeball") return false;
     return false;
   }
 
@@ -129,7 +131,15 @@ export default function BagModal({ inventory, party, onUse, onClose, context = "
         )}
 
         {!selectedItem && (
-          <p className="text-white/25 text-xs text-center py-4">Select an item above to choose a target.</p>
+          <p className="text-white/25 text-xs text-center py-4">
+            Select an item above to choose a target.
+          </p>
+        )}
+
+        {selectedItem === "pokeball" && (
+          <p className="text-white/25 text-xs text-center py-4">
+            Poké Balls are used during wild capture event encounters, not as normal bag items.
+          </p>
         )}
 
         <GameButton variant="secondary" size="sm" className="w-full mt-4" onClick={onClose}>
