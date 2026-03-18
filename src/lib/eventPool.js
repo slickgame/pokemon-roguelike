@@ -7,7 +7,7 @@ export const STARTER_EVENT_DEFS = [
     title: "Supply Cache",
     description:
       "You found an abandoned bag on the roadside. There may be something useful inside.",
-    weight: 70,
+    weight: 65,
     implemented: true,
   },
   {
@@ -54,7 +54,7 @@ export const STARTER_EVENT_DEFS = [
     kind: "capture",
     title: "Wild Pokémon Spotted",
     description: "A wary wild Pokémon appears nearby, watching your every move.",
-    weight: 20,
+    weight: 45,
     implemented: true,
     requiresAny: ["pokeball"],
   },
