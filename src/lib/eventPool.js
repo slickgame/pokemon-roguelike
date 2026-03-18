@@ -54,7 +54,7 @@ export const STARTER_EVENT_DEFS = [
     kind: "capture",
     title: "Wild Pokémon Spotted",
     description: "A wary wild Pokémon appears nearby, watching your every move.",
-    weight: 45,
+    weight: 100,
     implemented: true,
     requiresAny: ["pokeball"],
   },
