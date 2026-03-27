@@ -190,8 +190,20 @@ export default function EventNode() {
 
 
 
-  const finalizeRecruitEvent = async (overflowChoice = null) => {
+  const finalizeRecruitEvent = async (overflowChoice = null, overrideResolution = null) => {
     if (!eventState) return;
+
+    const resolved = overrideResolution ?? pendingOverflowResolution ?? {
+      itemCost: eventState.itemCost ?? { bait: 1 },
+      speciesId: eventState.speciesId,
+      speciesName: eventState.speciesName,
+      level: eventState.level ?? 4,
+      target: eventState.target,
+      roll: eventState.roll,
+      modifier: eventState.modifier ?? 0,
+      total: eventState.total ?? eventState.roll,
+      success: Boolean(eventState.success),
+    };
 
     setResolving(true);
     try {
@@ -200,18 +212,20 @@ export default function EventNode() {
         resolution: {
           type: "event_recruit",
           eventId,
-          itemCost: eventState.itemCost ?? { bait: 1 },
-          speciesId: eventState.speciesId,
-          speciesName: eventState.speciesName,
-          level: eventState.level ?? 4,
-          target: eventState.target,
-          roll: eventState.roll,
-          modifier: eventState.modifier ?? 0,
-          total: eventState.total ?? eventState.roll,
-          success: Boolean(eventState.success),
+          itemCost: resolved.itemCost,
+          speciesId: resolved.speciesId,
+          speciesName: resolved.speciesName,
+          level: resolved.level,
+          target: resolved.target,
+          roll: resolved.roll,
+          modifier: resolved.modifier ?? 0,
+          total: resolved.total ?? resolved.roll,
+          success: Boolean(resolved.success),
           overflowChoice,
         },
       });
+      setPendingOverflowResolution(null);
+      setShowOverflowChoice(false);
       handleResolveResult(res);
     } finally {
       setResolving(false);
