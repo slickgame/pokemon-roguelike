@@ -16,6 +16,7 @@ import NodeIcon from "../components/runmap/NodeIcon";
 import { MapPin, RefreshCw, Package, Coins, Users } from "lucide-react";
 import BagModal from "../components/battle/BagModal";
 import RelicPanel from "../components/runmap/RelicPanel";
+import { PartyHUDMini } from "../components/runmap/PartyHUD";
 
 // ── Derive progression state from RunActions + Run.results.progress ──────────
 function deriveProgress(actions, runProgress) {
@@ -454,35 +455,57 @@ export default function RunMap() {
         </div>
       </div>
 
-      {/* Minimap */}
+      {/* Minimap + Party HUD flanking */}
       {graph && (
-        <GameCard className="mb-4">
-          <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-2">Route Overview</p>
-          <div className="mb-3 flex justify-end"><GameButton variant="ghost" size="sm" className="border border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleSurrenderRun}>Surrender</GameButton></div>
-
-      <RouteMapView
-            graph={graph}
-            currentNodeId={currentNodeId}
-            completedNodeIds={completedNodeIds}
-            availableNodeIds={availableNodeIds}
-          />
-          {/* Legend */}
-          <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-white/5">
-            {[
-              { icon: "⚔️", label: "Weak Trainer" },
-              { icon: "🗡️", label: "Avg Trainer" },
-              { icon: "⭐", label: "Ace Trainer" },
-              { icon: "💊", label: "Center" },
-              { icon: "🛍️", label: "Shop" },
-              { icon: "✨", label: "Event" },
-              { icon: "👑", label: "Gym" },
-            ].map(({ icon, label }) => (
-              <span key={label} className="text-[10px] text-white/30 flex items-center gap-1">
-                <span>{icon}</span>{label}
-              </span>
+        <div className="flex gap-2 items-start mb-4">
+          {/* Active party — left column */}
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <p className="text-[8px] uppercase tracking-widest text-white/20 font-semibold text-center">Active</p>
+            {partyForBag.slice(0, 3).map((mon, i) => mon ? (
+              <PartyHUDMini key={i} mon={mon} />
+            ) : (
+              <div key={i} className="w-[52px] h-[84px] rounded-xl border border-white/5" />
             ))}
           </div>
-        </GameCard>
+
+          {/* Route Overview card — center */}
+          <GameCard className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-2">Route Overview</p>
+            <div className="mb-3 flex justify-end"><GameButton variant="ghost" size="sm" className="border border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={handleSurrenderRun}>Surrender</GameButton></div>
+            <RouteMapView
+              graph={graph}
+              currentNodeId={currentNodeId}
+              completedNodeIds={completedNodeIds}
+              availableNodeIds={availableNodeIds}
+            />
+            {/* Legend */}
+            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-white/5">
+              {[
+                { icon: "⚔️", label: "Weak Trainer" },
+                { icon: "🗡️", label: "Avg Trainer" },
+                { icon: "⭐", label: "Ace Trainer" },
+                { icon: "💊", label: "Center" },
+                { icon: "🛍️", label: "Shop" },
+                { icon: "✨", label: "Event" },
+                { icon: "👑", label: "Gym" },
+              ].map(({ icon, label }) => (
+                <span key={label} className="text-[10px] text-white/30 flex items-center gap-1">
+                  <span>{icon}</span>{label}
+                </span>
+              ))}
+            </div>
+          </GameCard>
+
+          {/* Bench — right column */}
+          {partyForBag.slice(3, 6).filter(Boolean).length > 0 && (
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <p className="text-[8px] uppercase tracking-widest text-white/20 font-semibold text-center">Bench</p>
+              {partyForBag.slice(3, 6).filter(Boolean).map((mon, i) => (
+                <PartyHUDMini key={i} mon={mon} bench />
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Current location */}
