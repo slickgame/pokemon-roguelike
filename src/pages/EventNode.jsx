@@ -24,6 +24,7 @@ export default function EventNode() {
   const [showOverflowChoice, setShowOverflowChoice] = useState(false);
   const [selectedTrainingIndex, setSelectedTrainingIndex] = useState(0);
   const [selectedBallId, setSelectedBallId] = useState("pokeball");
+  const [pendingOverflowResolution, setPendingOverflowResolution] = useState(null);
 
 
   useEffect(() => {
