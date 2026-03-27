@@ -249,9 +249,7 @@ export function selectEventForNode({
 }) {
   const eligible = getEligibleEvents({ inventory });
     if (forceEventId) {
-    const forced =
-      eligible.find((def) => def.id === forceEventId) ||
-      STARTER_EVENT_DEFS.find((def) => def.id === forceEventId);
+      const forced = STARTER_EVENT_DEFS.find((def) => def.id === forceEventId);
 
     if (forced) {
       let eventState = {};
