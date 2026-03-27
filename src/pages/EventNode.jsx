@@ -79,6 +79,10 @@ export default function EventNode() {
               ...(nextRun.results ?? {}),
               progress: {
                 ...progress,
+                devFlags: {
+                  ...(progress.devFlags ?? {}),
+                  forceEventId: null,
+                },
                 pendingEncounter: {
                   ...(pending ?? {}),
                   nodeId,
