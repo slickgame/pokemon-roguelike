@@ -102,6 +102,66 @@ export default function RunDebugPanel({ runId, onToast }) {
         </GameButton>
       </div>
 
+      <div className="mb-4">
+        <p className="text-white/25 mb-2 uppercase tracking-widest text-[10px]">Force Next Event</p>
+        <div className="flex flex-wrap gap-2">
+          <GameButton
+            onClick={() => handleForceNextEvent("supply_cache")}
+            disabled={!!forcingEvent || !runId}
+            loading={forcingEvent === "supply_cache"}
+            variant="secondary"
+            size="sm"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Supply Cache
+          </GameButton>
+
+          <GameButton
+            onClick={() => handleForceNextEvent("training_spot")}
+            disabled={!!forcingEvent || !runId}
+            loading={forcingEvent === "training_spot"}
+            variant="secondary"
+            size="sm"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Training Spot
+          </GameButton>
+
+          <GameButton
+            onClick={() => handleForceNextEvent("injured_pidgey")}
+            disabled={!!forcingEvent || !runId}
+            loading={forcingEvent === "injured_pidgey"}
+            variant="secondary"
+            size="sm"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Injured Pidgey
+          </GameButton>
+
+          <GameButton
+            onClick={() => handleForceNextEvent("baited_clearing")}
+            disabled={!!forcingEvent || !runId}
+            loading={forcingEvent === "baited_clearing"}
+            variant="secondary"
+            size="sm"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Baited Clearing
+          </GameButton>
+
+          <GameButton
+            onClick={() => handleForceNextEvent("wild_pokemon_spotted")}
+            disabled={!!forcingEvent || !runId}
+            loading={forcingEvent === "wild_pokemon_spotted"}
+            variant="secondary"
+            size="sm"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Wild Pokémon
+          </GameButton>
+        </div>
+      </div>
+
       {run && (
         <div className="mb-3 p-3 rounded-lg bg-white/5 border border-white/10 font-mono text-xs text-white/60 space-y-1">
           <p className="text-white/25 mb-1 uppercase tracking-widest text-[10px]">Run Status</p>
