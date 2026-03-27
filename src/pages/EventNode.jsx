@@ -67,13 +67,16 @@ export default function EventNode() {
             eventState: pending.eventState,
           };
         } else {
-          selected = selectEventForNode({
-            runSeed: nextRun.seed,
-            nodeId,
-            routeId,
-            inventory,
-            forceEventId,
-          });
+          selected = {
+            ...selectEventForNode({
+              runSeed: nextRun.seed,
+              nodeId,
+              routeId,
+              inventory,
+              forceEventId,
+            }),
+            forcedByDev: Boolean(forceEventId),
+          };
 
           await base44.entities.Run.update(runId, {
             results: {
