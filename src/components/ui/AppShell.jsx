@@ -6,7 +6,6 @@ import { base44 } from "@/api/base44Client";
 import { runApi } from "@/components/api/runApi";
 import { resumeActiveRun } from "@/lib/resumeRun";
 import { clearActiveRunId, setActiveRunId } from "@/lib/activeRun";
-import PartyHUD from "@/components/ui/PartyHUD";
 
 const STATIC_LINKS = [
   { label: "Home", page: "Home", icon: Home },
@@ -18,8 +17,6 @@ export default function AppShell({ children, currentPageName }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hasActiveRun, setHasActiveRun] = useState(false);
-  const [activeRunId, setActiveRunIdState] = useState(null);
-  const [partyState, setPartyState] = useState([]);
 
   // Strip functions_version from URL so it doesn't pin the app to a stale deployment
   React.useEffect(() => {
@@ -36,21 +33,12 @@ export default function AppShell({ children, currentPageName }) {
       .then((run) => {
         if (!mounted) return;
         setHasActiveRun(!!run);
-        if (run?.id) {
-          setActiveRunId(run.id);
-          setActiveRunIdState(run.id);
-          const party = run.results?.progress?.partyState ?? [];
-          setPartyState(party.slice(0, 6));
-        } else {
-          clearActiveRunId();
-          setActiveRunIdState(null);
-          setPartyState([]);
-        }
+        if (run?.id) setActiveRunId(run.id);
+        else clearActiveRunId();
       })
       .catch(() => {
         if (!mounted) return;
         setHasActiveRun(false);
-        setPartyState([]);
       });
     return () => { mounted = false; };
   }, [currentPageName]);
@@ -91,11 +79,6 @@ export default function AppShell({ children, currentPageName }) {
           </nav>
 
           <div className="flex items-center gap-3">
-            {hasActiveRun && partyState.length > 0 && (
-              <div className="hidden md:block">
-                <PartyHUD party={partyState} runId={activeRunId} />
-              </div>
-            )}
             {hasActiveRun && (
               <button onClick={handleContinue} className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/30">
                 <Play className="w-3.5 h-3.5" />
