@@ -50,6 +50,7 @@ export default function EventNode() {
         const pending = progress.pendingEncounter ?? {};
         const inventory = withInventoryDefaults(progress.inventory ?? EMPTY_INVENTORY);
         const routeId = pending.routeId ?? progress.routeId ?? "route1";
+        const forceEventId = progress.devFlags?.forceEventId ?? null;
 
         let selected = null;
         if (
