@@ -71,6 +71,7 @@ export default function EventNode() {
             nodeId,
             routeId,
             inventory,
+            forceEventId,
           });
 
           await base44.entities.Run.update(runId, {
