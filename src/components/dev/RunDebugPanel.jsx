@@ -52,6 +52,34 @@ export default function RunDebugPanel({ runId, onToast }) {
     }
   };
 
+  const handleForceNextEvent = async (eventId) => {
+    if (!runId) return onToast("No runId set", "error");
+    setForcingEvent(eventId);
+    try {
+      const r = await runApi.getRun(runId);
+      const progress = r?.results?.progress ?? {};
+
+      await base44.entities.Run.update(runId, {
+        results: {
+          ...(r?.results ?? {}),
+          progress: {
+            ...progress,
+            devFlags: {
+              ...(progress.devFlags ?? {}),
+              forceEventId: eventId,
+            },
+          },
+        },
+      });
+
+      onToast(`Next event node will force: ${eventId}`, "success");
+    } catch (err) {
+      onToast(`Error: ${err.message}`, "error");
+    } finally {
+      setForcingEvent(null);
+    }
+  };
+
   return (
     <GameCard>
       <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
