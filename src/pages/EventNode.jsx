@@ -276,19 +276,18 @@ export default function EventNode() {
     const success = total >= eventState.target;
 
     if (success && !hasPartySpace) {
+      setPendingOverflowResolution({
+        itemCost: { [selectedBall.itemId]: 1 },
+        speciesId: eventState.speciesId,
+        speciesName: eventState.speciesName,
+        level: eventState.level ?? 4,
+        target: eventState.target,
+        roll,
+        modifier,
+        total,
+        success,
+      });
       setShowOverflowChoice(true);
-      setEventView((prev) => ({
-        ...prev,
-        eventState: {
-          ...prev.eventState,
-          selectedBall,
-          roll,
-          modifier,
-          total,
-          success,
-          itemCost: { [selectedBall.itemId]: 1 },
-        },
-      }));
       return;
     }
 
