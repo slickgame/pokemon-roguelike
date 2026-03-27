@@ -808,6 +808,11 @@ const renderWildPokemonSpotted = () => {
         <p className="text-5xl">✨</p>
         <h1 className="text-2xl font-black text-white">{eventView.title}</h1>
         <p className="text-white/40 text-sm">{eventView.description}</p>
+        {eventView.forcedByDev ? (
+          <p className="text-amber-300 text-xs uppercase tracking-widest">
+            Dev Forced Event
+          </p>
+        ) : null}
       </div>
 
         {eventId === "training_spot"
