@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import GameCard from "../ui/GameCard";
 import GameButton from "../ui/GameButton";
 import { runApi } from "../api/runApi";
-import { Bug, List, XCircle } from "lucide-react";
+import { Bug, List, XCircle, Wand2 } from "lucide-react";
 
 export default function RunDebugPanel({ runId, onToast }) {
   const [run, setRun] = useState(null);
