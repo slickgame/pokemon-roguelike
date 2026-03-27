@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import GameCard from "../ui/GameCard";
 import GameButton from "../ui/GameButton";
 import { runApi } from "../api/runApi";
+import { base44 } from "@/api/base44Client";
 import { Bug, List, XCircle, Wand2 } from "lucide-react";
 
 export default function RunDebugPanel({ runId, onToast }) {
