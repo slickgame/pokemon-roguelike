@@ -6,7 +6,12 @@ const DB_SPECIES = [
   { id: 4,  name: "Charmander", types: ["fire"],            baseStats: { hp:39, atk:52, def:43, spa:60, spd:50, spe:65 }, abilities: ["blaze"] },
   { id: 7,  name: "Squirtle",   types: ["water"],           baseStats: { hp:44, atk:48, def:65, spa:50, spd:64, spe:43 }, abilities: ["torrent"] },
   { id: 10, name: "Caterpie",   types: ["bug"],             baseStats: { hp:45, atk:30, def:35, spa:20, spd:20, spe:45 }, abilities: ["shield_dust"] },
+  { id: 13, name: "Weedle",     types: ["bug","poison"],    baseStats: { hp:40, atk:35, def:30, spa:20, spd:20, spe:50 }, abilities: ["shield_dust"] },
+  { id: 16, name: "Pidgey",     types: ["normal","flying"], baseStats: { hp:40, atk:45, def:40, spa:35, spd:35, spe:56 }, abilities: ["keen_eye"] },
+  { id: 21, name: "Spearow",    types: ["normal","flying"], baseStats: { hp:40, atk:60, def:30, spa:31, spd:31, spe:70 }, abilities: ["keen_eye"] },
   { id: 25, name: "Pikachu",    types: ["electric"],        baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"] },
+  { id: 43, name: "Oddish",     types: ["grass","poison"],  baseStats: { hp:45, atk:50, def:55, spa:75, spd:65, spe:30 }, abilities: ["chlorophyll"] },
+  { id: 69, name: "Bellsprout", types: ["grass","poison"],  baseStats: { hp:50, atk:75, def:35, spa:70, spd:30, spe:40 }, abilities: ["chlorophyll"] },
 ];
 
 // ── Learnset registry (authoritative source for starter + level-up moves) ─────
@@ -15,8 +20,14 @@ const LEARNSETS = {
   4:  { startMoves: ["scratch","growl"],         levelUp: [{ level: 7, moveId: "ember" }] },
   7:  { startMoves: ["tackle","tail_whip"],      levelUp: [{ level: 7, moveId: "water_gun" }] },
   10: { startMoves: ["tackle","string_shot"],    levelUp: [] },
+  13: { startMoves: ["poison_sting","string_shot"], levelUp: [] },
+  16: { startMoves: ["tackle","gust"],           levelUp: [] },
+  21: { startMoves: ["peck","growl"],            levelUp: [] },
   25: { startMoves: ["thunder_shock","growl"],   levelUp: [{ level: 9, moveId: "quick_attack" }] },
+  43: { startMoves: ["absorb","growth"],         levelUp: [] },
+  69: { startMoves: ["vine_whip","growth"],      levelUp: [] },
 };
+
 const DB_MOVES = [
   { id: "tackle",        name: "Tackle",       type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
   { id: "scratch",       name: "Scratch",      type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
@@ -28,8 +39,14 @@ const DB_MOVES = [
   { id: "quick_attack",  name: "Quick Attack", type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 30, priority: 1, target: "single" },
   { id: "string_shot",   name: "String Shot",  type: "bug",      category: "status",   power: null, accuracy: 95,  pp: 40, priority: 0, target: "all_opponents" },
   { id: "tail_whip",     name: "Tail Whip",    type: "normal",   category: "status",   power: null, accuracy: 100, pp: 30, priority: 0, target: "all_opponents" },
+  { id: "poison_sting",  name: "Poison Sting", type: "poison",   category: "physical", power: 15,   accuracy: 100, pp: 35, priority: 0, target: "single" },
+  { id: "gust",          name: "Gust",         type: "flying",   category: "special",  power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
+  { id: "peck",          name: "Peck",         type: "flying",   category: "physical", power: 35,   accuracy: 100, pp: 35, priority: 0, target: "single" },
+  { id: "absorb",        name: "Absorb",       type: "grass",    category: "special",  power: 20,   accuracy: 100, pp: 25, priority: 0, target: "single" },
+  { id: "growth",        name: "Growth",       type: "normal",   category: "status",   power: null, accuracy: null, pp: 20, priority: 0, target: "self" },
 ];
-const MVP_CONFIG = { allowedSpeciesIds: [1, 4, 7, 10, 25] };
+
+const MVP_CONFIG = { allowedSpeciesIds: [1, 4, 7, 10, 13, 16, 21, 25, 43, 69] };
 
 const NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
@@ -78,7 +95,12 @@ const GENDER_RATIOS: Record<number, { male: number; female: number; genderless?:
   4:  { male: 0.875, female: 0.125 }, // Charmander
   7:  { male: 0.875, female: 0.125 }, // Squirtle
   10: { male: 0.5,   female: 0.5   }, // Caterpie
+  13: { male: 0.5,   female: 0.5   }, // Weedle
+  16: { male: 0.5,   female: 0.5   }, // Pidgey
+  21: { male: 0.5,   female: 0.5   }, // Spearow
   25: { male: 0.5,   female: 0.5   }, // Pikachu
+  43: { male: 0.5,   female: 0.5   }, // Oddish
+  69: { male: 0.5,   female: 0.5   }, // Bellsprout
 };
 
 function rollGender(speciesId: number, rng: () => number) {
@@ -643,7 +665,7 @@ Deno.serve(async (req) => {
           ...existingProgress,
           partyState: updatedPartyState,
           money: existingProgress.money ?? 0,
-          inventory: existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0 },
+          inventory: existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0, pokeball: 0 },
           pendingEncounter: canonicalPending,
         },
       },
