@@ -245,8 +245,37 @@ export function selectEventForNode({
   nodeId,
   routeId = "route1",
   inventory,
+  forceEventId = null,
 }) {
   const eligible = getEligibleEvents({ inventory });
+    if (forceEventId) {
+    const forced =
+      eligible.find((def) => def.id === forceEventId) ||
+      STARTER_EVENT_DEFS.find((def) => def.id === forceEventId);
+
+    if (forced) {
+      let eventState = {};
+      if (forced.id === "supply_cache") {
+        eventState = buildSupplyCacheState({ runSeed, nodeId });
+      } else if (forced.id === "training_spot") {
+        eventState = buildTrainingSpotState({ runSeed, nodeId });
+      } else if (forced.id === "injured_pidgey") {
+        eventState = buildInjuredPidgeyState({ runSeed, nodeId });
+      } else if (forced.id === "wild_pokemon_spotted") {
+        eventState = buildWildPokemonSpottedState({ runSeed, nodeId, routeId });
+      } else if (forced.id === "baited_clearing") {
+        eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
+      }
+
+      return {
+        eventId: forced.id,
+        title: forced.title,
+        description: forced.description,
+        kind: forced.kind,
+        eventState,
+      };
+    }
+  }
   if (eligible.length === 0) {
     const fallback = STARTER_EVENT_DEFS.find((def) => def.id === "supply_cache");
     return {
