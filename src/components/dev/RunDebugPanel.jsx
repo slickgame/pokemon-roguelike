@@ -10,6 +10,7 @@ export default function RunDebugPanel({ runId, onToast }) {
   const [loadingRun, setLoadingRun] = useState(false);
   const [loadingActions, setLoadingActions] = useState(false);
   const [loadingAbandon, setLoadingAbandon] = useState(false);
+  const [forcingEvent, setForcingEvent] = useState(null);
 
   const fetchRun = async () => {
     if (!runId) return onToast("No runId set", "error");
