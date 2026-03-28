@@ -340,13 +340,12 @@ export function selectEventForNode({
         eventState = buildTrainingSpotState({ runSeed, nodeId });
       } else if (forced.id === "injured_pidgey") {
         eventState = buildInjuredPidgeyState({ runSeed, nodeId });
+      } else if (forced.id === "burnt_plant_pokemon") {
+        eventState = buildBurntPlantPokemonState({ runSeed, nodeId, routeId });
       } else if (forced.id === "wild_pokemon_spotted") {
         eventState = buildWildPokemonSpottedState({ runSeed, nodeId, routeId });
       } else if (forced.id === "baited_clearing") {
         eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
-      }
-      } else if (forced.id === "burnt_plant_pokemon") {
-        eventState = buildBurntPlantPokemonState({ runSeed, nodeId, routeId });
       }
       return {
         eventId: forced.id,
@@ -378,13 +377,12 @@ export function selectEventForNode({
     eventState = buildTrainingSpotState({ runSeed, nodeId });
   } else if (chosen.id === "injured_pidgey") {
     eventState = buildInjuredPidgeyState({ runSeed, nodeId });
+  } else if (chosen.id === "burnt_plant_pokemon") {
+    eventState = buildBurntPlantPokemonState({ runSeed, nodeId, routeId });
   } else if (chosen.id === "wild_pokemon_spotted") {
     eventState = buildWildPokemonSpottedState({ runSeed, nodeId, routeId });
   } else if (chosen.id === "baited_clearing") {
     eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
-  }
-    else if (forced.id === "burnt_plant_pokemon") {
-    eventState = buildBurntPlantPokemonState({ runSeed, nodeId, routeId });
   }
 
 
@@ -395,3 +393,4 @@ export function selectEventForNode({
     kind: chosen.kind,
     eventState,
   };
+}
