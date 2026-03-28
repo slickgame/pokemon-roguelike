@@ -665,7 +665,7 @@ Deno.serve(async (req) => {
           ...existingProgress,
           partyState: updatedPartyState,
           money: existingProgress.money ?? 0,
-          inventory: existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0, pokeball: 0 },
+          inventory: existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0, pokeball: 0, burn_heal: 0 },
           pendingEncounter: canonicalPending,
         },
       },
