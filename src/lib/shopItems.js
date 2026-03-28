@@ -7,6 +7,16 @@ export const SHOP_ITEMS = [
     description: "Restores 20 HP to one Pokémon.",
     icon: "💊",
   },
+
+  {
+    id: "burn_heal",
+    name: "Burn Heal",
+    buyPrice: 75,
+    sellPrice: 35,
+    description: "Treats burns and is useful in certain event encounters.",
+    icon: "🔥",
+  },
+
   {
     id: "revive",
     name: "Revive",
@@ -23,6 +33,8 @@ export const SHOP_ITEMS = [
     description: "A lure item used in certain event encounters.",
     icon: "🪤",
   },
+
+  
 
   {
   id: "pokeball",
