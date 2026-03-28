@@ -6,7 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { ToastContainer, useToast } from "../components/ui/Toast";
 import GameCard from "../components/ui/GameCard";
 import GameButton from "../components/ui/GameButton";
-import { Star, Package, Wand2, Dumbbell, Heart, CircleDot } from "lucide-react";
+import { Star, Package, Wand2, Dumbbell, Heart, CircleDot, Flame } from "lucide-react";
 import { EMPTY_INVENTORY, withInventoryDefaults } from "@/lib/inventory";
 import { selectEventForNode } from "@/lib/eventPool";
 
@@ -248,17 +248,29 @@ export default function EventNode() {
     await finalizeRecruitEvent(null);
   };
 
-  const handleUsePotion = async () => {
-    if (!eventState) return;
-    if ((inventory.potion ?? 0) < 1) return;
+const handleUsePotion = async () => {
+  if (!eventState) return;
+  if ((inventory.potion ?? 0) < 1) return;
 
-    if (eventState.success && !hasPartySpace) {
-      setShowOverflowChoice(true);
-      return;
-    }
+  if (eventState.success && !hasPartySpace) {
+    setShowOverflowChoice(true);
+    return;
+  }
 
-    await finalizeRecruitEvent(null);
-  };
+  await finalizeRecruitEvent(null);
+};
+
+const handleUseBurnHeal = async () => {
+  if (!eventState) return;
+  if ((inventory.burn_heal ?? 0) < 1) return;
+
+  if (eventState.success && !hasPartySpace) {
+    setShowOverflowChoice(true);
+    return;
+  }
+
+  await finalizeRecruitEvent(null);
+};
 
   const handleUseBall = async () => {
     if (!eventState) return;
