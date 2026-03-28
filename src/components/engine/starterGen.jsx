@@ -149,9 +149,19 @@ export function generatePool({
     pool = rng.shuffle(pool);
   }
 
-  // Pick poolSize from shuffled pool
-  const chosen = pool.slice(0, poolSize);
+  const remaining = [...pool];
+  const chosen = [];
 
+  while (chosen.length < poolSize && remaining.length > 0) {
+    const picked = pickStarterSpeciesByRarity(remaining, rng, { starterRarity: {} , ...{ starterRarity: {} } });
+    if (!picked) break;
+
+    chosen.push(picked);
+
+    const idx = remaining.findIndex((s) => s.id === picked.id);
+    if (idx >= 0) remaining.splice(idx, 1);
+  }
+  
   if (chosen.length === 0) {
     return { candidates: [], warning: "No eligible species for this step." };
   }
