@@ -19,6 +19,8 @@ const SPECIES = [
   { id: 25, name: "Pikachu",    types: ["electric"],         baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"],     learnset: ["thunder_shock","growl","quick_attack"] },
 ];
 
+
+
 // ── Moves ─────────────────────────────────────────────────────────────────────
 const MOVES = [
   { id: "tackle",        name: "Tackle",       type: "normal",   category: "physical", power: 40,   accuracy: 100, pp: 35, priority: 0, target: "single" },
@@ -63,7 +65,21 @@ const TYPECHART = {
 const MVP151_CONFIG = {
   allowedSpeciesIds: [1, 4, 7, 10, 25],
   starterRank: { 1: 1, 4: 1, 7: 1, 25: 2, 10: 5 },
+  starterRarity: {
+  1: "rare",
+  4: "rare",
+  7: "rare",
+  10: "common",
+  13: "common",
+  16: "common",
+  21: "uncommon",
+  25: "rare",
+  43: "uncommon",
+  69: "uncommon",
+}
 };
+
+
 
 // ── Caches ────────────────────────────────────────────────────────────────────
 let _speciesMap   = null;
