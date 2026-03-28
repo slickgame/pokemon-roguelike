@@ -461,6 +461,110 @@ const handleUseBurnHeal = async () => {
     );
   };
 
+const renderBurntPlantPokemon = () => {
+  const hasBurnHeal = (inventory.burn_heal ?? 0) >= 1;
+
+  return (
+    <>
+      <GameCard className="py-8 border border-orange-500/20 bg-orange-500/5">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <Flame className="w-8 h-8 text-orange-300" />
+          <div className="text-left">
+            <p className="text-white font-bold">Treat Burnt {eventState.speciesName}</p>
+            <p className="text-white/40 text-xs">
+              Use 1 Burn Heal to try to help it recover.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-1 text-sm text-white/70 text-left max-w-xs mx-auto">
+          <div className="flex justify-between">
+            <span>Required item</span>
+            <span className="font-bold text-white">Burn Heal ×1</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Roll</span>
+            <span className="font-bold text-white">1d20 + 0</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Target</span>
+            <span className="font-bold text-white">{eventState.target}+</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Pre-rolled result</span>
+            <span className="font-bold text-white">
+              {eventState.roll} → {eventState.total}
+            </span>
+          </div>
+        </div>
+
+        {!hasBurnHeal ? (
+          <p className="text-amber-300 text-xs mt-4">Requires Burn Heal.</p>
+        ) : null}
+      </GameCard>
+
+      <div className="space-y-3">
+        <GameButton
+          variant="primary"
+          size="lg"
+          className="w-full"
+          onClick={handleUseBurnHeal}
+          loading={resolving}
+          disabled={resolving || !hasBurnHeal}
+        >
+          <Flame className="w-4 h-4" />
+          Use Burn Heal
+        </GameButton>
+
+        <GameButton
+          variant="secondary"
+          size="lg"
+          className="w-full"
+          onClick={() => navigate(createPageUrl(`RunMap?runId=${runId}`))}
+          disabled={resolving}
+        >
+          Leave
+        </GameButton>
+      </div>
+
+      {showOverflowChoice ? (
+        <GameCard className="py-6 border border-cyan-500/20 bg-cyan-500/5">
+          <div className="space-y-3">
+            <div>
+              <p className="text-white font-bold">Party Full</p>
+              <p className="text-white/50 text-sm mt-1">
+                {eventState.speciesName} wants to join, but your party already has 6 Pokémon.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <GameButton
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => finalizeRecruitEvent("send_to_storage")}
+                disabled={resolving}
+              >
+                Send to Storage
+              </GameButton>
+
+              <GameButton
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                onClick={() => finalizeRecruitEvent("decline")}
+                disabled={resolving}
+              >
+                Decline
+              </GameButton>
+            </div>
+          </div>
+        </GameCard>
+      ) : null}
+    </>
+  );
+};
+
   const renderInjuredPidgey = () => {
     const hasPotion = (inventory.potion ?? 0) >= 1;
 
