@@ -44,11 +44,12 @@ export default function StarterSelect() {
   }, [runId]);
 
   // ── Derive config from modifiers ──────────────────────────────────────────
-  const { config, eligibleSpecies } = useMemo(() => {
-    if (!run) return { config: null, eligibleSpecies: [] };
+  const { db, config, eligibleSpecies } = useMemo(() => {
+    if (!run) return { db: null, config: null, eligibleSpecies: [] };
     const db = loadDbBundle();
     const modifiers = run.modifiers ?? {};
     return {
+      db,
       config: getStarterConfig(modifiers),
       eligibleSpecies: buildEligibleSpecies({ db, modifiers }),
     };
@@ -56,7 +57,7 @@ export default function StarterSelect() {
 
   // ── Initialize: set total rerolls and generate first pool ─────────────────
   useEffect(() => {
-    if (!config || !run) return;
+    if (!config || !run || !db) return;
     setRemainingRerolls(config.totalRerolls);
     const { candidates, warning } = generatePool({
       seed: run.seed,
@@ -81,7 +82,7 @@ export default function StarterSelect() {
   const pickedTypes = useMemo(() => picks.map(p => p.types[0]), [picks]);
 
   const regeneratePool = useCallback((step, rIdx, currentPicks) => {
-    if (!config || !run) return;
+    if (!config || !run || !db) return;
     const { candidates, warning } = generatePool({
       seed: run.seed,
       step,
