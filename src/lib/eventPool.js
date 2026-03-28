@@ -345,7 +345,9 @@ export function selectEventForNode({
       } else if (forced.id === "baited_clearing") {
         eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
       }
-
+      } else if (forced.id === "burnt_plant_pokemon") {
+        eventState = buildBurntPlantPokemonState({ runSeed, nodeId, routeId });
+      }
       return {
         eventId: forced.id,
         title: forced.title,
@@ -381,6 +383,9 @@ export function selectEventForNode({
   } else if (chosen.id === "baited_clearing") {
     eventState = buildBaitedClearingState({ runSeed, nodeId, routeId });
   }
+    else if (forced.id === "burnt_plant_pokemon") {
+    eventState = buildBurntPlantPokemonState({ runSeed, nodeId, routeId });
+  }
 
 
   return {
@@ -390,4 +395,3 @@ export function selectEventForNode({
     kind: chosen.kind,
     eventState,
   };
-}
