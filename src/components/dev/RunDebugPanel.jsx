@@ -140,6 +140,17 @@ export default function RunDebugPanel({ runId, onToast }) {
           </GameButton>
 
           <GameButton
+            onClick={() => handleForceNextEvent("burnt_plant_pokemon")}
+            disabled={!!forcingEvent || !runId}
+            loading={forcingEvent === "burnt_plant_pokemon"}
+            variant="secondary"
+            size="sm"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Burnt Plant
+          </GameButton>
+
+          <GameButton
             onClick={() => handleForceNextEvent("baited_clearing")}
             disabled={!!forcingEvent || !runId}
             loading={forcingEvent === "baited_clearing"}
