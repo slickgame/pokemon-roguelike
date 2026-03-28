@@ -120,6 +120,51 @@ function pickWeighted(list, rng) {
   return list[list.length - 1] ?? null;
 }
 
+function pickRarity(rng, weights = RARITY_WEIGHTS) {
+  const entries = [
+    { rarity: "common", weight: weights.common ?? 0 },
+    { rarity: "uncommon", weight: weights.uncommon ?? 0 },
+    { rarity: "rare", weight: weights.rare ?? 0 },
+  ];
+
+  const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
+  if (total <= 0) return "common";
+
+  let roll = rng() * total;
+  for (const entry of entries) {
+    roll -= entry.weight;
+    if (roll <= 0) return entry.rarity;
+  }
+  return "common";
+}
+
+function pickByRarity(pool, rng, weights = RARITY_WEIGHTS) {
+  if (!Array.isArray(pool) || pool.length === 0) return null;
+
+  const chosenRarity = pickRarity(rng, weights);
+
+  const buckets = {
+    common: pool.filter((entry) => entry.rarity === "common"),
+    uncommon: pool.filter((entry) => entry.rarity === "uncommon"),
+    rare: pool.filter((entry) => entry.rarity === "rare"),
+  };
+
+  const fallbackOrder =
+    chosenRarity === "rare"
+      ? ["rare", "uncommon", "common"]
+      : chosenRarity === "uncommon"
+      ? ["uncommon", "common", "rare"]
+      : ["common", "uncommon", "rare"];
+
+  const bucket = fallbackOrder
+    .map((rarity) => buckets[rarity])
+    .find((entries) => entries.length > 0);
+
+  if (!bucket || bucket.length === 0) return pool[0] ?? null;
+
+  return bucket[Math.floor(rng() * bucket.length)] ?? bucket[0];
+}
+
 function hasRequiredItem(def, inventory) {
   if (!def.requiresAny || def.requiresAny.length === 0) return true;
   return def.requiresAny.some((itemId) => (inventory?.[itemId] ?? 0) > 0);
