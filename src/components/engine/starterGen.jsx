@@ -104,6 +104,7 @@ export function generatePool({
   seed, step, rerollIdx, pickedIds,
   eligibleSpecies, poolSize,
   kantoDirectStep, typeDiversityMode, pickedTypes,
+  mvpConfig,
 }) {
   // Sub-seed: deterministic per (seed, step, rerollIdx)
   const subSeed = `${seed}:step${step}:reroll${rerollIdx}`;
