@@ -249,7 +249,7 @@ export function buildWildPokemonSpottedState({ runSeed, nodeId, routeId = "route
     ROUTE_EVENT_POOLS.route1.wild_pokemon_spotted;
 
   const speciesRng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:wild_species`);
-  const candidate = pickWeighted(routePool, speciesRng) ?? routePool[0];
+  const candidate = pickByRarity(routePool, speciesRng) ?? routePool[0];
 
   return {
     speciesId: candidate.speciesId,
