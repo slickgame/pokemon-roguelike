@@ -154,7 +154,7 @@ export function generatePool({
   const chosen = [];
 
   while (chosen.length < poolSize && remaining.length > 0) {
-    const picked = pickStarterSpeciesByRarity(remaining, rng, { starterRarity: {} , ...{ starterRarity: {} } });
+    const picked = pickStarterSpeciesByRarity(remaining, rng, mvpConfig);
     if (!picked) break;
 
     chosen.push(picked);
