@@ -935,12 +935,13 @@ const renderWildPokemonSpotted = () => {
           ? renderTrainingSpot()
           : eventId === "injured_pidgey"
           ? renderInjuredPidgey()
+          : eventId === "burnt_plant_pokemon"
+          ? renderBurntPlantPokemon()
           : eventId === "wild_pokemon_spotted"
           ? renderWildPokemonSpotted()
           : eventId === "baited_clearing"
           ? renderBaitedClearing()
           : renderSupplyCache()}
-
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
