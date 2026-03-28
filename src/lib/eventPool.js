@@ -1,5 +1,11 @@
 import { withInventoryDefaults } from "@/lib/inventory";
 
+export const RARITY_WEIGHTS = {
+  common: 60,
+  uncommon: 30,
+  rare: 10,
+};
+
 export const STARTER_EVENT_DEFS = [
   {
     id: "supply_cache",
@@ -63,22 +69,20 @@ export const STARTER_EVENT_DEFS = [
 export const ROUTE_EVENT_POOLS = {
   route1: {
     baited_clearing: [
-      { speciesId: 10, name: "Caterpie", dc: 6, weight: 28, level: 4 },
-      { speciesId: 13, name: "Weedle", dc: 6, weight: 28, level: 4 },
-      { speciesId: 43, name: "Oddish", dc: 9, weight: 16, level: 5 },
-      { speciesId: 69, name: "Bellsprout", dc: 9, weight: 16, level: 5 },
-      { speciesId: 16, name: "Pidgey", dc: 8, weight: 6, level: 4 },
-      { speciesId: 21, name: "Spearow", dc: 10, weight: 6, level: 5 },
-
-    
+      { speciesId: 10, name: "Caterpie", rarity: "common", dc: 6, level: 4 },
+      { speciesId: 13, name: "Weedle", rarity: "common", dc: 6, level: 4 },
+      { speciesId: 43, name: "Oddish", rarity: "uncommon", dc: 9, level: 5 },
+      { speciesId: 69, name: "Bellsprout", rarity: "uncommon", dc: 9, level: 5 },
+      { speciesId: 16, name: "Pidgey", rarity: "rare", dc: 8, level: 4 },
+      { speciesId: 21, name: "Spearow", rarity: "rare", dc: 10, level: 5 },
     ],
     wild_pokemon_spotted: [
-        { speciesId: 10, name: "Caterpie", dc: 3, weight: 28, level: 4 },
-        { speciesId: 13, name: "Weedle", dc: 3, weight: 28, level: 4 },
-        { speciesId: 16, name: "Pidgey", dc: 5, weight: 18, level: 4 },
-        { speciesId: 21, name: "Spearow", dc: 7, weight: 14, level: 5 },
-        { speciesId: 43, name: "Oddish", dc: 8, weight: 6, level: 5 },
-        { speciesId: 69, name: "Bellsprout", dc: 8, weight: 6, level: 5 },
+      { speciesId: 10, name: "Caterpie", rarity: "common", dc: 3, level: 4 },
+      { speciesId: 13, name: "Weedle", rarity: "common", dc: 3, level: 4 },
+      { speciesId: 16, name: "Pidgey", rarity: "uncommon", dc: 5, level: 4 },
+      { speciesId: 21, name: "Spearow", rarity: "uncommon", dc: 7, level: 5 },
+      { speciesId: 43, name: "Oddish", rarity: "rare", dc: 8, level: 5 },
+      { speciesId: 69, name: "Bellsprout", rarity: "rare", dc: 8, level: 5 },
     ],
   },
 };
