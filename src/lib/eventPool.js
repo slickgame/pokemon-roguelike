@@ -46,15 +46,15 @@ export const STARTER_EVENT_DEFS = [
     requiresAny: ["potion"],
   },
 
-  {
-    id: "burnt_bellsprout",
-    kind: "recruitment",
-    title: "Burnt Bellsprout",
-    description: "A scorched Bellsprout recoils in pain near a charred patch of grass.",
-    weight: 0,
-    implemented: false,
-    requiresAny: ["burn_heal"],
-  },
+{
+  id: "burnt_plant_pokemon",
+  kind: "recruitment",
+  title: "Burnt Plant Pokémon",
+  description: "A scorched plant Pokémon recoils in pain near a charred patch of grass.",
+  weight: 15,
+  implemented: true,
+  requiresAny: ["burn_heal"],
+},
   {
     id: "wild_pokemon_spotted",
     kind: "capture",
@@ -83,6 +83,10 @@ export const ROUTE_EVENT_POOLS = {
       { speciesId: 21, name: "Spearow", rarity: "uncommon", dc: 7, level: 5 },
       { speciesId: 43, name: "Oddish", rarity: "rare", dc: 8, level: 5 },
       { speciesId: 69, name: "Bellsprout", rarity: "rare", dc: 8, level: 5 },
+    ],
+    burnt_plant_pokemon: [
+      { speciesId: 43, name: "Oddish", rarity: "common", dc: 8, level: 5 },
+      { speciesId: 69, name: "Bellsprout", rarity: "uncommon", dc: 9, level: 5 },
     ],
   },
 };
