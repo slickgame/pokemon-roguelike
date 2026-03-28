@@ -270,7 +270,7 @@ export function buildBaitedClearingState({ runSeed, nodeId, routeId = "route1" }
   const speciesRng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:bait_species`);
   const rollRng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:bait_roll`);
 
-  const candidate = pickWeighted(routePool, speciesRng) ?? routePool[0];
+  const candidate = pickByRarity(routePool, speciesRng) ?? routePool[0];
   const roll = Math.floor(rollRng() * 20) + 1;
   const target = candidate.dc;
   const total = roll;
