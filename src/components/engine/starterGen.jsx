@@ -14,6 +14,12 @@ const NATURES = [
 
 const KANTO_STARTER_IDS = new Set([1, 4, 7]);
 
+const STARTER_RARITY_WEIGHTS = {
+  common: 60,
+  uncommon: 30,
+  rare: 10,
+};
+
 /**
  * Build a StarterCandidate from a species + seeded rng.
  * rng state is consumed here; caller must use a stable sub-seed per candidate.
