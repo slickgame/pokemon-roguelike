@@ -293,6 +293,34 @@ export function buildBaitedClearingState({ runSeed, nodeId, routeId = "route1" }
   };
 }
 
+export function buildBurntPlantPokemonState({ runSeed, nodeId, routeId = "route1" }) {
+  const routePool =
+    ROUTE_EVENT_POOLS[routeId]?.burnt_plant_pokemon ??
+    ROUTE_EVENT_POOLS.route1.burnt_plant_pokemon;
+
+  const speciesRng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:burnt_plant_species`);
+  const rollRng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:burnt_plant_roll`);
+
+  const candidate = pickByRarity(routePool, speciesRng) ?? routePool[0];
+  const roll = Math.floor(rollRng() * 20) + 1;
+  const target = candidate.dc;
+  const modifier = 0;
+  const total = roll + modifier;
+  const success = total >= target;
+
+  return {
+    speciesId: candidate.speciesId,
+    speciesName: candidate.name,
+    level: candidate.level ?? 5,
+    target,
+    roll,
+    modifier,
+    total,
+    success,
+    itemCost: { burn_heal: 1 },
+  };
+}
+
 export function selectEventForNode({
   runSeed,
   nodeId,
