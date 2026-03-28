@@ -90,6 +90,7 @@ export default function StarterSelect() {
       eligibleSpecies,
       poolSize: config.poolSize,
       kantoDirectStep: config.kantoDirectStep,
+      mvpConfig: db.mvpConfig,
       typeDiversityMode: config.typeDiversityMode,
       pickedTypes: currentPicks.map(p => p.types[0]),
     });
