@@ -38,6 +38,54 @@ function buildCandidate(species, stepRng) {
   };
 }
 
+function getStarterRarity(speciesId, mvpConfig) {
+  const rarityMap = mvpConfig.starterRarity ?? {};
+  return rarityMap[speciesId] ?? "common";
+}
+
+function rollStarterRarity(rng, weights = STARTER_RARITY_WEIGHTS) {
+  const entries = [
+    { rarity: "common", weight: weights.common ?? 0 },
+    { rarity: "uncommon", weight: weights.uncommon ?? 0 },
+    { rarity: "rare", weight: weights.rare ?? 0 },
+  ];
+
+  const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
+  if (total <= 0) return "common";
+
+  let roll = rng.next() * total;
+  for (const entry of entries) {
+    roll -= entry.weight;
+    if (roll <= 0) return entry.rarity;
+  }
+  return "common";
+}
+
+function pickStarterSpeciesByRarity(pool, rng, mvpConfig) {
+  const chosenRarity = rollStarterRarity(rng);
+
+  const buckets = {
+    common: pool.filter((s) => getStarterRarity(s.id, mvpConfig) === "common"),
+    uncommon: pool.filter((s) => getStarterRarity(s.id, mvpConfig) === "uncommon"),
+    rare: pool.filter((s) => getStarterRarity(s.id, mvpConfig) === "rare"),
+  };
+
+  const fallbackOrder =
+    chosenRarity === "rare"
+      ? ["rare", "uncommon", "common"]
+      : chosenRarity === "uncommon"
+      ? ["uncommon", "common", "rare"]
+      : ["common", "uncommon", "rare"];
+
+  const bucket = fallbackOrder
+    .map((rarity) => buckets[rarity])
+    .find((entries) => entries.length > 0);
+
+  if (!bucket || bucket.length === 0) return null;
+
+  return bucket[rng.nextInt(bucket.length)] ?? bucket[0];
+}
+
 /**
  * generatePool(params) — returns an array of StarterCandidate.
  * @param {object} params
