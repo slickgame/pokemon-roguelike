@@ -53,7 +53,7 @@ function rollStarterRarity(rng, weights = STARTER_RARITY_WEIGHTS) {
   const total = entries.reduce((sum, entry) => sum + entry.weight, 0);
   if (total <= 0) return "common";
 
-  let roll = rng.next() * total;
+  let roll = rng.nextFloat() * total;
   for (const entry of entries) {
     roll -= entry.weight;
     if (roll <= 0) return entry.rarity;
