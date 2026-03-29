@@ -692,7 +692,7 @@ const renderWildPokemonSpotted = () => {
           <CircleDot className="w-8 h-8 text-red-300" />
           <div className="text-left">
             <p className="text-white font-bold">{eventState.speciesName} spotted</p>
-            <p className="text-white/40 text-xs">Choose a ball and try to catch it.</p>
+            <p className="text-white/40 text-xs">Choose a ball, preview the bonus, and try to catch it.</p>
           </div>
         </div>
 
