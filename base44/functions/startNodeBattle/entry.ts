@@ -508,11 +508,6 @@ Deno.serve(async (req) => {
     const existingProgress = run.results?.progress ?? {};
     const existingPartyState = existingProgress.partyState ?? null;
 
-    const playerBenchPool = deterministicShuffle(
-      allowedSpecies.filter(s => !pickedIds.includes(s.id)),
-      makeRng(`${run.seed}:player:bench_select`)
-    );
-
     let playerActive;
     let playerBench;
     let newPartyState = null;
