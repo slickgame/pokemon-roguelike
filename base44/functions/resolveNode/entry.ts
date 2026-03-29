@@ -465,19 +465,54 @@ Deno.serve(async (req) => {
         const moneyDelta = applyMoneyRelics(relics, baseMoney, nodeType);
         const dropChance = TIER_DROP_CHANCE[tier] ?? 0.6;
 
-        let itemsDelta: Record<string, number> = {};
-        if (rewardRng() < dropChance) {
-          const baitChance =
-            tier === 'skilled' ? 0.35 :
-            tier === 'avg' ? 0.25 :
-            0.15;
+    let itemsDelta: Record<string, number> = {};
 
-          if (rewardRng() < baitChance) {
-            itemsDelta = { bait: 1 };
-          } else {
-            itemsDelta = { potion: 1 };
-          }
+    if (rewardRng() < dropChance) {
+      const rewardRoll = rewardRng();
+
+      if (tier === "weak") {
+        if (rewardRoll < 0.40) {
+          itemsDelta = { potion: 1 };
+        } else if (rewardRoll < 0.65) {
+          itemsDelta = { pokeball: 1 };
+        } else if (rewardRoll < 0.82) {
+          itemsDelta = { bait: 1 };
+        } else if (rewardRoll < 0.94) {
+          itemsDelta = { burn_heal: 1 };
+        } else {
+          itemsDelta = { potion: 2 };
         }
+      } else if (tier === "avg") {
+        if (rewardRoll < 0.25) {
+          itemsDelta = { potion: 2 };
+        } else if (rewardRoll < 0.45) {
+          itemsDelta = { pokeball: 2 };
+        } else if (rewardRoll < 0.60) {
+          itemsDelta = { bait: 2 };
+        } else if (rewardRoll < 0.75) {
+          itemsDelta = { burn_heal: 1 };
+        } else if (rewardRoll < 0.90) {
+          itemsDelta = { pokeball: 1, bait: 1 };
+        } else {
+          itemsDelta = { great_ball: 1 };
+        }
+      } else {
+        // skilled / ace-tier rewards
+        if (rewardRoll < 0.20) {
+          itemsDelta = { potion: 2, pokeball: 1 };
+        } else if (rewardRoll < 0.38) {
+          itemsDelta = { pokeball: 2, bait: 1 };
+        } else if (rewardRoll < 0.54) {
+          itemsDelta = { bait: 2, burn_heal: 1 };
+        } else if (rewardRoll < 0.72) {
+          itemsDelta = { great_ball: 1 };
+        } else if (rewardRoll < 0.88) {
+          itemsDelta = { great_ball: 1, pokeball: 1 };
+        } else {
+          itemsDelta = { burn_heal: 2, pokeball: 1 };
+        }
+      }
+    }
 
         const currentMoney = existingProgress.money ?? 0;
         const currentInv   = existingProgress.inventory ?? { potion: 0, revive: 0, bait: 0, pokeball: 0, great_ball: 0, burn_heal: 0 };
