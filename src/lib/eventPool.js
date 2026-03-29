@@ -181,28 +181,30 @@ export function getEligibleEvents({ inventory }) {
   );
 }
 
-export function buildSupplyCacheState({ runSeed, nodeId }) {
-  const key = `${runSeed ?? "event"}:${nodeId ?? "node"}:cache_reward`;
-  const hash = hashString(key);
+export function buildSupplyCacheState({ runSeed, nodeId, routeId = "route1" }) {
+  const rng = makeRng(`${runSeed ?? "event"}:${nodeId ?? "node"}:supply_cache`);
 
-  if (hash % 100 < 30) {
-    return {
-      reward: {
-        itemId: "bait",
-        qty: 1,
-        title: "Bait ×1",
-        description: "Useful for certain Pokémon recruitment events.",
-      },
-    };
+  const roll = rng();
+
+  let itemsDelta = {};
+  if (roll < 0.30) {
+    itemsDelta = { potion: 1 };
+  } else if (roll < 0.50) {
+    itemsDelta = { pokeball: 1 };
+  } else if (roll < 0.65) {
+    itemsDelta = { bait: 1 };
+  } else if (roll < 0.78) {
+    itemsDelta = { burn_heal: 1 };
+  } else if (roll < 0.88) {
+    itemsDelta = { potion: 2 };
+  } else if (roll < 0.96) {
+    itemsDelta = { pokeball: 2 };
+  } else {
+    itemsDelta = { great_ball: 1 };
   }
 
   return {
-    reward: {
-      itemId: "potion",
-      qty: 1,
-      title: "Potion ×1",
-      description: "Restores 20 HP to one Pokémon.",
-    },
+    itemsDelta,
   };
 }
 
