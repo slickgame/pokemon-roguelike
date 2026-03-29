@@ -3,6 +3,7 @@ export const EMPTY_INVENTORY = {
   revive: 0,
   bait: 0,
   pokeball: 0,
+  burn_heal: 0,
 };
 
 export function withInventoryDefaults(inventory) {
