@@ -44,6 +44,16 @@ export const SHOP_ITEMS = [
   description: "A ball used to capture Pokémon during certain event encounters.",
   icon: "🔴",
 },
+
+{
+  id: "great_ball",
+  name: "Great Ball",
+  buyPrice: 250,
+  sellPrice: 125,
+  description: "A better ball for capture event encounters. Grants +2 to capture rolls.",
+  icon: "🔵",
+},
+
 ];
 
 export const SHOP_ITEM_BY_ID = Object.fromEntries(
