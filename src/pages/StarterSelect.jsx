@@ -75,7 +75,7 @@ export default function StarterSelect() {
     setPoolWarning(warning);
     setSelectedCandidate(null);
     setRerollIdx(0);
-  }, [config, run, eligibleSpecies]);
+  }, [db, config, run, eligibleSpecies]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const pickedIds = useMemo(() => new Set(picks.map(p => p.speciesId)), [picks]);
@@ -98,7 +98,7 @@ export default function StarterSelect() {
     setPool(candidates);
     setPoolWarning(warning);
     setSelectedCandidate(null);
-  }, [config, run, eligibleSpecies]);
+  }, [db, config, run, eligibleSpecies]);
 
   // ── Pick a candidate ──────────────────────────────────────────────────────
   const handlePick = async () => {
