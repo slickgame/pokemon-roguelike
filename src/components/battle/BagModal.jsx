@@ -37,6 +37,7 @@ export default function BagModal({ inventory, party, onUse, onClose, context = "
     if (item === "revive")  return p.fainted;
     if (item === "potion")  return !p.fainted && p.currentHp < p.maxHp;
     if (item === "pokeball") return false;
+    if (item === "great_ball") return false;
     return false;
   }
 
@@ -137,9 +138,9 @@ export default function BagModal({ inventory, party, onUse, onClose, context = "
           </p>
         )}
 
-        {selectedItem === "pokeball" && (
+        {(selectedItem === "pokeball" || selectedItem === "great_ball") && (
           <p className="text-white/25 text-xs text-center py-4">
-            Poké Balls are used during wild capture event encounters, not as normal bag items.
+            Capture balls are used during wild capture event encounters, not as normal bag items.
           </p>
         )}
 
