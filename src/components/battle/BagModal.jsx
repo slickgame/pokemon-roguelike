@@ -17,9 +17,10 @@ export default function BagModal({ inventory, party, onUse, onClose, context = "
   const [using, setUsing] = useState(false);
 
   const ITEMS = [
-    { id: "potion",   name: "Potion",   icon: "💊", desc: "Heals 20 HP",                         count: inventory?.potion ?? 0 },
-    { id: "revive",   name: "Revive",   icon: "💫", desc: "Revives to 50% HP",                    count: inventory?.revive ?? 0 },
-    { id: "pokeball", name: "Poké Ball", icon: "🔴", desc: "Used in wild capture event encounters", count: inventory?.pokeball ?? 0 },
+    { id: "potion",    name: "Potion",    icon: "💊", desc: "Heals 20 HP",                          count: inventory?.potion ?? 0 },
+    { id: "revive",    name: "Revive",    icon: "💫", desc: "Revives to 50% HP",                     count: inventory?.revive ?? 0 },
+    { id: "pokeball",  name: "Poké Ball", icon: "🔴", desc: "Used in wild capture event encounters",  count: inventory?.pokeball ?? 0 },
+    { id: "great_ball",name: "Great Ball",icon: "🔵", desc: "Used in wild capture events. +2 capture.", count: inventory?.great_ball ?? 0 },
   ];
 
   // Normalize poke HP fields (partyState uses currentHP/maxHP, battle uses currentHp/maxHp)
