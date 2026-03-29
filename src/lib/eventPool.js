@@ -262,6 +262,7 @@ export function buildWildPokemonSpottedState({ runSeed, nodeId, routeId = "route
     target: candidate.dc,
     ballOptions: [
       { itemId: "pokeball", label: "Poké Ball", bonus: 0 },
+      { itemId: "great_ball", label: "Great Ball", bonus: 2 },
     ],
   };
 }
