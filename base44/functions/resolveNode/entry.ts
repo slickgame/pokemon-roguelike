@@ -104,8 +104,8 @@ function applyRationPack(relics, rng) {
   return rng() < 0.25 ? { potion: 1 } : {};
 }
 
-const TIER_MONEY_BASE  = { weak: 50, avg: 80, skilled: 120, boss: 220 };
-const TIER_DROP_CHANCE = { weak: 0.60, avg: 0.70, skilled: 0.80 };
+const TIER_MONEY_BASE  = { weak: 55, avg: 90, skilled: 135, boss: 240 };
+const TIER_DROP_CHANCE = { weak: 0.70, avg: 0.82, skilled: 0.92 };
 
 const NODE_LABELS = {
   trainer_weak: "Weak Trainer",
@@ -317,7 +317,7 @@ function pickNodeType(rng, routeIndex) {
 function buildNodeMeta(type, tier) {
   if (type === 'trainer') return { trainerName: tier === 'skilled' ? 'Ace Trainer' : tier === 'avg' ? 'Trainer' : 'Youngster' };
   if (type === 'center') return { label: 'Pokémon Center' };
-  if (type === 'shop') return { label: 'Poké Mart', stock: ['potion'] };
+  if (type === 'shop') return { label: 'Poké Mart', stock: ['potion', 'pokeball', 'bait', 'burn_heal', 'great_ball'] };
   if (type === 'event') return { label: 'Item Found', reward: 'potion' };
   return {};
 }
