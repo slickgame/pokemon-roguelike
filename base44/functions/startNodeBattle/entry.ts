@@ -521,29 +521,24 @@ Deno.serve(async (req) => {
       // Hydrate from persisted state (respects HP/PP/fainted)
       const allHydrated = existingPartyState.map(snap => hydrateFromPartyState(snap, _speciesMap)).filter(Boolean);
       const rawActive = allHydrated.slice(0, 3);
-      const rawBench  = allHydrated.slice(3, 6);
+      const rawBench  = allHydrated.slice(3);
       // Auto-fill fainted active slots with healthy bench mons
       const sanitized = sanitizeActives(rawActive, rawBench);
       playerActive = sanitized.active;
       playerBench  = sanitized.bench;
-      // Pad if needed
-      while (playerActive.filter(Boolean).length < 3) {
-        const extra = playerBenchPool[playerActive.length];
-        if (!extra) break;
-        playerActive.push(buildFreshPokemon(extra, 5, `${run.seed}:player:extra:${playerActive.length}`));
-      }
+      // Do not auto-generate extra starter bench Pokémon on existing runs
     } else {
-      // Init fresh
+      // Init fresh: only the 3 chosen starters
       playerActive = pickedIds.slice(0, 3).map((sid, i) => {
         const sp = getSpeciesById(sid);
         if (!sp) return null;
         return buildFreshPokemon(sp, 5, `${run.seed}:player:active:${i}:${sid}`);
       }).filter(Boolean);
-      playerBench = playerBenchPool.slice(0, 3).map((sp, i) =>
-        buildFreshPokemon(sp, 5, `${run.seed}:player:bench:${i}:${sp.id}`)
-      );
+
+      playerBench = [];
+
       // Save initialized party state so future battles can persist it
-      newPartyState = initPartyState(pickedIds, playerBenchPool.slice(0, 3), run.seed);
+      newPartyState = initPartyState(pickedIds, [], run.seed);
     }
 
     // ── Enemy team ───────────────────────────────────────────────────────────
