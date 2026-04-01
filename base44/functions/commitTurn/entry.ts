@@ -1,5 +1,6 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.6";
 import { effectiveness } from "../../../src/shared/typeChart.js";
+import { LEARNSETS, MOVES_BY_ID } from "../../../src/shared/staticDb.generated.js";
 
 // ── Deterministic RNG ─────────────────────────────────────────────────────────
 function hashString(str) {
@@ -1263,143 +1264,12 @@ function grantEvsToPoke(poke, evGains, log, sourceLabel) {
   }
 }
 
-// Learnsets — must mirror components/db/learnsets.js (keyed by speciesId integer)
-const LEVEL_UP_LEARNSETS = {
-  1: [{ level: 7, moveId: "vine_whip" }],
-  4: [{ level: 7, moveId: "ember" }],
-  7: [{ level: 7, moveId: "water_gun" }],
-  10: [],
-  16: [{ level: 9, moveId: "quick_attack" }],
-  17: [],
-  18: [],
-  19: [{ level: 7, moveId: "quick_attack" }],
-  20: [],
-  21: [{ level: 9, moveId: "quick_attack" }],
-  22: [],
-  25: [{ level: 9, moveId: "quick_attack" }],
-  26: [],
-  33: [{ level: 9, moveId: "quick_attack" }],
-  52: [{ level: 9, moveId: "quick_attack" }],
-  133: [{ level: 9, moveId: "quick_attack" }],
-};
+// Learnsets/moves sourced from generated static DB artifact
+const LEVEL_UP_LEARNSETS = Object.fromEntries(
+  Object.entries(LEARNSETS).map(([speciesId, data]) => [speciesId, data?.levelUp ?? []]),
+);
 
-// Minimal move data for level-up moves (just enough to add to movesets)
-const MOVE_DATA = {
-  vine_whip: {
-    id: "vine_whip",
-    name: "Vine Whip",
-    type: "grass",
-    category: "physical",
-    power: 45,
-    pp: 25,
-    priority: 0,
-  },
-  ember: {
-    id: "ember",
-    name: "Ember",
-    type: "fire",
-    category: "special",
-    power: 40,
-    pp: 25,
-    priority: 0,
-    secondaryEffects: [{ chance: 10, status: "burn" }],
-  },
-  water_gun: {
-    id: "water_gun",
-    name: "Water Gun",
-    type: "water",
-    category: "special",
-    power: 40,
-    pp: 25,
-    priority: 0,
-  },
-  quick_attack: {
-    id: "quick_attack",
-    name: "Quick Attack",
-    type: "normal",
-    category: "physical",
-    power: 40,
-    pp: 30,
-    priority: 1,
-  },
-  tackle: {
-    id: "tackle",
-    name: "Tackle",
-    type: "normal",
-    category: "physical",
-    power: 40,
-    pp: 35,
-    priority: 0,
-  },
-  scratch: {
-    id: "scratch",
-    name: "Scratch",
-    type: "normal",
-    category: "physical",
-    power: 40,
-    pp: 35,
-    priority: 0,
-  },
-  growl: {
-    id: "growl",
-    name: "Growl",
-    type: "normal",
-    category: "status",
-    power: null,
-    pp: 40,
-    priority: 0,
-    accuracy: 100,
-    effects: {
-      stageChanges: { target: "all_opponents", changes: { atk: -1 } },
-    },
-  },
-  thunder_shock: {
-    id: "thunder_shock",
-    name: "ThunderShock",
-    type: "electric",
-    category: "special",
-    power: 40,
-    pp: 30,
-    priority: 0,
-  },
-  string_shot: {
-    id: "string_shot",
-    name: "String Shot",
-    type: "bug",
-    category: "status",
-    power: null,
-    pp: 40,
-    priority: 0,
-    accuracy: 95,
-    effects: {
-      stageChanges: { target: "all_opponents", changes: { spe: -1 } },
-    },
-  },
-  tail_whip: {
-    id: "tail_whip",
-    name: "Tail Whip",
-    type: "normal",
-    category: "status",
-    power: null,
-    pp: 30,
-    priority: 0,
-    accuracy: 100,
-    effects: {
-      stageChanges: { target: "all_opponents", changes: { def: -1 } },
-    },
-  },
-  growth: {
-    id: "growth",
-    name: "Growth",
-    type: "normal",
-    category: "status",
-    power: null,
-    pp: 20,
-    priority: 0,
-    accuracy: null,
-    effects: { stageChanges: { target: "self", changes: { atk: 1, spa: 1 } } },
-  },
-};
+const MOVE_DATA = MOVES_BY_ID;
 
 const EVOLUTION_SPECIES_REGISTRY = {
   2: {
