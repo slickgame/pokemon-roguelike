@@ -14,6 +14,62 @@ import { Swords, Bug, Package, Coins } from "lucide-react";
 import ReplacementPanel from "../components/battle/ReplacementPanel";
 import BagModal from "../components/battle/BagModal";
 import LearnMoveModal from "../components/battle/LearnMoveModal";
+import EvolveModal from "../components/battle/EvolveModal";
+
+const NATURE_EFFECTS = {
+  Hardy: { up: null, down: null },
+  Lonely: { up: "atk", down: "def" },
+  Brave: { up: "atk", down: "spe" },
+  Adamant: { up: "atk", down: "spa" },
+  Naughty: { up: "atk", down: "spd" },
+  Bold: { up: "def", down: "atk" },
+  Docile: { up: null, down: null },
+  Relaxed: { up: "def", down: "spe" },
+  Impish: { up: "def", down: "spa" },
+  Lax: { up: "def", down: "spd" },
+  Timid: { up: "spe", down: "atk" },
+  Hasty: { up: "spe", down: "def" },
+  Serious: { up: null, down: null },
+  Jolly: { up: "spe", down: "spa" },
+  Naive: { up: "spe", down: "spd" },
+  Modest: { up: "spa", down: "atk" },
+  Mild: { up: "spa", down: "def" },
+  Quiet: { up: "spa", down: "spe" },
+  Bashful: { up: null, down: null },
+  Rash: { up: "spa", down: "spd" },
+  Calm: { up: "spd", down: "atk" },
+  Gentle: { up: "spd", down: "def" },
+  Sassy: { up: "spd", down: "spe" },
+  Careful: { up: "spd", down: "spa" },
+  Quirky: { up: null, down: null },
+};
+
+const getNatureModifier = (nature, statKey) => {
+  const effect = NATURE_EFFECTS[nature] ?? { up: null, down: null };
+  if (effect.up === statKey) return 1.1;
+  if (effect.down === statKey) return 0.9;
+  return 1.0;
+};
+
+const computeStat = (base, level, iv = 0, ev = 0, natureMod = 1, isHp = false) => {
+  const inner = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100);
+  if (isHp) return inner + level + 10;
+  return Math.floor((inner + 5) * natureMod);
+};
+
+const recomputeStatsForEvolution = (mon, nextBaseStats) => {
+  const ivs = mon.ivs ?? {};
+  const evs = mon.evs ?? {};
+  const nature = mon.nature ?? "Hardy";
+  return {
+    hp: computeStat(nextBaseStats.hp, mon.level, ivs.hp ?? 0, evs.hp ?? 0, 1, true),
+    atk: computeStat(nextBaseStats.atk, mon.level, ivs.atk ?? 0, evs.atk ?? 0, getNatureModifier(nature, "atk")),
+    def: computeStat(nextBaseStats.def, mon.level, ivs.def ?? 0, evs.def ?? 0, getNatureModifier(nature, "def")),
+    spa: computeStat(nextBaseStats.spa, mon.level, ivs.spa ?? 0, evs.spa ?? 0, getNatureModifier(nature, "spa")),
+    spd: computeStat(nextBaseStats.spd, mon.level, ivs.spd ?? 0, evs.spd ?? 0, getNatureModifier(nature, "spd")),
+    spe: computeStat(nextBaseStats.spe, mon.level, ivs.spe ?? 0, evs.spe ?? 0, getNatureModifier(nature, "spe")),
+  };
+};
 
 export default function Battle() {
   const navigate = useNavigate();
@@ -38,6 +94,7 @@ export default function Battle() {
   const [showBag, setShowBag] = useState(false);
   const [run, setRun] = useState(null);
   const [learnQueue, setLearnQueue] = useState([]); // queued learn prompts
+  const [evolutionQueue, setEvolutionQueue] = useState([]); // queued evolution prompts
   const [lastCommitError, setLastCommitError] = useState(null);
   const [restoredDraftNotice, setRestoredDraftNotice] = useState(false);
 
@@ -81,6 +138,8 @@ export default function Battle() {
           setState(b.state);
           setTurnNumber(b.turnNumber ?? 0);
           setWinner(b.state?.winner ?? null);
+          setLearnQueue(b.state?.pendingLearnPrompts ?? []);
+          setEvolutionQueue(b.state?.pendingEvolutionPrompts ?? []);
         } else {
           toast("Battle not found.", "error");
           navigate(createPageUrl(`RunMap?runId=${runId}`));
@@ -178,8 +237,8 @@ export default function Battle() {
       setLastCommitError("Choose a replacement first.");
       return;
     }
-    if (learnQueue.length > 0) {
-      setLastCommitError("Resolve the move learning prompt first.");
+    if (learnQueue.length > 0 || evolutionQueue.length > 0) {
+      setLastCommitError("Resolve pending level-up prompts first.");
       return;
     }
 
@@ -234,9 +293,16 @@ export default function Battle() {
       if (data.pendingLearnPrompts && data.pendingLearnPrompts.length > 0) {
         setLearnQueue((prev) => [...prev, ...data.pendingLearnPrompts]);
       }
+      if (
+        data.pendingEvolutionPrompts &&
+        data.pendingEvolutionPrompts.length > 0
+      ) {
+        setEvolutionQueue((prev) => [...prev, ...data.pendingEvolutionPrompts]);
+      }
 
       if (newWinner) {
         setLearnQueue([]); // clear learn prompts on battle end
+        setEvolutionQueue([]); // clear evolution prompts on battle end
         setShowBag(false); // auto-close bag/replacement modals on battle end
         toast(
           newWinner === "player" ? "You won! 🎉" : "You lost...",
@@ -340,6 +406,8 @@ export default function Battle() {
   const enemyBench = state.enemy.bench ?? [];
   const commitDisabledReason = pendingReplacement
     ? "Replacement required"
+    : evolutionQueue.length > 0
+      ? "Evolution prompt pending"
     : learnQueue.length > 0
       ? "Move learn prompt pending"
       : committing
@@ -572,6 +640,7 @@ export default function Battle() {
                 committing ||
                 !!winner ||
                 !!pendingReplacement ||
+                evolutionQueue.length > 0 ||
                 learnQueue.length > 0
               }
             >
@@ -687,6 +756,78 @@ export default function Battle() {
           party={allPartyForBag}
           onClose={() => setShowBag(false)}
           context="battle"
+        />
+      )}
+
+      {evolutionQueue.length > 0 && (
+        <EvolveModal
+          prompt={evolutionQueue[0]}
+          onConfirm={() => {
+            setState((prev) => {
+              if (!prev) return prev;
+              const prompt = evolutionQueue[0];
+              const updateMon = (p) => {
+                if (!p || p.name !== prompt.pokeName) return p;
+                const nextStats = recomputeStatsForEvolution(
+                  p,
+                  prompt.targetBaseStats,
+                );
+                const oldMaxHp = p.maxHp ?? nextStats.hp;
+                const nextMaxHp = nextStats.hp;
+                const nextCurrentHp = Math.max(
+                  0,
+                  Math.min((p.currentHp ?? 0) + (nextMaxHp - oldMaxHp), nextMaxHp),
+                );
+                return {
+                  ...p,
+                  speciesId: prompt.targetSpeciesId,
+                  name: prompt.targetSpeciesName,
+                  types: prompt.targetTypes ?? p.types,
+                  abilityId: (prompt.targetAbilities ?? []).includes(p.abilityId)
+                    ? p.abilityId
+                    : (prompt.targetAbilities?.[0] ?? p.abilityId),
+                  baseStats: prompt.targetBaseStats ?? p.baseStats,
+                  stats: nextStats,
+                  maxHp: nextMaxHp,
+                  currentHp: nextCurrentHp,
+                  pendingEvolution: null,
+                  lastSkippedEvolutionLevel: null,
+                };
+              };
+              return {
+                ...prev,
+                player: {
+                  ...prev.player,
+                  active: (prev.player.active ?? []).map(updateMon),
+                  bench: (prev.player.bench ?? []).map(updateMon),
+                },
+              };
+            });
+            setEvolutionQueue((q) => q.slice(1));
+          }}
+          onSkip={() => {
+            setState((prev) => {
+              if (!prev) return prev;
+              const prompt = evolutionQueue[0];
+              const updateMon = (p) =>
+                !p || p.name !== prompt.pokeName
+                  ? p
+                  : {
+                      ...p,
+                      pendingEvolution: null,
+                      lastSkippedEvolutionLevel: prompt.level,
+                    };
+              return {
+                ...prev,
+                player: {
+                  ...prev.player,
+                  active: (prev.player.active ?? []).map(updateMon),
+                  bench: (prev.player.bench ?? []).map(updateMon),
+                },
+              };
+            });
+            setEvolutionQueue((q) => q.slice(1));
+          }}
         />
       )}
 
