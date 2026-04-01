@@ -19,7 +19,10 @@ export default function Battle() {
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);
   const { toasts, toast, dismiss } = useToast();
-  const { runId, handleInvalidRun } = useRequiredRunId({ page: "Battle", toast });
+  const { runId, handleInvalidRun } = useRequiredRunId({
+    page: "Battle",
+    toast,
+  });
   const battleId = params.get("battleId");
   const nodeId = params.get("nodeId");
   const routeId = params.get("routeId") ?? "route1";
@@ -38,13 +41,14 @@ export default function Battle() {
   const [lastCommitError, setLastCommitError] = useState(null);
   const [restoredDraftNotice, setRestoredDraftNotice] = useState(false);
 
-  const draftKey = runId && battleId ? `battleDraft:${runId}:${battleId}` : null;
+  const draftKey =
+    runId && battleId ? `battleDraft:${runId}:${battleId}` : null;
 
   // Load run for inventory/economy display + status guard
   useEffect(() => {
     if (!runId) return;
     base44.entities.Run.filter({ id: runId })
-      .then(rows => {
+      .then((rows) => {
         if (rows[0]) setRun(rows[0]);
         else {
           handleInvalidRun();
@@ -71,7 +75,7 @@ export default function Battle() {
       return;
     }
     base44.entities.Battle.filter({ id: battleId })
-      .then(rows => {
+      .then((rows) => {
         const b = rows[0];
         if (b) {
           setState(b.state);
@@ -82,7 +86,7 @@ export default function Battle() {
           navigate(createPageUrl(`RunMap?runId=${runId}`));
         }
       })
-      .catch(e => toast(e.message, "error"))
+      .catch((e) => toast(e.message, "error"))
       .finally(() => setLoading(false));
   }, [battleId]);
 
@@ -96,7 +100,11 @@ export default function Battle() {
       if (draftRaw) {
         try {
           const draft = JSON.parse(draftRaw);
-          if (draft && typeof draft === "object" && Object.keys(draft).length > 0) {
+          if (
+            draft &&
+            typeof draft === "object" &&
+            Object.keys(draft).length > 0
+          ) {
             setCommandsBySlot(draft);
             setRestoredDraftNotice(true);
             return;
@@ -108,7 +116,9 @@ export default function Battle() {
     }
 
     const defaults = {};
-    const aliveEnemyTargets = (state.enemy.active ?? []).map((p, i) => ({ p, i })).filter(({ p }) => p && !p.fainted);
+    const aliveEnemyTargets = (state.enemy.active ?? [])
+      .map((p, i) => ({ p, i }))
+      .filter(({ p }) => p && !p.fainted);
     for (let i = 0; i < (state.player.active ?? []).length; i++) {
       const poke = state.player.active[i];
       if (!poke || poke.fainted) continue;
@@ -124,7 +134,7 @@ export default function Battle() {
 
   const setCommand = (slotIdx, commandObj) => {
     setLastCommitError(null);
-    setCommandsBySlot(prev => ({ ...prev, [slotIdx]: commandObj }));
+    setCommandsBySlot((prev) => ({ ...prev, [slotIdx]: commandObj }));
   };
 
   useEffect(() => {
@@ -139,12 +149,17 @@ export default function Battle() {
   const buildDefaultCommandForSlot = (battleState, slot) => {
     const actor = battleState?.player?.active?.[slot];
     if (!actor || actor.fainted) return null;
-    const firstAliveEnemySlot = (battleState?.enemy?.active ?? []).findIndex((p) => p && !p.fainted);
+    const firstAliveEnemySlot = (battleState?.enemy?.active ?? []).findIndex(
+      (p) => p && !p.fainted,
+    );
     return {
       actorSlot: slot,
       type: "move",
       moveId: actor.moves?.[0]?.id,
-      target: { side: "enemy", slot: firstAliveEnemySlot >= 0 ? firstAliveEnemySlot : 0 },
+      target: {
+        side: "enemy",
+        slot: firstAliveEnemySlot >= 0 ? firstAliveEnemySlot : 0,
+      },
     };
   };
 
@@ -173,11 +188,14 @@ export default function Battle() {
     for (let slot = 0; slot < activeSlots.length; slot++) {
       const actor = activeSlots[slot];
       if (!actor || actor.fainted) continue;
-      const cmd = commandsBySlot?.[slot] ?? buildDefaultCommandForSlot(state, slot);
+      const cmd =
+        commandsBySlot?.[slot] ?? buildDefaultCommandForSlot(state, slot);
       if (cmd) cmds.push(cmd);
     }
     if (cmds.length === 0) {
-      setLastCommitError("No actions selected. Choose moves/switch/items first.");
+      setLastCommitError(
+        "No actions selected. Choose moves/switch/items first.",
+      );
       toast("No actions selected.", "error");
       return;
     }
@@ -185,7 +203,9 @@ export default function Battle() {
     setCommitting(true);
     try {
       const res = await invokeWithRetry(base44, "commitTurn", {
-        runId, battleId, playerCommands: cmds,
+        runId,
+        battleId,
+        playerCommands: cmds,
       });
       const data = res.data;
       if (draftKey) localStorage.removeItem(draftKey);
@@ -195,34 +215,68 @@ export default function Battle() {
       setWinner(newWinner);
       // Refresh inventory from updated run
       if (data.updatedInventory) {
-        setRun(r => r ? { ...r, results: { ...(r.results ?? {}), progress: { ...(r.results?.progress ?? {}), inventory: data.updatedInventory } } } : r);
+        setRun((r) =>
+          r
+            ? {
+                ...r,
+                results: {
+                  ...(r.results ?? {}),
+                  progress: {
+                    ...(r.results?.progress ?? {}),
+                    inventory: data.updatedInventory,
+                  },
+                },
+              }
+            : r,
+        );
       }
       // Queue learn prompts from backend
       if (data.pendingLearnPrompts && data.pendingLearnPrompts.length > 0) {
-        setLearnQueue(prev => [...prev, ...data.pendingLearnPrompts]);
+        setLearnQueue((prev) => [...prev, ...data.pendingLearnPrompts]);
       }
 
       if (newWinner) {
         setLearnQueue([]); // clear learn prompts on battle end
         setShowBag(false); // auto-close bag/replacement modals on battle end
-        toast(newWinner === "player" ? "You won! 🎉" : "You lost...", newWinner === "player" ? "success" : "error");
+        toast(
+          newWinner === "player" ? "You won! 🎉" : "You lost...",
+          newWinner === "player" ? "success" : "error",
+        );
         // Resolve via canonical resolveNode — marks node complete, clears pendingEncounter
-        const allPlayerPokes = [...(data.state?.player?.active ?? []), ...(data.state?.player?.bench ?? [])];
-        const faintCount = allPlayerPokes.filter(p => p?.fainted).length;
+        const allPlayerPokes = [
+          ...(data.state?.player?.active ?? []),
+          ...(data.state?.player?.bench ?? []),
+        ];
+        const faintCount = allPlayerPokes.filter((p) => p?.fainted).length;
         const resolveRes = await invokeWithRetry(base44, "resolveNode", {
           runId,
-          resolution: { type: "battle", winner: newWinner, faintCount, battleId },
+          resolution: {
+            type: "battle",
+            winner: newWinner,
+            faintCount,
+            battleId,
+          },
         });
         const resolveData = resolveRes.data ?? {};
         // Gym win → relic reward, else node complete
-        if (resolveData.nextScreen === "relic_reward" && resolveData.relicSource) {
-          navigate(createPageUrl(`RelicReward?runId=${runId}&nodeId=${nodeId ?? ""}&source=${resolveData.relicSource}`));
+        if (
+          resolveData.nextScreen === "relic_reward" &&
+          resolveData.relicSource
+        ) {
+          navigate(
+            createPageUrl(
+              `RelicReward?runId=${runId}&nodeId=${nodeId ?? ""}&source=${resolveData.relicSource}`,
+            ),
+          );
         } else {
-          navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`));
+          navigate(
+            createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`),
+          );
         }
       }
     } catch (e) {
-      const msg = e?.response?.data?.error || e?.message || "Failed to commit turn";
+      const msg =
+        e?.response?.data?.error || e?.message || "Failed to commit turn";
       setLastCommitError(msg);
       toast(msg, "error");
       console.error("commitTurn failed:", e);
@@ -231,36 +285,59 @@ export default function Battle() {
     }
   };
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="animate-spin w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full" />
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin w-8 h-8 border-2 border-violet-500/20 border-t-violet-500 rounded-full" />
+      </div>
+    );
 
-  if (!state) return (
-    <div className="max-w-lg mx-auto px-4 py-12 text-center">
-      <GameCard><p className="text-red-400">Battle not found. Check URL params (runId &amp; battleId).</p></GameCard>
-    </div>
-  );
+  if (!state)
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 text-center">
+        <GameCard>
+          <p className="text-red-400">
+            Battle not found. Check URL params (runId &amp; battleId).
+          </p>
+        </GameCard>
+      </div>
+    );
 
   // Guard: run no longer active and battle not finished in current state
-  if (run && run.status !== "active" && !winner) return (
-    <div className="max-w-lg mx-auto px-4 py-12 text-center space-y-4">
-      <GameCard className="py-10 space-y-4">
-        <p className="text-white/60 text-lg font-semibold">This run has ended</p>
-        <p className="text-white/30 text-sm">Status: <span className="text-amber-400">{run.status}</span></p>
-        <div className="flex gap-2 justify-center">
-          <GameButton variant="secondary" size="md" onClick={() => navigate(createPageUrl(`Results?runId=${runId}`))}>View Results</GameButton>
-          <GameButton variant="primary" size="md" onClick={() => navigate(createPageUrl("Home"))}>Return Home</GameButton>
-        </div>
-      </GameCard>
-    </div>
-  );
+  if (run && run.status !== "active" && !winner)
+    return (
+      <div className="max-w-lg mx-auto px-4 py-12 text-center space-y-4">
+        <GameCard className="py-10 space-y-4">
+          <p className="text-white/60 text-lg font-semibold">
+            This run has ended
+          </p>
+          <p className="text-white/30 text-sm">
+            Status: <span className="text-amber-400">{run.status}</span>
+          </p>
+          <div className="flex gap-2 justify-center">
+            <GameButton
+              variant="secondary"
+              size="md"
+              onClick={() => navigate(createPageUrl(`Results?runId=${runId}`))}
+            >
+              View Results
+            </GameButton>
+            <GameButton
+              variant="primary"
+              size="md"
+              onClick={() => navigate(createPageUrl("Home"))}
+            >
+              Return Home
+            </GameButton>
+          </div>
+        </GameCard>
+      </div>
+    );
 
   const playerActive = state.player.active ?? [];
-  const playerBench  = state.player.bench  ?? [];
-  const enemyActive  = state.enemy.active  ?? [];
-  const enemyBench   = state.enemy.bench   ?? [];
+  const playerBench = state.player.bench ?? [];
+  const enemyActive = state.enemy.active ?? [];
+  const enemyBench = state.enemy.bench ?? [];
   const commitDisabledReason = pendingReplacement
     ? "Replacement required"
     : learnQueue.length > 0
@@ -273,14 +350,20 @@ export default function Battle() {
     setChoosing(true);
     try {
       const res = await invokeWithRetry(base44, "chooseReplacement", {
-        runId, battleId, slot: pendingReplacement.slot, benchIndex,
+        runId,
+        battleId,
+        slot: pendingReplacement.slot,
+        benchIndex,
       });
       const data = res.data;
       if (draftKey) localStorage.removeItem(draftKey);
       setState(data.state);
       setTurnNumber(data.turnNumber ?? turnNumber);
     } catch (e) {
-      toast(e.response?.data?.error || e.message || "Failed to choose replacement", "error");
+      toast(
+        e.response?.data?.error || e.message || "Failed to choose replacement",
+        "error",
+      );
     } finally {
       setChoosing(false);
     }
@@ -288,11 +371,11 @@ export default function Battle() {
 
   const lastRngUsed = state.lastRngUsed ?? 0;
   const lastActionOrder = state.lastActionOrder ?? [];
-  const inventory = withInventoryDefaults(run?.results?.progress?.inventory ?? EMPTY_INVENTORY);
+  const inventory = withInventoryDefaults(
+    run?.results?.progress?.inventory ?? EMPTY_INVENTORY,
+  );
   const money = run?.results?.progress?.money ?? 0;
   const allPartyForBag = [...playerActive, ...playerBench];
-
-
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -305,7 +388,8 @@ export default function Battle() {
           <div>
             <h1 className="text-xl font-black text-white">Battle</h1>
             <p className="text-white/40 text-xs">
-              Turn {turnNumber} · {winner
+              Turn {turnNumber} ·{" "}
+              {winner
                 ? `Battle finished — ${winner === "player" ? "Victory!" : "Defeat"}`
                 : `Active · RNG calls: ${state.rngCallCount ?? 0}`}
             </p>
@@ -330,7 +414,7 @@ export default function Battle() {
             </button>
           )}
           <button
-            onClick={() => setShowDebug(v => !v)}
+            onClick={() => setShowDebug((v) => !v)}
             className="flex items-center gap-1 text-xs text-white/25 hover:text-white/50 transition-colors"
           >
             <Bug className="w-3 h-3" /> Debug
@@ -347,15 +431,33 @@ export default function Battle() {
       {/* Debug panel */}
       {showDebug && (
         <GameCard className="mb-4 font-mono text-xs text-white/50 space-y-1">
-          <p className="text-white/25 uppercase tracking-widest text-[9px] mb-2">Dev — Last Turn Debug</p>
-          <p>RNG rolls this turn: <span className="text-amber-400">{lastRngUsed}</span></p>
-          <p>Total RNG cursor: <span className="text-amber-400">{state.rngCallCount ?? 0}</span></p>
-          <p>Enemy switch used: <span className="text-amber-400">{state.enemySwitchUsed ? "yes" : "no"}</span></p>
+          <p className="text-white/25 uppercase tracking-widest text-[9px] mb-2">
+            Dev — Last Turn Debug
+          </p>
+          <p>
+            RNG rolls this turn:{" "}
+            <span className="text-amber-400">{lastRngUsed}</span>
+          </p>
+          <p>
+            Total RNG cursor:{" "}
+            <span className="text-amber-400">{state.rngCallCount ?? 0}</span>
+          </p>
+          <p>
+            Enemy switch used:{" "}
+            <span className="text-amber-400">
+              {state.enemySwitchUsed ? "yes" : "no"}
+            </span>
+          </p>
           <p className="mt-1 text-white/30">Last action order:</p>
-          {lastActionOrder.length === 0
-            ? <p className="text-white/20">— no turns committed yet —</p>
-            : lastActionOrder.map((a, i) => <p key={i} className="pl-2">#{i + 1} {a}</p>)
-          }
+          {lastActionOrder.length === 0 ? (
+            <p className="text-white/20">— no turns committed yet —</p>
+          ) : (
+            lastActionOrder.map((a, i) => (
+              <p key={i} className="pl-2">
+                #{i + 1} {a}
+              </p>
+            ))
+          )}
         </GameCard>
       )}
 
@@ -363,18 +465,35 @@ export default function Battle() {
       <div className="grid grid-cols-2 gap-4 mb-6">
         {/* Enemy */}
         <GameCard>
-          <p className="text-[10px] uppercase tracking-widest text-red-400/70 font-semibold mb-2">Enemy Active</p>
+          <p className="text-[10px] uppercase tracking-widest text-red-400/70 font-semibold mb-2">
+            Enemy Active
+          </p>
           <div className="space-y-1.5">
             {enemyActive.map((poke, i) => (
-              <PokemonBattleCard key={i} poke={poke} slot={i} side="enemy" isActive={true} />
+              <PokemonBattleCard
+                key={i}
+                poke={poke}
+                slot={i}
+                side="enemy"
+                isActive={true}
+                stages={state.enemyStages?.[i]}
+              />
             ))}
           </div>
           {enemyBench.length > 0 && (
             <>
-              <p className="text-[9px] uppercase tracking-widest text-white/20 font-semibold mt-3 mb-1">Bench</p>
+              <p className="text-[9px] uppercase tracking-widest text-white/20 font-semibold mt-3 mb-1">
+                Bench
+              </p>
               <div className="space-y-1.5">
                 {enemyBench.map((poke, i) => (
-                  <PokemonBattleCard key={i} poke={poke} slot={i} side="enemy" isActive={false} />
+                  <PokemonBattleCard
+                    key={i}
+                    poke={poke}
+                    slot={i}
+                    side="enemy"
+                    isActive={false}
+                  />
                 ))}
               </div>
             </>
@@ -383,20 +502,44 @@ export default function Battle() {
 
         {/* Player */}
         <GameCard>
-          <p className="text-[10px] uppercase tracking-widest text-violet-400/70 font-semibold mb-2">Your Active</p>
+          <p className="text-[10px] uppercase tracking-widest text-violet-400/70 font-semibold mb-2">
+            Your Active
+          </p>
           <div className="space-y-1.5">
-            {playerActive.map((poke, i) => (
-              poke
-                ? <PokemonBattleCard key={i} poke={poke} slot={i} side="player" isActive={true} />
-                : <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/2 text-white/20 text-xs">Empty slot</div>
-            ))}
+            {playerActive.map((poke, i) =>
+              poke ? (
+                <PokemonBattleCard
+                  key={i}
+                  poke={poke}
+                  slot={i}
+                  side="player"
+                  isActive={true}
+                  stages={state.playerStages?.[i]}
+                />
+              ) : (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/2 text-white/20 text-xs"
+                >
+                  Empty slot
+                </div>
+              ),
+            )}
           </div>
           {playerBench.length > 0 && (
             <>
-              <p className="text-[9px] uppercase tracking-widest text-white/20 font-semibold mt-3 mb-1">Bench</p>
+              <p className="text-[9px] uppercase tracking-widest text-white/20 font-semibold mt-3 mb-1">
+                Bench
+              </p>
               <div className="space-y-1.5">
                 {playerBench.map((poke, i) => (
-                  <PokemonBattleCard key={i} poke={poke} slot={i} side="player" isActive={false} />
+                  <PokemonBattleCard
+                    key={i}
+                    poke={poke}
+                    slot={i}
+                    side="player"
+                    isActive={false}
+                  />
                 ))}
               </div>
             </>
@@ -408,7 +551,9 @@ export default function Battle() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!winner && (
           <GameCard>
-            <p className="text-white font-semibold text-sm mb-3">Select Actions</p>
+            <p className="text-white font-semibold text-sm mb-3">
+              Select Actions
+            </p>
             <CommandBuilder
               playerActive={playerActive}
               playerBench={playerBench}
@@ -423,13 +568,20 @@ export default function Battle() {
               className="w-full mt-4"
               onClick={handleCommit}
               loading={committing}
-              disabled={committing || !!winner || !!pendingReplacement || learnQueue.length > 0}
+              disabled={
+                committing ||
+                !!winner ||
+                !!pendingReplacement ||
+                learnQueue.length > 0
+              }
             >
               <Swords className="w-4 h-4" />
               Commit Turn
             </GameButton>
             {commitDisabledReason && (
-              <p className="text-xs text-amber-300/80 mt-2">{commitDisabledReason}</p>
+              <p className="text-xs text-amber-300/80 mt-2">
+                {commitDisabledReason}
+              </p>
             )}
             {lastCommitError && (
               <p className="text-xs text-red-400/80 mt-2">{lastCommitError}</p>
@@ -439,29 +591,65 @@ export default function Battle() {
 
         {/* Battle log */}
         <GameCard className={winner ? "md:col-span-2" : ""}>
-          <p className="text-white font-semibold text-sm mb-3">Battle Log — Turn {turnNumber}</p>
+          <p className="text-white font-semibold text-sm mb-3">
+            Battle Log — Turn {turnNumber}
+          </p>
           <div className="space-y-1 max-h-64 overflow-y-auto">
-            {(state.turnLog ?? []).length === 0
-              ? <p className="text-white/25 text-xs">No actions yet. Commit a turn!</p>
-              : (state.turnLog ?? []).map((msg, i) => (
-                  <p key={i} className="text-white/70 text-xs leading-relaxed">{msg}</p>
-                ))
-            }
+            {(state.turnLog ?? []).length === 0 ? (
+              <p className="text-white/25 text-xs">
+                No actions yet. Commit a turn!
+              </p>
+            ) : (
+              (state.turnLog ?? []).map((msg, i) => (
+                <p key={i} className="text-white/70 text-xs leading-relaxed">
+                  {msg}
+                </p>
+              ))
+            )}
           </div>
           {winner && (
             <div className="mt-4 space-y-2">
               <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60 space-y-1">
-                <p className="font-semibold text-white/80 mb-1">Battle Summary</p>
-                <p>Winner: <span className={winner === "player" ? "text-emerald-400" : "text-red-400"}>{winner}</span></p>
+                <p className="font-semibold text-white/80 mb-1">
+                  Battle Summary
+                </p>
+                <p>
+                  Winner:{" "}
+                  <span
+                    className={
+                      winner === "player" ? "text-emerald-400" : "text-red-400"
+                    }
+                  >
+                    {winner}
+                  </span>
+                </p>
                 <p>Turns: {turnNumber}</p>
-                <p>Your fainted: {[...playerActive, ...playerBench].filter(p => p?.fainted).length}</p>
-                <p>Enemy fainted: {[...enemyActive, ...enemyBench].filter(p => p?.fainted).length}</p>
+                <p>
+                  Your fainted:{" "}
+                  {
+                    [...playerActive, ...playerBench].filter((p) => p?.fainted)
+                      .length
+                  }
+                </p>
+                <p>
+                  Enemy fainted:{" "}
+                  {
+                    [...enemyActive, ...enemyBench].filter((p) => p?.fainted)
+                      .length
+                  }
+                </p>
               </div>
               <GameButton
                 variant="primary"
                 size="md"
                 className="w-full"
-                onClick={() => navigate(createPageUrl(`NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`))}
+                onClick={() =>
+                  navigate(
+                    createPageUrl(
+                      `NodeComplete?runId=${runId}&nodeId=${nodeId ?? ""}`,
+                    ),
+                  )
+                }
               >
                 View Summary
               </GameButton>
@@ -470,7 +658,9 @@ export default function Battle() {
                   variant="secondary"
                   size="md"
                   className="w-full"
-                  onClick={() => navigate(createPageUrl(`Results?runId=${runId}`))}
+                  onClick={() =>
+                    navigate(createPageUrl(`Results?runId=${runId}`))
+                  }
                 >
                   View Results
                 </GameButton>
@@ -480,14 +670,16 @@ export default function Battle() {
         </GameCard>
       </div>
 
-      {!winner && pendingReplacement && playerBench.some(p => p && !p.fainted && p.currentHp > 0) && (
-        <ReplacementPanel
-          pendingReplacement={pendingReplacement}
-          playerBench={playerBench}
-          onChoose={handleChooseReplacement}
-          choosing={choosing}
-        />
-      )}
+      {!winner &&
+        pendingReplacement &&
+        playerBench.some((p) => p && !p.fainted && p.currentHp > 0) && (
+          <ReplacementPanel
+            pendingReplacement={pendingReplacement}
+            playerBench={playerBench}
+            onChoose={handleChooseReplacement}
+            choosing={choosing}
+          />
+        )}
 
       {showBag && (
         <BagModal
@@ -505,26 +697,29 @@ export default function Battle() {
             // Find the Pokémon's current moves from state
             (() => {
               const all = [...playerActive, ...playerBench];
-              const mon = all.find(p => p && p.name === learnQueue[0].pokeName);
+              const mon = all.find(
+                (p) => p && p.name === learnQueue[0].pokeName,
+              );
               return mon?.moves ?? [];
             })()
           }
           onConfirm={(newMoves, replacedSlot) => {
             // Apply move replacement directly to state
-            setState(prev => {
+            setState((prev) => {
               if (!prev) return prev;
               const updated = { ...prev, player: { ...prev.player } };
-              const applyMoves = (arr) => arr.map(p => {
-                if (!p || p.name !== learnQueue[0].pokeName) return p;
-                return { ...p, moves: newMoves };
-              });
+              const applyMoves = (arr) =>
+                arr.map((p) => {
+                  if (!p || p.name !== learnQueue[0].pokeName) return p;
+                  return { ...p, moves: newMoves };
+                });
               updated.player.active = applyMoves(updated.player.active);
               updated.player.bench = applyMoves(updated.player.bench);
               return updated;
             });
-            setLearnQueue(q => q.slice(1));
+            setLearnQueue((q) => q.slice(1));
           }}
-          onSkip={() => setLearnQueue(q => q.slice(1))}
+          onSkip={() => setLearnQueue((q) => q.slice(1))}
         />
       )}
 

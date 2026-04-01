@@ -1,10 +1,11 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { effectiveness } from '../../../src/shared/typeChart.js';
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.6";
+import { effectiveness } from "../../../src/shared/typeChart.js";
 
 // ── Deterministic RNG ─────────────────────────────────────────────────────────
 function hashString(str) {
   let h = 2166136261;
-  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  for (let i = 0; i < str.length; i++)
+    h = Math.imul(h ^ str.charCodeAt(i), 16777619);
   return h >>> 0;
 }
 function makeRng(seedStr) {
@@ -12,44 +13,45 @@ function makeRng(seedStr) {
   let s = hashString(String(seedStr));
   const next = () => {
     callCount++;
-    s |= 0; s = s + 0x6d2b79f5 | 0;
-    let t = Math.imul(s ^ s >>> 15, 1 | s);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   return { next, getCallCount: () => callCount };
 }
 
 const NATURE_EFFECTS = {
-  Hardy:   { up: null, down: null },
-  Lonely:  { up: "atk", down: "def" },
-  Brave:   { up: "atk", down: "spe" },
+  Hardy: { up: null, down: null },
+  Lonely: { up: "atk", down: "def" },
+  Brave: { up: "atk", down: "spe" },
   Adamant: { up: "atk", down: "spa" },
   Naughty: { up: "atk", down: "spd" },
 
-  Bold:    { up: "def", down: "atk" },
-  Docile:  { up: null, down: null },
+  Bold: { up: "def", down: "atk" },
+  Docile: { up: null, down: null },
   Relaxed: { up: "def", down: "spe" },
-  Impish:  { up: "def", down: "spa" },
-  Lax:     { up: "def", down: "spd" },
+  Impish: { up: "def", down: "spa" },
+  Lax: { up: "def", down: "spd" },
 
-  Timid:   { up: "spe", down: "atk" },
-  Hasty:   { up: "spe", down: "def" },
+  Timid: { up: "spe", down: "atk" },
+  Hasty: { up: "spe", down: "def" },
   Serious: { up: null, down: null },
-  Jolly:   { up: "spe", down: "spa" },
-  Naive:   { up: "spe", down: "spd" },
+  Jolly: { up: "spe", down: "spa" },
+  Naive: { up: "spe", down: "spd" },
 
-  Modest:  { up: "spa", down: "atk" },
-  Mild:    { up: "spa", down: "def" },
-  Quiet:   { up: "spa", down: "spe" },
+  Modest: { up: "spa", down: "atk" },
+  Mild: { up: "spa", down: "def" },
+  Quiet: { up: "spa", down: "spe" },
   Bashful: { up: null, down: null },
-  Rash:    { up: "spa", down: "spd" },
+  Rash: { up: "spa", down: "spd" },
 
-  Calm:    { up: "spd", down: "atk" },
-  Gentle:  { up: "spd", down: "def" },
-  Sassy:   { up: "spd", down: "spe" },
+  Calm: { up: "spd", down: "atk" },
+  Gentle: { up: "spd", down: "def" },
+  Sassy: { up: "spd", down: "spe" },
   Careful: { up: "spd", down: "spa" },
-  Quirky:  { up: null, down: null },
+  Quirky: { up: null, down: null },
 };
 
 function getNatureModifier(nature, statKey) {
@@ -60,8 +62,17 @@ function getNatureModifier(nature, statKey) {
 }
 
 // ── Stat helpers ──────────────────────────────────────────────────────────────
-function computeStatValue(base, level, iv = 0, ev = 0, natureMod = 1, isHP = false) {
-  const inner = Math.floor(((2 * base + iv + Math.floor(ev / 4)) * level) / 100);
+function computeStatValue(
+  base,
+  level,
+  iv = 0,
+  ev = 0,
+  natureMod = 1,
+  isHP = false,
+) {
+  const inner = Math.floor(
+    ((2 * base + iv + Math.floor(ev / 4)) * level) / 100,
+  );
   if (isHP) return inner + level + 10;
   return Math.floor((inner + 5) * natureMod);
 }
@@ -76,12 +87,42 @@ function computeAllStats(mon) {
   const nature = mon.nature ?? "Hardy";
 
   return {
-    hp:  computeStatValue(b.hp,  lv, ivs.hp ?? 0,  evs.hp,  1, true),
-    atk: computeStatValue(b.atk, lv, ivs.atk ?? 0, evs.atk, getNatureModifier(nature, "atk")),
-    def: computeStatValue(b.def, lv, ivs.def ?? 0, evs.def, getNatureModifier(nature, "def")),
-    spa: computeStatValue(b.spa, lv, ivs.spa ?? 0, evs.spa, getNatureModifier(nature, "spa")),
-    spd: computeStatValue(b.spd, lv, ivs.spd ?? 0, evs.spd, getNatureModifier(nature, "spd")),
-    spe: computeStatValue(b.spe, lv, ivs.spe ?? 0, evs.spe, getNatureModifier(nature, "spe")),
+    hp: computeStatValue(b.hp, lv, ivs.hp ?? 0, evs.hp, 1, true),
+    atk: computeStatValue(
+      b.atk,
+      lv,
+      ivs.atk ?? 0,
+      evs.atk,
+      getNatureModifier(nature, "atk"),
+    ),
+    def: computeStatValue(
+      b.def,
+      lv,
+      ivs.def ?? 0,
+      evs.def,
+      getNatureModifier(nature, "def"),
+    ),
+    spa: computeStatValue(
+      b.spa,
+      lv,
+      ivs.spa ?? 0,
+      evs.spa,
+      getNatureModifier(nature, "spa"),
+    ),
+    spd: computeStatValue(
+      b.spd,
+      lv,
+      ivs.spd ?? 0,
+      evs.spd,
+      getNatureModifier(nature, "spd"),
+    ),
+    spe: computeStatValue(
+      b.spe,
+      lv,
+      ivs.spe ?? 0,
+      evs.spe,
+      getNatureModifier(nature, "spe"),
+    ),
   };
 }
 
@@ -99,36 +140,147 @@ function getStat(mon, key) {
     ivs[key] ?? 0,
     evs[key] ?? 0,
     key === "hp" ? 1 : getNatureModifier(nature, key),
-    key === "hp"
+    key === "hp",
   );
   mon.stats[key] = computed;
   return computed;
 }
 
+const STAGE_STAT_KEYS = [
+  "atk",
+  "def",
+  "spa",
+  "spd",
+  "spe",
+  "accuracy",
+  "evasion",
+];
+const STAGE_MIN = -6;
+const STAGE_MAX = 6;
+
+function createEmptyStages() {
+  return {
+    atk: 0,
+    def: 0,
+    spa: 0,
+    spd: 0,
+    spe: 0,
+    accuracy: 0,
+    evasion: 0,
+  };
+}
+
+function normalizeStages(rawStages) {
+  const normalized = createEmptyStages();
+  for (const key of STAGE_STAT_KEYS) {
+    const raw = Number(rawStages?.[key] ?? 0);
+    const clamped = Math.max(
+      STAGE_MIN,
+      Math.min(STAGE_MAX, Number.isFinite(raw) ? Math.trunc(raw) : 0),
+    );
+    normalized[key] = clamped;
+  }
+  return normalized;
+}
+
+function getStageMultiplier(stage, type = "stat") {
+  const n = Math.max(
+    STAGE_MIN,
+    Math.min(STAGE_MAX, Math.trunc(Number(stage) || 0)),
+  );
+  if (type === "accuracy") {
+    return n >= 0 ? (3 + n) / 3 : 3 / (3 - n);
+  }
+  return n >= 0 ? (2 + n) / 2 : 2 / (2 - n);
+}
+
+function getModifiedStat(mon, key, stages) {
+  const base = getStat(mon, key);
+  if (key === "hp") return base;
+  const mult = getStageMultiplier(stages?.[key] ?? 0, "stat");
+  return Math.max(1, Math.floor(base * mult));
+}
+
+function getActionSpeed(mon, stages) {
+  let speed = getModifiedStat(mon, "spe", stages);
+  if (mon?.status === "paralysis") speed = Math.max(1, Math.floor(speed * 0.5));
+  return speed;
+}
+
+function ensureBattleStages(state) {
+  if (!state.playerStages) state.playerStages = [];
+  if (!state.enemyStages) state.enemyStages = [];
+
+  for (let i = 0; i < state.player.active.length; i++) {
+    state.playerStages[i] = normalizeStages(state.playerStages[i]);
+  }
+  state.playerStages.length = state.player.active.length;
+
+  for (let i = 0; i < state.enemy.active.length; i++) {
+    state.enemyStages[i] = normalizeStages(state.enemyStages[i]);
+  }
+  state.enemyStages.length = state.enemy.active.length;
+}
+
+function clearStagesOnSwitch(state, side, slot) {
+  if (side === "player") state.playerStages[slot] = createEmptyStages();
+  else state.enemyStages[slot] = createEmptyStages();
+}
+
+function clearStagesForFreshActives(state) {
+  for (let i = 0; i < state.player.active.length; i++) {
+    if (state.player.active[i]?.justSwitchedIn)
+      clearStagesOnSwitch(state, "player", i);
+  }
+  for (let i = 0; i < state.enemy.active.length; i++) {
+    if (state.enemy.active[i]?.justSwitchedIn)
+      clearStagesOnSwitch(state, "enemy", i);
+  }
+}
+
 // ── Damage formula ────────────────────────────────────────────────────────────
-function calcDamage(attacker, move, defender, rng, log) {
+function calcDamage(
+  attacker,
+  move,
+  defender,
+  rng,
+  log,
+  attackerStages,
+  defenderStages,
+) {
   // NOTE: Accuracy/evasion checks are resolved in the move-action block before
   // this function is called, so calcDamage assumes the move has already hit.
   if (!move.power) return { dmg: 0, typeEff: 1 };
   const lvl = attacker.level;
   const isSpecial = move.category === "special";
-  const atkStat = getStat(attacker, isSpecial ? "spa" : "atk");
-  const defStat = getStat(defender, isSpecial ? "spd" : "def");
+  const atkStat = getModifiedStat(
+    attacker,
+    isSpecial ? "spa" : "atk",
+    attackerStages,
+  );
+  const defStat = getModifiedStat(
+    defender,
+    isSpecial ? "spd" : "def",
+    defenderStages,
+  );
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const typeEff = effectiveness(move.type, defender.types);
   const roll = 0.85 + rng.next() * 0.15;
 
   // Base damage
-  let dmg = Math.floor(Math.floor(2 * lvl / 5 + 2) * move.power * atkStat / defStat / 50 + 2);
+  let dmg = Math.floor(
+    (Math.floor((2 * lvl) / 5 + 2) * move.power * atkStat) / defStat / 50 + 2,
+  );
 
   // Burn modifier (halves physical damage)
-  if (attacker.status === "burn" && move.category === "physical") dmg = Math.floor(dmg * 0.5);
+  if (attacker.status === "burn" && move.category === "physical")
+    dmg = Math.floor(dmg * 0.5);
 
   // Spread modifier (AoE moves deal 75% per target)
   if (move.target && move.target !== "single") dmg = Math.floor(dmg * 0.75);
 
   // Crit (1/24 chance, 1.5x)
-  const isCrit = rng.next() < (1 / 24);
+  const isCrit = rng.next() < 1 / 24;
   if (isCrit) {
     dmg = Math.floor(dmg * 1.5);
     if (log) log.push("A critical hit!");
@@ -144,7 +296,7 @@ function abilityNameFromId(abilityId) {
   if (!abilityId) return "its Ability";
   return String(abilityId)
     .split("_")
-    .map((part) => part ? part[0].toUpperCase() + part.slice(1) : part)
+    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
     .join(" ");
 }
 
@@ -154,17 +306,43 @@ function isLowHp(mon) {
 
 function moveMakesContact(move) {
   return Boolean(
-    move?.makesContact === true
-    || move?.contact === true
-    || move?.flags?.contact === true
+    move?.makesContact === true ||
+    move?.contact === true ||
+    move?.flags?.contact === true,
   );
 }
 
 function canApplyStatus(target, statusId) {
   if (!target || target.fainted || (target.currentHp ?? 0) <= 0) return false;
   if (target.status) return false;
-  if (statusId === "paralysis" && (target.types ?? []).includes("electric")) return false;
+  const types = target.types ?? [];
+  if (statusId === "paralysis" && types.includes("electric")) return false;
+  if (
+    (statusId === "poison" || statusId === "badly_poisoned") &&
+    (types.includes("poison") || types.includes("steel"))
+  )
+    return false;
+  if (statusId === "burn" && types.includes("fire")) return false;
+  if (statusId === "freeze" && types.includes("ice")) return false;
   return true;
+}
+
+function ensureStatusState(mon) {
+  if (!mon) return;
+  if (typeof mon.statusTurns !== "number") mon.statusTurns = 0;
+  if (typeof mon.confusionTurns !== "number") mon.confusionTurns = 0;
+}
+
+function statusLabel(statusId) {
+  const map = {
+    paralysis: "paralyzed",
+    poison: "poisoned",
+    badly_poisoned: "badly poisoned",
+    burn: "burned",
+    freeze: "frozen",
+    sleep: "asleep",
+  };
+  return map[statusId] ?? statusId;
 }
 
 const ABILITY_HOOKS = {
@@ -226,23 +404,22 @@ function getMoveSecondaryEffects(move) {
   if (!move) return [];
   if (Array.isArray(move.secondaryEffects)) return move.secondaryEffects;
   if (Array.isArray(move.secondaries)) return move.secondaries;
-  if (move.secondary && typeof move.secondary === "object") return [move.secondary];
+  if (move.secondary && typeof move.secondary === "object")
+    return [move.secondary];
   return [];
 }
 
-function applyMoveSecondaryEffects({
-  attacker,
-  defender,
-  move,
-  rng,
-  log,
-}) {
-  const receiveSecondaryResult = callAbilityHook(defender, "onReceiveSecondary", {
-    source: attacker,
-    move,
-    rng,
-    log,
-  });
+function applyMoveSecondaryEffects({ attacker, defender, move, rng, log }) {
+  const receiveSecondaryResult = callAbilityHook(
+    defender,
+    "onReceiveSecondary",
+    {
+      source: attacker,
+      move,
+      rng,
+      log,
+    },
+  );
   if (receiveSecondaryResult?.ignoreSecondary) return;
 
   const effects = getMoveSecondaryEffects(move);
@@ -252,7 +429,22 @@ function applyMoveSecondaryEffects({
     const statusId = effect.status ?? effect.statusId ?? null;
     if (statusId && canApplyStatus(defender, statusId)) {
       defender.status = statusId;
-      log.push(`${defender.name} was afflicted with ${statusId}!`);
+      ensureStatusState(defender);
+      if (statusId === "sleep")
+        defender.statusTurns = 1 + Math.floor(rng.next() * 3); // 1-3 turns
+      log.push(`${defender.name} was ${statusLabel(statusId)}!`);
+    }
+    const volatileStatus = effect.volatileStatus ?? effect.volatile ?? null;
+    if (
+      volatileStatus === "confusion" &&
+      (defender.currentHp ?? 0) > 0 &&
+      !defender.fainted
+    ) {
+      ensureStatusState(defender);
+      if (defender.confusionTurns <= 0) {
+        defender.confusionTurns = 2 + Math.floor(rng.next() * 4); // 2-5 turns
+        log.push(`${defender.name} became confused!`);
+      }
     }
   }
 }
@@ -270,28 +462,65 @@ function isValidTarget(state, side, slot) {
 }
 
 // ── Damage estimate ────────────────────────────────────────────────────────────
-function estimateDamage(attacker, move, defender) {
+function estimateDamage(
+  attacker,
+  move,
+  defender,
+  attackerStages,
+  defenderStages,
+) {
   if (!move.power) return 0;
   const lvl = attacker.level;
   const isSpecial = move.category === "special";
-  const atkStat = getStat(attacker, isSpecial ? "spa" : "atk");
-  const defStat = getStat(defender, isSpecial ? "spd" : "def");
+  const atkStat = getModifiedStat(
+    attacker,
+    isSpecial ? "spa" : "atk",
+    attackerStages,
+  );
+  const defStat = getModifiedStat(
+    defender,
+    isSpecial ? "spd" : "def",
+    defenderStages,
+  );
   const stab = attacker.types.includes(move.type) ? 1.5 : 1;
   const typeEff = effectiveness(move.type, defender.types);
-  return Math.max(1, Math.floor(
-    Math.floor(Math.floor(2 * lvl / 5 + 2) * move.power * atkStat / defStat / 50 + 2)
-    * stab * typeEff * 0.925
-  ));
+  return Math.max(
+    1,
+    Math.floor(
+      Math.floor(
+        (Math.floor((2 * lvl) / 5 + 2) * move.power * atkStat) / defStat / 50 +
+          2,
+      ) *
+        stab *
+        typeEff *
+        0.925,
+    ),
+  );
 }
 
 // ── Smart retarget ────────────────────────────────────────────────────────────
-function chooseSmartTarget(state, attacker, move, originalTargetSide) {
-  const enemySideState = originalTargetSide === "enemy" ? state.enemy : state.player;
+function chooseSmartTarget(
+  state,
+  attacker,
+  move,
+  originalTargetSide,
+  attackerStages,
+) {
+  const enemySideState =
+    originalTargetSide === "enemy" ? state.enemy : state.player;
+  const defenderStageList =
+    originalTargetSide === "enemy" ? state.enemyStages : state.playerStages;
   const candidates = [];
   for (let slot = 0; slot < enemySideState.active.length; slot++) {
     const poke = enemySideState.active[slot];
     if (!poke || poke.fainted || poke.currentHp <= 0) continue;
-    const est = estimateDamage(attacker, move, poke);
+    const est = estimateDamage(
+      attacker,
+      move,
+      poke,
+      attackerStages,
+      defenderStageList?.[slot],
+    );
     const typeEff = effectiveness(move.type, poke.types);
     const canKO = est >= poke.currentHp ? 100000 : 0;
     const hpPct = poke.currentHp / poke.maxHp;
@@ -309,7 +538,9 @@ function chooseSmartTarget(state, attacker, move, originalTargetSide) {
 
 // ── Auto-replace fainted slot from bench ─────────────────────────────────────
 function autoReplace(sideState, activeIdx, label, log) {
-  const benchIdx = sideState.bench.findIndex(p => p && !p.fainted && (p.currentHp ?? 0) > 0);
+  const benchIdx = sideState.bench.findIndex(
+    (p) => p && !p.fainted && (p.currentHp ?? 0) > 0,
+  );
   if (benchIdx === -1) return null;
   const incoming = sideState.bench[benchIdx];
   const fainted = sideState.active[activeIdx];
@@ -319,13 +550,14 @@ function autoReplace(sideState, activeIdx, label, log) {
   return incoming;
 }
 
-
 function normalizeTeam(sideState) {
   if (!sideState?.active || !sideState?.bench) return;
   for (let i = 0; i < sideState.active.length; i++) {
     const p = sideState.active[i];
     if (p && !p.fainted && (p.currentHp ?? 0) > 0) continue;
-    const benchIdx = sideState.bench.findIndex((b) => b && !b.fainted && (b.currentHp ?? 0) > 0);
+    const benchIdx = sideState.bench.findIndex(
+      (b) => b && !b.fainted && (b.currentHp ?? 0) > 0,
+    );
     if (benchIdx === -1) {
       sideState.active[i] = null;
       continue;
@@ -337,7 +569,7 @@ function normalizeTeam(sideState) {
 }
 // ── Enemy AI ──────────────────────────────────────────────────────────────────
 function enemyPickMove(poke, playerActive) {
-  const targets = playerActive.filter(p => isAlive(p));
+  const targets = playerActive.filter((p) => isAlive(p));
   if (targets.length === 0) return null;
   const target = targets[0];
   let bestMove = poke.moves[0];
@@ -347,18 +579,154 @@ function enemyPickMove(poke, playerActive) {
     const eff = effectiveness(mv.type, target.types);
     const stab = poke.types.includes(mv.type) ? 1.5 : 1;
     const score = mv.power * eff * stab;
-    if (score > bestScore) { bestScore = score; bestMove = mv; }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = mv;
+    }
   }
   return { type: "move", moveId: bestMove.id, targetIdx: 0 };
+}
+
+function getStageSide(state, side) {
+  return side === "player" ? state.playerStages : state.enemyStages;
+}
+
+function applyStageChange(targetStages, stageChanges) {
+  const outcomes = [];
+  for (const stat of STAGE_STAT_KEYS) {
+    const delta = Number(stageChanges?.[stat] ?? 0);
+    if (!delta) continue;
+    const before = targetStages[stat];
+    const after = Math.max(
+      STAGE_MIN,
+      Math.min(STAGE_MAX, before + Math.trunc(delta)),
+    );
+    targetStages[stat] = after;
+    if (after !== before) outcomes.push({ stat, delta: after - before });
+  }
+  return outcomes;
+}
+
+function formatStageDelta(delta) {
+  return delta > 0 ? "rose" : "fell";
+}
+
+function applyStatusMoveEffects({
+  move,
+  attacker,
+  attackerSideState,
+  target,
+  attackerStages,
+  targetStages,
+  allTargetStages,
+  allTargets,
+  log,
+}) {
+  const stageEffect = move?.effects?.stageChanges;
+  if (!stageEffect) return false;
+
+  let anyApplied = false;
+  const applyTo = [];
+  if (stageEffect.target === "self") {
+    applyTo.push({ mon: attacker, stages: attackerStages });
+  } else if (stageEffect.target === "all_opponents") {
+    for (let i = 0; i < allTargetStages.length; i++) {
+      applyTo.push({ mon: allTargets?.[i], stages: allTargetStages[i] });
+    }
+  } else if (stageEffect.target === "all_allies") {
+    for (let i = 0; i < attackerSideState.active.length; i++) {
+      applyTo.push({
+        mon: attackerSideState.active[i],
+        stages: attackerSideState.stages?.[i],
+      });
+    }
+  } else {
+    applyTo.push({ mon: target, stages: targetStages });
+  }
+
+  for (const entry of applyTo) {
+    if (!entry?.mon || entry.mon.fainted || (entry.mon.currentHp ?? 0) <= 0)
+      continue;
+    const outcomes = applyStageChange(entry.stages, stageEffect.changes);
+    if (outcomes.length === 0) {
+      log.push(`${entry.mon.name}'s stats couldn't be changed further.`);
+      continue;
+    }
+    anyApplied = true;
+    for (const result of outcomes) {
+      const magnitude = Math.abs(result.delta);
+      const amountText = magnitude === 2 ? "sharply " : "";
+      log.push(
+        `${entry.mon.name}'s ${result.stat} ${amountText}${formatStageDelta(result.delta)}!`,
+      );
+    }
+  }
+  return anyApplied;
+}
+
+function resolvePreMoveStatus({ actor, side, rng, log, ownStages }) {
+  ensureStatusState(actor);
+  const actorLabel =
+    side === "player" ? `Your ${actor.name}` : `Rival's ${actor.name}`;
+
+  if (actor.confusionTurns > 0) {
+    actor.confusionTurns = Math.max(0, actor.confusionTurns - 1);
+    if (rng.next() < 1 / 3) {
+      const atkStat = getModifiedStat(actor, "atk", ownStages);
+      const defStat = getModifiedStat(actor, "def", ownStages);
+      const selfHit = Math.max(
+        1,
+        Math.floor((42 * 40 * atkStat) / Math.max(1, defStat) / 50) + 2,
+      );
+      actor.currentHp = Math.max(0, actor.currentHp - selfHit);
+      log.push(
+        `${actorLabel} is confused and hurt itself for ${selfHit} damage!`,
+      );
+      if (actor.currentHp === 0) actor.fainted = true;
+      return { canAct: false };
+    }
+    log.push(`${actorLabel} fought through confusion!`);
+  }
+
+  if (actor.status === "sleep") {
+    actor.statusTurns = Math.max(0, (actor.statusTurns ?? 0) - 1);
+    if (actor.statusTurns > 0) {
+      log.push(`${actorLabel} is fast asleep!`);
+      return { canAct: false };
+    }
+    actor.status = null;
+    log.push(`${actorLabel} woke up!`);
+  }
+
+  if (actor.status === "freeze") {
+    if (rng.next() < 0.2) {
+      actor.status = null;
+      log.push(`${actorLabel} thawed out!`);
+    } else {
+      log.push(`${actorLabel} is frozen solid!`);
+      return { canAct: false };
+    }
+  }
+
+  if (actor.status === "paralysis" && rng.next() < 0.25) {
+    log.push(`${actorLabel} is paralyzed! It can't move!`);
+    return { canAct: false };
+  }
+
+  return { canAct: true };
 }
 
 function enemyPickSwitch(activeIdx, sideState, playerActive) {
   const poke = sideState.active[activeIdx];
   if (!poke || poke.fainted) return -1;
   if (poke.currentHp / poke.maxHp >= 0.25) return -1;
-  const healthyBench = sideState.bench.map((p, i) => ({ p, i })).filter(({ p }) => isAlive(p));
+  const healthyBench = sideState.bench
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => isAlive(p));
   if (healthyBench.length === 0) return -1;
-  const playerTarget = [...playerActive].filter(p => isAlive(p)).sort((a, b) => b.currentHp - a.currentHp)[0];
+  const playerTarget = [...playerActive]
+    .filter((p) => isAlive(p))
+    .sort((a, b) => b.currentHp - a.currentHp)[0];
   if (!playerTarget) return -1;
   let best = healthyBench[0];
   let bestScore = -1;
@@ -366,33 +734,50 @@ function enemyPickSwitch(activeIdx, sideState, playerActive) {
     let score = 0;
     for (const mv of p.moves) {
       if (!mv.power) continue;
-      score = Math.max(score, effectiveness(mv.type, playerTarget.types) * mv.power);
+      score = Math.max(
+        score,
+        effectiveness(mv.type, playerTarget.types) * mv.power,
+      );
     }
-    if (score > bestScore) { bestScore = score; best = { p, i }; }
+    if (score > bestScore) {
+      bestScore = score;
+      best = { p, i };
+    }
   }
   return best.i;
 }
 
 // ── Relic helpers (inlined — no local imports) ────────────────────────────────
 const UNEVOLVED_SPECIES_SET = new Set([
-  1,4,7,10,13,16,19,21,23,25,27,29,32,35,37,39,41,43,46,48,50,52,54,56,58,
-  60,63,66,69,72,74,77,79,81,83,84,86,88,90,92,96,98,100,102,104,106,107,108,
-  109,111,113,114,115,116,118,120,122,123,124,125,126,127,128,129,131,132,
-  133,138,140,143,144,145,146,147,150,151
+  1, 4, 7, 10, 13, 16, 19, 21, 23, 25, 27, 29, 32, 35, 37, 39, 41, 43, 46, 48,
+  50, 52, 54, 56, 58, 60, 63, 66, 69, 72, 74, 77, 79, 81, 83, 84, 86, 88, 90,
+  92, 96, 98, 100, 102, 104, 106, 107, 108, 109, 111, 113, 114, 115, 116, 118,
+  120, 122, 123, 124, 125, 126, 127, 128, 129, 131, 132, 133, 138, 140, 143,
+  144, 145, 146, 147, 150, 151,
 ]);
 function hasRelic(relics, id) {
-  return Array.isArray(relics) && relics.some(r => r.id === id);
+  return Array.isArray(relics) && relics.some((r) => r.id === id);
 }
 function relicDamageMultiplier(relics, attacker, isFirstActionThisBattle) {
   let mult = 1.0;
-  if (hasRelic(relics, "cracked_everstone") && attacker && UNEVOLVED_SPECIES_SET.has(attacker.speciesId)) mult *= 1.15;
+  if (
+    hasRelic(relics, "cracked_everstone") &&
+    attacker &&
+    UNEVOLVED_SPECIES_SET.has(attacker.speciesId)
+  )
+    mult *= 1.15;
   if (hasRelic(relics, "ether_lens")) mult *= 1.05;
-  if (hasRelic(relics, "surge_battery") && isFirstActionThisBattle) mult *= 1.20;
+  if (hasRelic(relics, "surge_battery") && isFirstActionThisBattle) mult *= 1.2;
   return mult;
 }
 function relicDefenseMultiplier(relics, defender) {
   let mult = 1.0;
-  if (hasRelic(relics, "cracked_everstone") && defender && UNEVOLVED_SPECIES_SET.has(defender.speciesId)) mult *= 0.90;
+  if (
+    hasRelic(relics, "cracked_everstone") &&
+    defender &&
+    UNEVOLVED_SPECIES_SET.has(defender.speciesId)
+  )
+    mult *= 0.9;
   return mult;
 }
 
@@ -409,28 +794,36 @@ function getExpForLevel(level, curve) {
   if (level <= 1) return 0;
   const n = level;
   switch (curve) {
-    case "Fast":        return Math.floor(4 * n * n * n / 5);
-    case "Medium Fast": return n * n * n;
-    case "Medium Slow": return Math.floor(6 / 5 * n * n * n - 15 * n * n + 100 * n - 140);
-    case "Slow":        return Math.floor(5 * n * n * n / 4);
+    case "Fast":
+      return Math.floor((4 * n * n * n) / 5);
+    case "Medium Fast":
+      return n * n * n;
+    case "Medium Slow":
+      return Math.floor((6 / 5) * n * n * n - 15 * n * n + 100 * n - 140);
+    case "Slow":
+      return Math.floor((5 * n * n * n) / 4);
     case "Erratic": {
-      if (n <= 50)  return Math.floor(n * n * n * (100 - n) / 50);
-      if (n <= 68)  return Math.floor(n * n * n * (150 - n) / 100);
-      if (n <= 98)  return Math.floor(n * n * n * Math.floor((1911 - 10 * n) / 3) / 500);
-      return Math.floor(n * n * n * (160 - n) / 100);
+      if (n <= 50) return Math.floor((n * n * n * (100 - n)) / 50);
+      if (n <= 68) return Math.floor((n * n * n * (150 - n)) / 100);
+      if (n <= 98)
+        return Math.floor((n * n * n * Math.floor((1911 - 10 * n) / 3)) / 500);
+      return Math.floor((n * n * n * (160 - n)) / 100);
     }
     case "Fluctuating": {
-      if (n <= 15)  return Math.floor(n * n * n * (Math.floor((n + 1) / 3) + 24) / 50);
-      if (n <= 35)  return Math.floor(n * n * n * (n + 14) / 50);
-      return Math.floor(n * n * n * (Math.floor(n / 2) + 32) / 50);
+      if (n <= 15)
+        return Math.floor((n * n * n * (Math.floor((n + 1) / 3) + 24)) / 50);
+      if (n <= 35) return Math.floor((n * n * n * (n + 14)) / 50);
+      return Math.floor((n * n * n * (Math.floor(n / 2) + 32)) / 50);
     }
-    default:            return n * n * n; // Medium Fast fallback
+    default:
+      return n * n * n; // Medium Fast fallback
   }
 }
 
 function getLevelFromExp(exp, curve) {
   if (exp <= 0) return 1;
-  let lo = 1, hi = 100;
+  let lo = 1,
+    hi = 100;
   while (lo < hi) {
     const mid = Math.floor((lo + hi + 1) / 2);
     if (getExpForLevel(mid, curve) <= exp) lo = mid;
@@ -441,52 +834,312 @@ function getLevelFromExp(exp, curve) {
 
 // Official base exp yields for Kanto 1-151 (Gen 1 / FRLG)
 const BASE_EXP_YIELDS = {
-  1:64,2:142,3:263,4:62,5:142,6:267,7:63,8:142,9:265,10:39,11:72,12:198,
-  13:39,14:72,15:220,16:50,17:122,18:239,19:51,20:145,21:52,22:162,23:58,
-  24:177,25:112,26:218,27:64,28:177,29:55,30:128,31:227,32:55,33:128,34:227,
-  35:68,36:188,37:60,38:197,39:76,40:197,41:54,42:171,43:78,44:132,45:184,
-  46:74,47:141,48:128,49:202,50:45,51:157,52:69,53:163,54:80,55:175,56:74,
-  57:176,58:91,59:213,60:77,61:145,62:230,63:75,64:145,65:250,66:75,67:145,
-  68:250,69:60,70:138,71:191,72:71,73:205,74:73,75:148,76:218,77:82,78:175,
-  79:99,80:199,81:65,82:165,83:94,84:65,85:166,86:65,87:166,88:90,89:218,
-  90:75,91:199,92:95,93:180,94:261,95:78,96:64,97:176,98:65,99:173,100:66,
-  101:172,102:98,103:207,104:78,105:173,106:114,107:114,108:165,109:95,110:175,
-  111:111,112:234,113:255,114:166,115:218,116:66,117:170,118:83,119:198,120:83,
-  121:207,122:136,123:187,124:137,125:172,126:172,127:200,128:172,129:40,130:239,
-  131:207,132:101,133:65,134:197,135:197,136:197,137:130,138:71,139:164,140:71,
-  141:170,142:215,143:189,144:216,145:216,146:216,147:60,148:147,149:270,150:340,151:270,
+  1: 64,
+  2: 142,
+  3: 263,
+  4: 62,
+  5: 142,
+  6: 267,
+  7: 63,
+  8: 142,
+  9: 265,
+  10: 39,
+  11: 72,
+  12: 198,
+  13: 39,
+  14: 72,
+  15: 220,
+  16: 50,
+  17: 122,
+  18: 239,
+  19: 51,
+  20: 145,
+  21: 52,
+  22: 162,
+  23: 58,
+  24: 177,
+  25: 112,
+  26: 218,
+  27: 64,
+  28: 177,
+  29: 55,
+  30: 128,
+  31: 227,
+  32: 55,
+  33: 128,
+  34: 227,
+  35: 68,
+  36: 188,
+  37: 60,
+  38: 197,
+  39: 76,
+  40: 197,
+  41: 54,
+  42: 171,
+  43: 78,
+  44: 132,
+  45: 184,
+  46: 74,
+  47: 141,
+  48: 128,
+  49: 202,
+  50: 45,
+  51: 157,
+  52: 69,
+  53: 163,
+  54: 80,
+  55: 175,
+  56: 74,
+  57: 176,
+  58: 91,
+  59: 213,
+  60: 77,
+  61: 145,
+  62: 230,
+  63: 75,
+  64: 145,
+  65: 250,
+  66: 75,
+  67: 145,
+  68: 250,
+  69: 60,
+  70: 138,
+  71: 191,
+  72: 71,
+  73: 205,
+  74: 73,
+  75: 148,
+  76: 218,
+  77: 82,
+  78: 175,
+  79: 99,
+  80: 199,
+  81: 65,
+  82: 165,
+  83: 94,
+  84: 65,
+  85: 166,
+  86: 65,
+  87: 166,
+  88: 90,
+  89: 218,
+  90: 75,
+  91: 199,
+  92: 95,
+  93: 180,
+  94: 261,
+  95: 78,
+  96: 64,
+  97: 176,
+  98: 65,
+  99: 173,
+  100: 66,
+  101: 172,
+  102: 98,
+  103: 207,
+  104: 78,
+  105: 173,
+  106: 114,
+  107: 114,
+  108: 165,
+  109: 95,
+  110: 175,
+  111: 111,
+  112: 234,
+  113: 255,
+  114: 166,
+  115: 218,
+  116: 66,
+  117: 170,
+  118: 83,
+  119: 198,
+  120: 83,
+  121: 207,
+  122: 136,
+  123: 187,
+  124: 137,
+  125: 172,
+  126: 172,
+  127: 200,
+  128: 172,
+  129: 40,
+  130: 239,
+  131: 207,
+  132: 101,
+  133: 65,
+  134: 197,
+  135: 197,
+  136: 197,
+  137: 130,
+  138: 71,
+  139: 164,
+  140: 71,
+  141: 170,
+  142: 215,
+  143: 189,
+  144: 216,
+  145: 216,
+  146: 216,
+  147: 60,
+  148: 147,
+  149: 270,
+  150: 340,
+  151: 270,
 };
 
 // Official growth rates for Kanto 1-151
 const GROWTH_RATES = {
-  1:"Medium Slow",2:"Medium Slow",3:"Medium Slow",4:"Medium Slow",5:"Medium Slow",
-  6:"Medium Slow",7:"Medium Slow",8:"Medium Slow",9:"Medium Slow",10:"Fast",11:"Fast",
-  12:"Fast",13:"Fast",14:"Fast",15:"Fast",16:"Medium Fast",17:"Medium Fast",18:"Medium Fast",
-  19:"Medium Fast",20:"Medium Fast",21:"Medium Fast",22:"Medium Fast",23:"Medium Fast",
-  24:"Medium Fast",25:"Medium Fast",26:"Medium Fast",27:"Medium Fast",28:"Medium Fast",
-  29:"Medium Slow",30:"Medium Slow",31:"Medium Slow",32:"Medium Slow",33:"Medium Slow",
-  34:"Medium Slow",35:"Fast",36:"Fast",37:"Medium Fast",38:"Medium Fast",39:"Fast",40:"Fast",
-  41:"Medium Fast",42:"Medium Fast",43:"Medium Slow",44:"Medium Slow",45:"Medium Slow",
-  46:"Medium Fast",47:"Medium Fast",48:"Medium Fast",49:"Medium Fast",50:"Medium Fast",
-  51:"Medium Fast",52:"Medium Fast",53:"Medium Fast",54:"Medium Fast",55:"Medium Fast",
-  56:"Medium Fast",57:"Medium Fast",58:"Medium Slow",59:"Medium Slow",60:"Medium Slow",
-  61:"Medium Slow",62:"Medium Slow",63:"Medium Slow",64:"Medium Slow",65:"Medium Slow",
-  66:"Medium Fast",67:"Medium Fast",68:"Medium Fast",69:"Medium Slow",70:"Medium Slow",
-  71:"Medium Slow",72:"Slow",73:"Slow",74:"Medium Slow",75:"Medium Slow",76:"Medium Slow",
-  77:"Medium Fast",78:"Medium Fast",79:"Slow",80:"Slow",81:"Medium Fast",82:"Medium Fast",
-  83:"Medium Fast",84:"Medium Fast",85:"Medium Fast",86:"Medium Fast",87:"Medium Fast",
-  88:"Medium Fast",89:"Medium Fast",90:"Fast",91:"Slow",92:"Medium Fast",93:"Medium Fast",
-  94:"Medium Slow",95:"Medium Fast",96:"Fast",97:"Fast",98:"Medium Fast",99:"Medium Fast",
-  100:"Medium Fast",101:"Medium Fast",102:"Medium Slow",103:"Medium Slow",104:"Medium Slow",
-  105:"Medium Slow",106:"Medium Fast",107:"Medium Fast",108:"Medium Slow",109:"Medium Fast",
-  110:"Medium Fast",111:"Slow",112:"Slow",113:"Fast",114:"Medium Slow",115:"Slow",
-  116:"Medium Fast",117:"Medium Fast",118:"Medium Fast",119:"Slow",120:"Slow",121:"Slow",
-  122:"Medium Fast",123:"Medium Slow",124:"Medium Slow",125:"Medium Slow",126:"Medium Slow",
-  127:"Slow",128:"Slow",129:"Slow",130:"Slow",131:"Slow",132:"Medium Fast",
-  133:"Medium Fast",134:"Medium Fast",135:"Medium Fast",136:"Medium Fast",137:"Medium Fast",
-  138:"Medium Fast",139:"Medium Fast",140:"Medium Fast",141:"Medium Fast",142:"Slow",
-  143:"Slow",144:"Slow",145:"Slow",146:"Slow",147:"Slow",148:"Slow",149:"Slow",150:"Slow",
-  151:"Medium Slow",
+  1: "Medium Slow",
+  2: "Medium Slow",
+  3: "Medium Slow",
+  4: "Medium Slow",
+  5: "Medium Slow",
+  6: "Medium Slow",
+  7: "Medium Slow",
+  8: "Medium Slow",
+  9: "Medium Slow",
+  10: "Fast",
+  11: "Fast",
+  12: "Fast",
+  13: "Fast",
+  14: "Fast",
+  15: "Fast",
+  16: "Medium Fast",
+  17: "Medium Fast",
+  18: "Medium Fast",
+  19: "Medium Fast",
+  20: "Medium Fast",
+  21: "Medium Fast",
+  22: "Medium Fast",
+  23: "Medium Fast",
+  24: "Medium Fast",
+  25: "Medium Fast",
+  26: "Medium Fast",
+  27: "Medium Fast",
+  28: "Medium Fast",
+  29: "Medium Slow",
+  30: "Medium Slow",
+  31: "Medium Slow",
+  32: "Medium Slow",
+  33: "Medium Slow",
+  34: "Medium Slow",
+  35: "Fast",
+  36: "Fast",
+  37: "Medium Fast",
+  38: "Medium Fast",
+  39: "Fast",
+  40: "Fast",
+  41: "Medium Fast",
+  42: "Medium Fast",
+  43: "Medium Slow",
+  44: "Medium Slow",
+  45: "Medium Slow",
+  46: "Medium Fast",
+  47: "Medium Fast",
+  48: "Medium Fast",
+  49: "Medium Fast",
+  50: "Medium Fast",
+  51: "Medium Fast",
+  52: "Medium Fast",
+  53: "Medium Fast",
+  54: "Medium Fast",
+  55: "Medium Fast",
+  56: "Medium Fast",
+  57: "Medium Fast",
+  58: "Medium Slow",
+  59: "Medium Slow",
+  60: "Medium Slow",
+  61: "Medium Slow",
+  62: "Medium Slow",
+  63: "Medium Slow",
+  64: "Medium Slow",
+  65: "Medium Slow",
+  66: "Medium Fast",
+  67: "Medium Fast",
+  68: "Medium Fast",
+  69: "Medium Slow",
+  70: "Medium Slow",
+  71: "Medium Slow",
+  72: "Slow",
+  73: "Slow",
+  74: "Medium Slow",
+  75: "Medium Slow",
+  76: "Medium Slow",
+  77: "Medium Fast",
+  78: "Medium Fast",
+  79: "Slow",
+  80: "Slow",
+  81: "Medium Fast",
+  82: "Medium Fast",
+  83: "Medium Fast",
+  84: "Medium Fast",
+  85: "Medium Fast",
+  86: "Medium Fast",
+  87: "Medium Fast",
+  88: "Medium Fast",
+  89: "Medium Fast",
+  90: "Fast",
+  91: "Slow",
+  92: "Medium Fast",
+  93: "Medium Fast",
+  94: "Medium Slow",
+  95: "Medium Fast",
+  96: "Fast",
+  97: "Fast",
+  98: "Medium Fast",
+  99: "Medium Fast",
+  100: "Medium Fast",
+  101: "Medium Fast",
+  102: "Medium Slow",
+  103: "Medium Slow",
+  104: "Medium Slow",
+  105: "Medium Slow",
+  106: "Medium Fast",
+  107: "Medium Fast",
+  108: "Medium Slow",
+  109: "Medium Fast",
+  110: "Medium Fast",
+  111: "Slow",
+  112: "Slow",
+  113: "Fast",
+  114: "Medium Slow",
+  115: "Slow",
+  116: "Medium Fast",
+  117: "Medium Fast",
+  118: "Medium Fast",
+  119: "Slow",
+  120: "Slow",
+  121: "Slow",
+  122: "Medium Fast",
+  123: "Medium Slow",
+  124: "Medium Slow",
+  125: "Medium Slow",
+  126: "Medium Slow",
+  127: "Slow",
+  128: "Slow",
+  129: "Slow",
+  130: "Slow",
+  131: "Slow",
+  132: "Medium Fast",
+  133: "Medium Fast",
+  134: "Medium Fast",
+  135: "Medium Fast",
+  136: "Medium Fast",
+  137: "Medium Fast",
+  138: "Medium Fast",
+  139: "Medium Fast",
+  140: "Medium Fast",
+  141: "Medium Fast",
+  142: "Slow",
+  143: "Slow",
+  144: "Slow",
+  145: "Slow",
+  146: "Slow",
+  147: "Slow",
+  148: "Slow",
+  149: "Slow",
+  150: "Slow",
+  151: "Medium Slow",
 };
 
 function getGrowthRateForSpecies(speciesId) {
@@ -504,7 +1157,10 @@ const XP_MULT_3V3 = 0.7;
 function calcXpYield(enemyLevel, enemySpeciesId, isTrainerOwned = true) {
   const b = getBaseExpYield(enemySpeciesId);
   const a = isTrainerOwned ? 1.5 : 1.0;
-  return Math.max(1, Math.floor(Math.floor((a * b * enemyLevel) / 7) * XP_MULT_3V3));
+  return Math.max(
+    1,
+    Math.floor(Math.floor((a * b * enemyLevel) / 7) * XP_MULT_3V3),
+  );
 }
 
 function recomputeStats(poke) {
@@ -516,9 +1172,9 @@ function recomputeStats(poke) {
 // No EVs are awarded from battle — this is the hook for future sources
 // (events, relics, camp training, shops).
 
-const EV_STAT_CAP  = 252;
+const EV_STAT_CAP = 252;
 const EV_TOTAL_CAP = 510;
-const EV_STAT_ORDER = ["hp","atk","def","spa","spd","spe"];
+const EV_STAT_ORDER = ["hp", "atk", "def", "spa", "spd", "spe"];
 
 /**
  * Ensure an EVs object has all six stats, each clamped to [0, 252],
@@ -570,10 +1226,10 @@ function grantEvsToPoke(poke, evGains, log, sourceLabel) {
   if (!poke || !evGains) return;
 
   const before = normalizeEvs(poke.evs ?? {});
-  const after  = applyEvGain(before, evGains);
+  const after = applyEvGain(before, evGains);
 
   // Check if anything actually changed
-  const changed = EV_STAT_ORDER.filter(s => after[s] !== before[s]);
+  const changed = EV_STAT_ORDER.filter((s) => after[s] !== before[s]);
   if (changed.length === 0) return;
 
   poke.evs = after;
@@ -598,8 +1254,8 @@ function grantEvsToPoke(poke, evGains, log, sourceLabel) {
 
   if (Array.isArray(log)) {
     const parts = changed
-      .filter(s => after[s] > before[s])
-      .map(s => `+${after[s] - before[s]} ${s}`);
+      .filter((s) => after[s] > before[s])
+      .map((s) => `+${after[s] - before[s]} ${s}`);
     if (parts.length > 0) {
       const label = sourceLabel ? ` (${sourceLabel})` : "";
       log.push(`[EV] ${poke.name} gained EVs${label}: ${parts.join(", ")}`);
@@ -609,9 +1265,9 @@ function grantEvsToPoke(poke, evGains, log, sourceLabel) {
 
 // Learnsets — must mirror components/db/learnsets.js (keyed by speciesId integer)
 const LEVEL_UP_LEARNSETS = {
-  1:  [{ level: 7, moveId: "vine_whip" }],
-  4:  [{ level: 7, moveId: "ember" }],
-  7:  [{ level: 7, moveId: "water_gun" }],
+  1: [{ level: 7, moveId: "vine_whip" }],
+  4: [{ level: 7, moveId: "ember" }],
+  7: [{ level: 7, moveId: "water_gun" }],
   10: [],
   16: [{ level: 9, moveId: "quick_attack" }],
   17: [],
@@ -624,21 +1280,125 @@ const LEVEL_UP_LEARNSETS = {
   26: [],
   33: [{ level: 9, moveId: "quick_attack" }],
   52: [{ level: 9, moveId: "quick_attack" }],
-  133:[{ level: 9, moveId: "quick_attack" }],
+  133: [{ level: 9, moveId: "quick_attack" }],
 };
 
 // Minimal move data for level-up moves (just enough to add to movesets)
 const MOVE_DATA = {
-  vine_whip:    { id: "vine_whip",    name: "Vine Whip",    type: "grass",    category: "physical", power: 45,  pp: 25, priority: 0 },
-  ember:        { id: "ember",        name: "Ember",        type: "fire",     category: "special",  power: 40,  pp: 25, priority: 0 },
-  water_gun:    { id: "water_gun",    name: "Water Gun",    type: "water",    category: "special",  power: 40,  pp: 25, priority: 0 },
-  quick_attack: { id: "quick_attack", name: "Quick Attack", type: "normal",   category: "physical", power: 40,  pp: 30, priority: 1 },
-  tackle:       { id: "tackle",       name: "Tackle",       type: "normal",   category: "physical", power: 40,  pp: 35, priority: 0 },
-  scratch:      { id: "scratch",      name: "Scratch",      type: "normal",   category: "physical", power: 40,  pp: 35, priority: 0 },
-  growl:        { id: "growl",        name: "Growl",        type: "normal",   category: "status",   power: null,pp: 40, priority: 0 },
-  thunder_shock:{ id: "thunder_shock",name: "ThunderShock", type: "electric", category: "special",  power: 40,  pp: 30, priority: 0 },
-  string_shot:  { id: "string_shot",  name: "String Shot",  type: "bug",      category: "status",   power: null,pp: 40, priority: 0 },
-  tail_whip:    { id: "tail_whip",    name: "Tail Whip",    type: "normal",   category: "status",   power: null,pp: 30, priority: 0 },
+  vine_whip: {
+    id: "vine_whip",
+    name: "Vine Whip",
+    type: "grass",
+    category: "physical",
+    power: 45,
+    pp: 25,
+    priority: 0,
+  },
+  ember: {
+    id: "ember",
+    name: "Ember",
+    type: "fire",
+    category: "special",
+    power: 40,
+    pp: 25,
+    priority: 0,
+    secondaryEffects: [{ chance: 10, status: "burn" }],
+  },
+  water_gun: {
+    id: "water_gun",
+    name: "Water Gun",
+    type: "water",
+    category: "special",
+    power: 40,
+    pp: 25,
+    priority: 0,
+  },
+  quick_attack: {
+    id: "quick_attack",
+    name: "Quick Attack",
+    type: "normal",
+    category: "physical",
+    power: 40,
+    pp: 30,
+    priority: 1,
+  },
+  tackle: {
+    id: "tackle",
+    name: "Tackle",
+    type: "normal",
+    category: "physical",
+    power: 40,
+    pp: 35,
+    priority: 0,
+  },
+  scratch: {
+    id: "scratch",
+    name: "Scratch",
+    type: "normal",
+    category: "physical",
+    power: 40,
+    pp: 35,
+    priority: 0,
+  },
+  growl: {
+    id: "growl",
+    name: "Growl",
+    type: "normal",
+    category: "status",
+    power: null,
+    pp: 40,
+    priority: 0,
+    accuracy: 100,
+    effects: {
+      stageChanges: { target: "all_opponents", changes: { atk: -1 } },
+    },
+  },
+  thunder_shock: {
+    id: "thunder_shock",
+    name: "ThunderShock",
+    type: "electric",
+    category: "special",
+    power: 40,
+    pp: 30,
+    priority: 0,
+  },
+  string_shot: {
+    id: "string_shot",
+    name: "String Shot",
+    type: "bug",
+    category: "status",
+    power: null,
+    pp: 40,
+    priority: 0,
+    accuracy: 95,
+    effects: {
+      stageChanges: { target: "all_opponents", changes: { spe: -1 } },
+    },
+  },
+  tail_whip: {
+    id: "tail_whip",
+    name: "Tail Whip",
+    type: "normal",
+    category: "status",
+    power: null,
+    pp: 30,
+    priority: 0,
+    accuracy: 100,
+    effects: {
+      stageChanges: { target: "all_opponents", changes: { def: -1 } },
+    },
+  },
+  growth: {
+    id: "growth",
+    name: "Growth",
+    type: "normal",
+    category: "status",
+    power: null,
+    pp: 20,
+    priority: 0,
+    accuracy: null,
+    effects: { stageChanges: { target: "self", changes: { atk: 1, spa: 1 } } },
+  },
 };
 
 // Apply XP to a Pokémon and handle level-ups. Returns queued learn prompts.
@@ -646,7 +1406,9 @@ function applyXpToPoke(poke, xpAmount, log) {
   if (!poke || xpAmount <= 0) return [];
   const beforeExp = poke.exp ?? 0;
   poke.exp = beforeExp + xpAmount;
-  log.push(`${poke.name} gained ${xpAmount} Exp. Points! [DEV: ${beforeExp} → ${poke.exp}]`);
+  log.push(
+    `${poke.name} gained ${xpAmount} Exp. Points! [DEV: ${beforeExp} → ${poke.exp}]`,
+  );
 
   const curve = getGrowthRateForSpecies(poke.speciesId);
   const learnQueue = [];
@@ -666,7 +1428,10 @@ function applyXpToPoke(poke, xpAmount, log) {
     };
     poke.maxHp = newStats.hp;
     // Gen-like: gain HP from level up
-    poke.currentHp = Math.max(0, poke.currentHp + Math.max(0, newStats.hp - oldMaxHp));
+    poke.currentHp = Math.max(
+      0,
+      poke.currentHp + Math.max(0, newStats.hp - oldMaxHp),
+    );
     poke.currentHp = Math.min(poke.currentHp, poke.maxHp);
     log.push(`${poke.name} grew to Lv.${poke.level}!`);
 
@@ -676,7 +1441,7 @@ function applyXpToPoke(poke, xpAmount, log) {
       if (entry.level === poke.level) {
         const moveData = MOVE_DATA[entry.moveId];
         if (!moveData) continue;
-        const alreadyHas = poke.moves.some(m => m.id === entry.moveId);
+        const alreadyHas = poke.moves.some((m) => m.id === entry.moveId);
         if (alreadyHas) continue;
 
         if (poke.moves.length < 4) {
@@ -685,7 +1450,12 @@ function applyXpToPoke(poke, xpAmount, log) {
           log.push(`${poke.name} learned ${moveData.name}!`);
         } else {
           // Queue learn prompt for UI
-          learnQueue.push({ pokeName: poke.name, pokeRef: poke, moveData, level: poke.level });
+          learnQueue.push({
+            pokeName: poke.name,
+            pokeRef: poke,
+            moveData,
+            level: poke.level,
+          });
         }
       }
     }
@@ -703,11 +1473,27 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch, log) {
     const poke = state.player.active[cmd.actorSlot];
     if (!poke || poke.fainted || poke.justSwitchedIn) continue;
     if (cmd.type === "switch") {
-      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: SWITCH_PRIORITY, speed: getStat(poke, "spe"), isSwitch: true });
+      actions.push({
+        side: "player",
+        activeIdx: cmd.actorSlot,
+        poke,
+        cmd,
+        priority: SWITCH_PRIORITY,
+        speed: getActionSpeed(poke, state.playerStages?.[cmd.actorSlot]),
+        isSwitch: true,
+      });
     } else if (cmd.type === "item") {
-      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, cmd, priority: 6, speed: getStat(poke, "spe"), isItem: true });
+      actions.push({
+        side: "player",
+        activeIdx: cmd.actorSlot,
+        poke,
+        cmd,
+        priority: 6,
+        speed: getActionSpeed(poke, state.playerStages?.[cmd.actorSlot]),
+        isItem: true,
+      });
     } else {
-      const move = poke.moves.find(m => m.id === cmd.moveId);
+      const move = poke.moves.find((m) => m.id === cmd.moveId);
       if (!move) continue;
       const remainingPp = move.currentPp ?? move.pp;
       if (remainingPp <= 0) {
@@ -715,7 +1501,18 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch, log) {
         continue;
       }
       const enemyTargetIdx = cmd.target?.slot ?? 0;
-      actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, move, cmd, priority: move.priority ?? 0, speed: getStat(poke, "spe"), isSwitch: false, isItem: false, enemyTargetIdx });
+      actions.push({
+        side: "player",
+        activeIdx: cmd.actorSlot,
+        poke,
+        move,
+        cmd,
+        priority: move.priority ?? 0,
+        speed: getActionSpeed(poke, state.playerStages?.[cmd.actorSlot]),
+        isSwitch: false,
+        isItem: false,
+        enemyTargetIdx,
+      });
     }
   }
 
@@ -723,22 +1520,45 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch, log) {
     const poke = state.enemy.active[ei];
     if (!poke || poke.fainted || poke.justSwitchedIn) continue;
     if (allowEnemySwitch) {
-      const switchBenchIdx = enemyPickSwitch(ei, state.enemy, state.player.active);
+      const switchBenchIdx = enemyPickSwitch(
+        ei,
+        state.enemy,
+        state.player.active,
+      );
       if (switchBenchIdx >= 0) {
-        actions.push({ side: "enemy", activeIdx: ei, poke, cmd: { type: "switch", benchIdx: switchBenchIdx }, priority: SWITCH_PRIORITY, speed: getStat(poke, "spe"), isSwitch: true, benchIdx: switchBenchIdx });
+        actions.push({
+          side: "enemy",
+          activeIdx: ei,
+          poke,
+          cmd: { type: "switch", benchIdx: switchBenchIdx },
+          priority: SWITCH_PRIORITY,
+          speed: getActionSpeed(poke, state.enemyStages?.[ei]),
+          isSwitch: true,
+          benchIdx: switchBenchIdx,
+        });
         continue;
       }
     }
     const movePick = enemyPickMove(poke, state.player.active);
     if (!movePick) continue;
-    const move = poke.moves.find(m => m.id === movePick.moveId);
+    const move = poke.moves.find((m) => m.id === movePick.moveId);
     if (!move) continue;
     const remainingPp = move.currentPp ?? move.pp;
     if (remainingPp <= 0) {
       log.push(`${poke.name} has no PP left for ${move.name}!`);
       continue;
     }
-    actions.push({ side: "enemy", activeIdx: ei, poke, move, priority: move.priority ?? 0, speed: getStat(poke, "spe"), isSwitch: false, isItem: false, playerTargetIdx: movePick.targetIdx });
+    actions.push({
+      side: "enemy",
+      activeIdx: ei,
+      poke,
+      move,
+      priority: move.priority ?? 0,
+      speed: getActionSpeed(poke, state.enemyStages?.[ei]),
+      isSwitch: false,
+      isItem: false,
+      playerTargetIdx: movePick.targetIdx,
+    });
   }
 
   actions.sort((a, b) => {
@@ -755,14 +1575,18 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch, log) {
 function validateSwitch(cmd, state) {
   const { actorSlot } = cmd;
   const benchIdx = cmd.target?.slot;
-  if (actorSlot === undefined || actorSlot === null) return "Switch missing actorSlot.";
-  if (benchIdx === undefined || benchIdx === null) return "Switch missing target.slot (bench index).";
+  if (actorSlot === undefined || actorSlot === null)
+    return "Switch missing actorSlot.";
+  if (benchIdx === undefined || benchIdx === null)
+    return "Switch missing target.slot (bench index).";
   const actor = state.player.active[actorSlot];
   if (!actor) return `No active Pokémon at slot ${actorSlot}.`;
   const bench = state.player.bench[benchIdx];
   if (!bench) return `No bench Pokémon at index ${benchIdx}.`;
-  if (bench.fainted) return `${bench.name} has fainted and cannot be switched in.`;
-  if (state.player.active.some(p => p === bench)) return `${bench.name} is already active.`;
+  if (bench.fainted)
+    return `${bench.name} has fainted and cannot be switched in.`;
+  if (state.player.active.some((p) => p === bench))
+    return `${bench.name} is already active.`;
   return null;
 }
 
@@ -774,9 +1598,12 @@ function validateItem(cmd, state, inventory) {
   const allPlayer = [...state.player.active, ...state.player.bench];
   const targetPoke = allPlayer[target?.partyIndex];
   if (!targetPoke) return `No Pokémon at party index ${target?.partyIndex}`;
-  if (cfg.revives && !targetPoke.fainted) return `${targetPoke.name} hasn't fainted — can't use Revive.`;
-  if (!cfg.canTargetFainted && targetPoke.fainted) return `${targetPoke.name} has fainted — can't use ${itemId}.`;
-  if (!cfg.canTargetFainted && targetPoke.currentHp >= targetPoke.maxHp) return `${targetPoke.name}'s HP is already full!`;
+  if (cfg.revives && !targetPoke.fainted)
+    return `${targetPoke.name} hasn't fainted — can't use Revive.`;
+  if (!cfg.canTargetFainted && targetPoke.fainted)
+    return `${targetPoke.name} has fainted — can't use ${itemId}.`;
+  if (!cfg.canTargetFainted && targetPoke.currentHp >= targetPoke.maxHp)
+    return `${targetPoke.name}'s HP is already full!`;
   return null;
 }
 
@@ -828,18 +1655,30 @@ Deno.serve(async (req) => {
 
     const { runId, battleId, playerCommands } = await req.json();
     if (!runId || !battleId || !playerCommands)
-      return Response.json({ error: "runId, battleId, playerCommands required" }, { status: 400 });
+      return Response.json(
+        { error: "runId, battleId, playerCommands required" },
+        { status: 400 },
+      );
 
     const battles = await base44.entities.Battle.filter({ id: battleId });
     const battle = battles[0];
-    if (!battle) return Response.json({ error: "Battle not found" }, { status: 404 });
-    if (battle.status !== "active") return Response.json({ error: "Battle already finished" }, { status: 400 });
+    if (!battle)
+      return Response.json({ error: "Battle not found" }, { status: 404 });
+    if (battle.status !== "active")
+      return Response.json(
+        { error: "Battle already finished" },
+        { status: 400 },
+      );
 
     // Load run for inventory + modifiers (xp share)
     const runs = await base44.asServiceRole.entities.Run.filter({ id: runId });
     const run = runs[0];
     if (!run) return Response.json({ error: "Run not found" }, { status: 404 });
-    const inventory = run.results?.progress?.inventory ?? { potion: 0, revive: 0, bait: 0 };
+    const inventory = run.results?.progress?.inventory ?? {
+      potion: 0,
+      revive: 0,
+      bait: 0,
+    };
     const runRelics = run.results?.progress?.relics ?? [];
 
     // XP share: xp_share_on is default; bench gets XP unless xp_share_off is explicitly set
@@ -851,7 +1690,9 @@ Deno.serve(async (req) => {
     for (const cmd of playerCommands) {
       const actorPoke = battle.state.player.active[cmd.actorSlot];
       if (!actorPoke) {
-        console.warn(`[commitTurn] Ignoring command for empty active slot ${cmd.actorSlot}`);
+        console.warn(
+          `[commitTurn] Ignoring command for empty active slot ${cmd.actorSlot}`,
+        );
         continue;
       }
       if (cmd.type === "switch") {
@@ -861,7 +1702,10 @@ Deno.serve(async (req) => {
         const err = validateItem(cmd, battle.state, inventory);
         if (err) return Response.json({ error: err }, { status: 400 });
       } else if (cmd.type !== "move") {
-        return Response.json({ error: `Unknown action type: ${cmd.type}` }, { status: 400 });
+        return Response.json(
+          { error: `Unknown action type: ${cmd.type}` },
+          { status: 400 },
+        );
       }
       validatedCommands.push(cmd);
     }
@@ -881,17 +1725,32 @@ Deno.serve(async (req) => {
 
     normalizeTeam(state.player);
     normalizeTeam(state.enemy);
+    ensureBattleStages(state);
+    clearStagesForFreshActives(state);
 
     // Clear justSwitchedIn flags from previous turn
-    for (const p of [...state.player.active, ...state.player.bench, ...state.enemy.active, ...state.enemy.bench]) {
+    for (const p of [
+      ...state.player.active,
+      ...state.player.bench,
+      ...state.enemy.active,
+      ...state.enemy.bench,
+    ]) {
       if (p) p.justSwitchedIn = false;
     }
 
     const allowEnemySwitch = !state.enemySwitchUsed;
-    const actions = buildActions(playerCommands_, state, rng, allowEnemySwitch, log);
+    const actions = buildActions(
+      playerCommands_,
+      state,
+      rng,
+      allowEnemySwitch,
+      log,
+    );
 
     for (const a of actions) {
-      actionOrder.push(`${a.side}:${a.isSwitch ? "switch" : a.isItem ? `item:${a.cmd?.itemId}` : a.move?.id ?? "?"} (activeIdx ${a.activeIdx}, pri ${a.priority}, spd ${a.speed})`);
+      actionOrder.push(
+        `${a.side}:${a.isSwitch ? "switch" : a.isItem ? `item:${a.cmd?.itemId}` : (a.move?.id ?? "?")} (activeIdx ${a.activeIdx}, pri ${a.priority}, spd ${a.speed})`,
+      );
     }
 
     // ── Resolve actions ────────────────────────────────────────────────────────
@@ -911,6 +1770,7 @@ Deno.serve(async (req) => {
           if (bench && !bench.fainted && (bench.currentHp ?? 0) > 0) {
             state.player.active[activeIdx] = bench;
             state.player.bench[benchIdx] = poke;
+            clearStagesOnSwitch(state, "player", activeIdx);
             log.push(`${poke.name} was recalled. Go, ${bench.name}!`);
           }
         } else {
@@ -919,6 +1779,7 @@ Deno.serve(async (req) => {
           if (bench && !bench.fainted && (bench.currentHp ?? 0) > 0) {
             state.enemy.active[activeIdx] = bench;
             state.enemy.bench[benchIdx] = poke;
+            clearStagesOnSwitch(state, "enemy", activeIdx);
             log.push(`Rival recalled ${poke.name} and sent out ${bench.name}!`);
             state.enemySwitchUsed = true;
           }
@@ -930,21 +1791,35 @@ Deno.serve(async (req) => {
       if (isItem) {
         const { itemId, target } = action.cmd;
         const cfg = ITEM_CONFIG[itemId];
-        if (!cfg) { log.push(`Unknown item: ${itemId}!`); continue; }
+        if (!cfg) {
+          log.push(`Unknown item: ${itemId}!`);
+          continue;
+        }
 
         // partyIndex is stable: 0-2 = active slots, 3-5 = bench slots
         const allPlayer = [...state.player.active, ...state.player.bench];
         const partyIdx = target?.partyIndex;
-        const targetPoke = partyIdx !== undefined && partyIdx !== null ? allPlayer[partyIdx] : null;
-        if (!targetPoke) { log.push(`No Pokémon at party index ${partyIdx}!`); continue; }
-        console.log(`[commitTurn] Item target partyIndex=${partyIdx} name=${targetPoke.name}`);
+        const targetPoke =
+          partyIdx !== undefined && partyIdx !== null
+            ? allPlayer[partyIdx]
+            : null;
+        if (!targetPoke) {
+          log.push(`No Pokémon at party index ${partyIdx}!`);
+          continue;
+        }
+        console.log(
+          `[commitTurn] Item target partyIndex=${partyIdx} name=${targetPoke.name}`,
+        );
 
         inventory[itemId] = Math.max(0, (inventory[itemId] ?? 0) - 1);
         inventoryDelta[itemId] = (inventoryDelta[itemId] ?? 0) - 1;
 
         if (itemId === "potion") {
           if (!targetPoke.fainted && targetPoke.currentHp < targetPoke.maxHp) {
-            const healed = Math.min(cfg.healAmount, targetPoke.maxHp - targetPoke.currentHp);
+            const healed = Math.min(
+              cfg.healAmount,
+              targetPoke.maxHp - targetPoke.currentHp,
+            );
             targetPoke.currentHp += healed;
             log.push(`You used a Potion on ${targetPoke.name}! +${healed} HP.`);
           } else {
@@ -956,7 +1831,9 @@ Deno.serve(async (req) => {
             targetPoke.currentHp = halfHp;
             targetPoke.fainted = false;
             targetPoke.status = null;
-            log.push(`You used a Revive on ${targetPoke.name}! It recovered to half HP.`);
+            log.push(
+              `You used a Revive on ${targetPoke.name}! It recovered to half HP.`,
+            );
           } else {
             log.push(`Revive had no effect on ${targetPoke.name}.`);
           }
@@ -967,23 +1844,43 @@ Deno.serve(async (req) => {
       // ── Move ────────────────────────────────────────────────────────────────
       const { move } = action;
       const targetSide = side === "player" ? "enemy" : "player";
-      const originalTargetSlot = side === "player" ? (action.enemyTargetIdx ?? 0) : (action.playerTargetIdx ?? 0);
+      const ownStageList = getStageSide(state, side);
+      const targetStageList = getStageSide(state, targetSide);
+      const attackerStages = ownStageList?.[activeIdx] ?? createEmptyStages();
+      const originalTargetSlot =
+        side === "player"
+          ? (action.enemyTargetIdx ?? 0)
+          : (action.playerTargetIdx ?? 0);
       let effectiveTargetSlot = originalTargetSlot;
       let retargeted = false;
 
       if (!isValidTarget(state, targetSide, originalTargetSlot)) {
-        const smart = chooseSmartTarget(state, poke, move, targetSide);
+        const smart = chooseSmartTarget(
+          state,
+          poke,
+          move,
+          targetSide,
+          attackerStages,
+        );
         if (!smart) continue;
         effectiveTargetSlot = smart.slot;
         retargeted = true;
-        const targetSideState2 = targetSide === "enemy" ? state.enemy : state.player;
-        const newTargetName = targetSideState2.active[effectiveTargetSlot]?.name ?? "???";
-        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
-        log.push(`Target fainted — ${attackerLabel} retargeted to ${newTargetName}!`);
+        const targetSideState2 =
+          targetSide === "enemy" ? state.enemy : state.player;
+        const newTargetName =
+          targetSideState2.active[effectiveTargetSlot]?.name ?? "???";
+        const attackerLabel =
+          side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        log.push(
+          `Target fainted — ${attackerLabel} retargeted to ${newTargetName}!`,
+        );
       }
 
-      const targetSideState = targetSide === "enemy" ? state.enemy : state.player;
+      const targetSideState =
+        targetSide === "enemy" ? state.enemy : state.player;
       const target = targetSideState.active[effectiveTargetSlot];
+      const defenderStages =
+        targetStageList?.[effectiveTargetSlot] ?? createEmptyStages();
       if (!target || target.fainted) continue;
 
       action.originalTargetSlot = originalTargetSlot;
@@ -995,7 +1892,7 @@ Deno.serve(async (req) => {
       // 2) Roll accuracy once using the turn RNG.
       // 3) On miss, log and skip all damage/effects for this action.
       // 4) On hit, continue into damage/effect resolution.
-      const mv = poke.moves.find(m => m.id === move.id);
+      const mv = poke.moves.find((m) => m.id === move.id);
       const remainingPp = mv ? (mv.currentPp ?? mv.pp) : 0;
       if (!mv || remainingPp <= 0) {
         log.push(`${poke.name} has no PP left for ${move.name}!`);
@@ -1003,24 +1900,78 @@ Deno.serve(async (req) => {
       }
       mv.currentPp = Math.max(0, remainingPp - 1);
 
+      const preMove = resolvePreMoveStatus({
+        actor: poke,
+        side,
+        rng,
+        log,
+        ownStages: attackerStages,
+      });
+      if (!preMove.canAct) {
+        if (poke.fainted) {
+          const faintLabel =
+            side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+          log.push(`${faintLabel} fainted!`);
+          if (side === "player") {
+            const validBench = state.player.bench.filter(
+              (p) => p && !p.fainted && p.currentHp > 0,
+            );
+            if (validBench.length > 0 && !state.pendingReplacement) {
+              state.pendingReplacement = {
+                side: "player",
+                slot: activeIdx,
+                faintedName: poke.name,
+                reason: "confusion",
+              };
+            }
+          } else {
+            const replacement = autoReplace(
+              state.enemy,
+              activeIdx,
+              "Rival",
+              log,
+            );
+            if (replacement) clearStagesOnSwitch(state, "enemy", activeIdx);
+          }
+        }
+        continue;
+      }
+
       const baseAccuracy = move.accuracy ?? 100;
-      // Future hooks: fold stat stages/abilities/items into these multipliers.
-      const accuracyStageMultiplier = 1;
-      const evasionStageMultiplier = 1;
+      const accuracyStageMultiplier = getStageMultiplier(
+        attackerStages.accuracy,
+        "accuracy",
+      );
+      const evasionStageMultiplier = getStageMultiplier(
+        defenderStages.evasion,
+        "accuracy",
+      );
       const effectiveAccuracy = Math.max(
         0,
-        Math.min(100, baseAccuracy * accuracyStageMultiplier / evasionStageMultiplier)
+        Math.min(
+          100,
+          (baseAccuracy * accuracyStageMultiplier) / evasionStageMultiplier,
+        ),
       );
       const hitRoll = rng.next() * 100;
       if (hitRoll >= effectiveAccuracy) {
-        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        const attackerLabel =
+          side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
         log.push(`${attackerLabel} used ${move.name}, but it missed!`);
         continue;
       }
 
       if (move.power) {
         // Accuracy was already resolved above; this block is hit-only resolution.
-        let { dmg, typeEff } = calcDamage(poke, move, target, rng, log);
+        let { dmg, typeEff } = calcDamage(
+          poke,
+          move,
+          target,
+          rng,
+          log,
+          attackerStages,
+          defenderStages,
+        );
         const preDamageHookResult = callAbilityHook(poke, "preDamage", {
           source: poke,
           target,
@@ -1031,7 +1982,10 @@ Deno.serve(async (req) => {
           log,
         });
         if (preDamageHookResult?.damageMultiplier) {
-          dmg = Math.max(1, Math.floor(dmg * preDamageHookResult.damageMultiplier));
+          dmg = Math.max(
+            1,
+            Math.floor(dmg * preDamageHookResult.damageMultiplier),
+          );
         }
         // ── Relic damage modifiers (player attacker only) ─────────────────
         if (side === "player") {
@@ -1039,13 +1993,23 @@ Deno.serve(async (req) => {
           const offMult = relicDamageMultiplier(runRelics, poke, isFirstAction);
           const defMult = relicDefenseMultiplier(runRelics, target);
           dmg = Math.max(1, Math.floor(dmg * offMult * defMult));
-          if (isFirstAction && hasRelic(runRelics, "surge_battery")) state.surgeBatteryFired = true;
+          if (isFirstAction && hasRelic(runRelics, "surge_battery"))
+            state.surgeBatteryFired = true;
         }
         target.currentHp = Math.max(0, target.currentHp - dmg);
-        const effText = typeEff >= 2 ? " It's super effective!" : typeEff <= 0.5 ? " It's not very effective..." : "";
-        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
-        const defenderLabel = side === "player" ? `Rival's ${target.name}` : `your ${target.name}`;
-        log.push(`${attackerLabel} used ${move.name}! Dealt ${dmg} damage to ${defenderLabel}.${effText}`);
+        const effText =
+          typeEff >= 2
+            ? " It's super effective!"
+            : typeEff <= 0.5
+              ? " It's not very effective..."
+              : "";
+        const attackerLabel =
+          side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        const defenderLabel =
+          side === "player" ? `Rival's ${target.name}` : `your ${target.name}`;
+        log.push(
+          `${attackerLabel} used ${move.name}! Dealt ${dmg} damage to ${defenderLabel}.${effText}`,
+        );
 
         callAbilityHook(poke, "postHit", {
           source: poke,
@@ -1077,29 +2041,50 @@ Deno.serve(async (req) => {
 
         if (target.currentHp === 0) {
           // ── focus_charm: survive at 1 HP once per battle ─────────────────
-          if (side === "enemy" && hasRelic(runRelics, "focus_charm") && !state.focusCharmUsed) {
+          if (
+            side === "enemy" &&
+            hasRelic(runRelics, "focus_charm") &&
+            !state.focusCharmUsed
+          ) {
             target.currentHp = 1;
             state.focusCharmUsed = true;
             log.push(`${target.name} held on with Focus Charm!`);
           } else {
-          target.fainted = true;
-          const faintLabel = side === "player" ? `Rival's ${target.name}` : `Your ${target.name}`;
-          log.push(`${faintLabel} fainted!`);
-
+            target.fainted = true;
+            const faintLabel =
+              side === "player"
+                ? `Rival's ${target.name}`
+                : `Your ${target.name}`;
+            log.push(`${faintLabel} fainted!`);
           } // end focus_charm else
           if (side === "player") {
-            const replacement = autoReplace(state.enemy, effectiveTargetSlot, "Rival", log);
-            if (replacement) replacement.justSwitchedIn = true;
+            const replacement = autoReplace(
+              state.enemy,
+              effectiveTargetSlot,
+              "Rival",
+              log,
+            );
+            if (replacement) {
+              replacement.justSwitchedIn = true;
+              clearStagesOnSwitch(state, "enemy", effectiveTargetSlot);
+            }
 
             // ── XP Award on enemy faint ────────────────────────────────────
             const enemyKey = `${effectiveTargetSlot}_${target.speciesId}_${target.level}`;
             if (!state.xpAwardedEnemyIds[enemyKey]) {
               state.xpAwardedEnemyIds[enemyKey] = true;
               // Official formula: floor((a * b * L) / 7), a=1.5 trainer, b=baseExpYield, L=level
-              const xpYield = calcXpYield(target.level ?? 5, target.speciesId, true);
+              const xpYield = calcXpYield(
+                target.level ?? 5,
+                target.speciesId,
+                true,
+              );
 
               // Award to each eligible recipient (full XP each — no splitting)
-              const allPlayerPokes = [...state.player.active, ...(xpShareBench ? state.player.bench : [])];
+              const allPlayerPokes = [
+                ...state.player.active,
+                ...(xpShareBench ? state.player.bench : []),
+              ];
               for (const recipient of allPlayerPokes) {
                 if (!recipient) continue;
                 const prompts = applyXpToPoke(recipient, xpYield, log);
@@ -1115,16 +2100,38 @@ Deno.serve(async (req) => {
               }
             }
           } else {
-            const validBench = state.player.bench.filter(p => p && !p.fainted && p.currentHp > 0);
+            const validBench = state.player.bench.filter(
+              (p) => p && !p.fainted && p.currentHp > 0,
+            );
             if (validBench.length > 0 && !state.pendingReplacement) {
-              state.pendingReplacement = { side: "player", slot: effectiveTargetSlot, faintedName: target.name, reason: "fainted" };
+              state.pendingReplacement = {
+                side: "player",
+                slot: effectiveTargetSlot,
+                faintedName: target.name,
+                reason: "fainted",
+              };
             }
             // Player's active that was KO'd — any auto-fill will be marked justSwitchedIn in chooseReplacement
           }
         }
       } else {
-        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        const attackerLabel =
+          side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
         log.push(`${attackerLabel} used ${move.name}!`);
+        applyStatusMoveEffects({
+          move,
+          attacker: poke,
+          attackerSideState: {
+            active: sideState.active,
+            stages: ownStageList,
+          },
+          target,
+          attackerStages,
+          targetStages: defenderStages,
+          allTargetStages: targetStageList,
+          allTargets: targetSideState.active,
+          log,
+        });
       }
     }
 
@@ -1135,8 +2142,15 @@ Deno.serve(async (req) => {
       if (poke.status === "burn" || poke.status === "poison") {
         const dot = Math.max(1, Math.floor(poke.maxHp / 8));
         poke.currentHp = Math.max(0, poke.currentHp - dot);
-        log.push(`Rival's ${poke.name} took ${dot} damage from ${poke.status}!`);
-        if (poke.currentHp === 0) { poke.fainted = true; log.push(`Rival's ${poke.name} fainted!`); autoReplace(state.enemy, ai, "Rival", log); }
+        log.push(
+          `Rival's ${poke.name} took ${dot} damage from ${poke.status}!`,
+        );
+        if (poke.currentHp === 0) {
+          poke.fainted = true;
+          log.push(`Rival's ${poke.name} fainted!`);
+          const replacement = autoReplace(state.enemy, ai, "Rival", log);
+          if (replacement) clearStagesOnSwitch(state, "enemy", ai);
+        }
       }
     }
     for (let ai = 0; ai < state.player.active.length; ai++) {
@@ -1149,20 +2163,37 @@ Deno.serve(async (req) => {
         if (poke.currentHp === 0) {
           poke.fainted = true;
           log.push(`Your ${poke.name} fainted!`);
-          const validBenchStatus = state.player.bench.filter(p => p && !p.fainted && p.currentHp > 0);
+          const validBenchStatus = state.player.bench.filter(
+            (p) => p && !p.fainted && p.currentHp > 0,
+          );
           if (validBenchStatus.length > 0 && !state.pendingReplacement) {
-            state.pendingReplacement = { side: "player", slot: ai, faintedName: poke.name, reason: "status" };
+            state.pendingReplacement = {
+              side: "player",
+              slot: ai,
+              faintedName: poke.name,
+              reason: "status",
+            };
           }
         }
       }
     }
 
     // ── Victory check ──────────────────────────────────────────────────────────
-    const playerAllFainted = state.player.active.every(p => !p || p.fainted) && state.player.bench.every(p => !p || p.fainted);
-    const enemyAllFainted  = state.enemy.active.every(p => !p || p.fainted)  && state.enemy.bench.every(p => !p || p.fainted);
+    const playerAllFainted =
+      state.player.active.every((p) => !p || p.fainted) &&
+      state.player.bench.every((p) => !p || p.fainted);
+    const enemyAllFainted =
+      state.enemy.active.every((p) => !p || p.fainted) &&
+      state.enemy.bench.every((p) => !p || p.fainted);
     let winner = null;
-    if (playerAllFainted) { winner = "enemy";  log.push("All your Pokémon fainted! You lost!"); }
-    if (enemyAllFainted)  { winner = "player"; log.push("All enemy Pokémon fainted! You won!"); }
+    if (playerAllFainted) {
+      winner = "enemy";
+      log.push("All your Pokémon fainted! You lost!");
+    }
+    if (enemyAllFainted) {
+      winner = "player";
+      log.push("All enemy Pokémon fainted! You won!");
+    }
 
     if (winner) {
       state.pendingReplacement = null;
@@ -1178,7 +2209,11 @@ Deno.serve(async (req) => {
     state.pendingLearnPrompts = pendingLearnPrompts;
 
     const newStatus = winner ? "finished" : "active";
-    const updatePayload: Record<string, unknown> = { state, turnNumber, status: newStatus };
+    const updatePayload: Record<string, unknown> = {
+      state,
+      turnNumber,
+      status: newStatus,
+    };
     if (winner) updatePayload.endedAt = new Date().toISOString();
 
     // ── Extract partyState for persistence (now includes exp/level) ───────────
@@ -1195,7 +2230,9 @@ Deno.serve(async (req) => {
       // Keep encounter pending during battle; resolution happens in resolveNode/resolveEncounterFromBattle.
       pendingEncounter: winner
         ? pendingEncounter
-        : (pendingEncounter ? { ...pendingEncounter, status: "pending" } : pendingEncounter),
+        : pendingEncounter
+          ? { ...pendingEncounter, status: "pending" }
+          : pendingEncounter,
     };
 
     await Promise.all([
@@ -1209,32 +2246,62 @@ Deno.serve(async (req) => {
     const nextIdx = (run?.nextActionIdx ?? 0) + 1;
     await Promise.all([
       base44.asServiceRole.entities.RunAction.create({
-        runId, idx: nextIdx,
+        runId,
+        idx: nextIdx,
         actionType: "battle_turn_commit",
-        payload: { battleId, turnNumber, playerCommands, log, rngUsed, actionOrder, inventoryDelta,
-          retargets: actions.filter(a => a.wasRetargeted).map(a => ({ side: a.side, activeIdx: a.activeIdx, originalTargetSlot: a.originalTargetSlot, finalTargetSlot: a.finalTargetSlot })) },
+        payload: {
+          battleId,
+          turnNumber,
+          playerCommands,
+          log,
+          rngUsed,
+          actionOrder,
+          inventoryDelta,
+          retargets: actions
+            .filter((a) => a.wasRetargeted)
+            .map((a) => ({
+              side: a.side,
+              activeIdx: a.activeIdx,
+              originalTargetSlot: a.originalTargetSlot,
+              finalTargetSlot: a.finalTargetSlot,
+            })),
+        },
       }),
-      base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: nextIdx }),
+      base44.asServiceRole.entities.Run.update(runId, {
+        nextActionIdx: nextIdx,
+      }),
     ]);
 
     if (winner) {
       const allPlayer = [...state.player.active, ...state.player.bench];
-      const allEnemy  = [...state.enemy.active,  ...state.enemy.bench];
-      const playerFaints = allPlayer.filter(p => p?.fainted).length;
-      const enemyFaints  = allEnemy.filter(p => p?.fainted).length;
+      const allEnemy = [...state.enemy.active, ...state.enemy.bench];
+      const playerFaints = allPlayer.filter((p) => p?.fainted).length;
+      const enemyFaints = allEnemy.filter((p) => p?.fainted).length;
       const summary = { winner, turns: turnNumber, playerFaints, enemyFaints };
       const endIdx = nextIdx + 1;
       await Promise.all([
         base44.asServiceRole.entities.RunAction.create({
-          runId, idx: endIdx,
+          runId,
+          idx: endIdx,
           actionType: "battle_end",
           payload: { battleId, summary },
         }),
-        base44.asServiceRole.entities.Run.update(runId, { nextActionIdx: endIdx }),
+        base44.asServiceRole.entities.Run.update(runId, {
+          nextActionIdx: endIdx,
+        }),
       ]);
     }
 
-    return Response.json({ state, turnNumber, winner, log, rngUsed, actionOrder, updatedInventory: inventory, pendingLearnPrompts });
+    return Response.json({
+      state,
+      turnNumber,
+      winner,
+      log,
+      rngUsed,
+      actionOrder,
+      updatedInventory: inventory,
+      pendingLearnPrompts,
+    });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
