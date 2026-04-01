@@ -140,6 +140,123 @@ function calcDamage(attacker, move, defender, rng, log) {
   return { dmg, typeEff, isCrit };
 }
 
+function abilityNameFromId(abilityId) {
+  if (!abilityId) return "its Ability";
+  return String(abilityId)
+    .split("_")
+    .map((part) => part ? part[0].toUpperCase() + part.slice(1) : part)
+    .join(" ");
+}
+
+function isLowHp(mon) {
+  return (mon.currentHp ?? 0) <= Math.floor((mon.maxHp ?? 1) / 3);
+}
+
+function moveMakesContact(move) {
+  return Boolean(
+    move?.makesContact === true
+    || move?.contact === true
+    || move?.flags?.contact === true
+  );
+}
+
+function canApplyStatus(target, statusId) {
+  if (!target || target.fainted || (target.currentHp ?? 0) <= 0) return false;
+  if (target.status) return false;
+  if (statusId === "paralysis" && (target.types ?? []).includes("electric")) return false;
+  return true;
+}
+
+const ABILITY_HOOKS = {
+  overgrow: {
+    preDamage: ({ owner, move, log }) => {
+      if (move?.type !== "grass" || !isLowHp(owner)) return null;
+      const name = abilityNameFromId(owner.abilityId);
+      log.push(`${owner.name}'s ${name} boosted ${move.name}!`);
+      return { damageMultiplier: 1.5 };
+    },
+  },
+  blaze: {
+    preDamage: ({ owner, move, log }) => {
+      if (move?.type !== "fire" || !isLowHp(owner)) return null;
+      const name = abilityNameFromId(owner.abilityId);
+      log.push(`${owner.name}'s ${name} boosted ${move.name}!`);
+      return { damageMultiplier: 1.5 };
+    },
+  },
+  torrent: {
+    preDamage: ({ owner, move, log }) => {
+      if (move?.type !== "water" || !isLowHp(owner)) return null;
+      const name = abilityNameFromId(owner.abilityId);
+      log.push(`${owner.name}'s ${name} boosted ${move.name}!`);
+      return { damageMultiplier: 1.5 };
+    },
+  },
+  static: {
+    onContact: ({ owner, source, move, rng, log }) => {
+      if (!moveMakesContact(move)) return null;
+      if (!canApplyStatus(source, "paralysis")) return null;
+      const procChance = 0.3;
+      if (rng.next() >= procChance) return null;
+      source.status = "paralysis";
+      const name = abilityNameFromId(owner.abilityId);
+      log.push(`${owner.name}'s ${name} paralyzed ${source.name} on contact!`);
+      return { statusApplied: "paralysis" };
+    },
+  },
+  shield_dust: {
+    onReceiveSecondary: ({ owner, log }) => {
+      const name = abilityNameFromId(owner.abilityId);
+      log.push(`${owner.name}'s ${name} blocked the secondary effect!`);
+      return { ignoreSecondary: true };
+    },
+  },
+};
+
+function callAbilityHook(mon, hookName, context) {
+  const abilityId = mon?.abilityId;
+  if (!abilityId) return null;
+  const ability = ABILITY_HOOKS[abilityId];
+  const hook = ability?.[hookName];
+  if (typeof hook !== "function") return null;
+  return hook({ owner: mon, ...context }) ?? null;
+}
+
+function getMoveSecondaryEffects(move) {
+  if (!move) return [];
+  if (Array.isArray(move.secondaryEffects)) return move.secondaryEffects;
+  if (Array.isArray(move.secondaries)) return move.secondaries;
+  if (move.secondary && typeof move.secondary === "object") return [move.secondary];
+  return [];
+}
+
+function applyMoveSecondaryEffects({
+  attacker,
+  defender,
+  move,
+  rng,
+  log,
+}) {
+  const receiveSecondaryResult = callAbilityHook(defender, "onReceiveSecondary", {
+    source: attacker,
+    move,
+    rng,
+    log,
+  });
+  if (receiveSecondaryResult?.ignoreSecondary) return;
+
+  const effects = getMoveSecondaryEffects(move);
+  for (const effect of effects) {
+    const chance = effect.chance ?? effect.rate ?? 100;
+    if (rng.next() * 100 >= chance) continue;
+    const statusId = effect.status ?? effect.statusId ?? null;
+    if (statusId && canApplyStatus(defender, statusId)) {
+      defender.status = statusId;
+      log.push(`${defender.name} was afflicted with ${statusId}!`);
+    }
+  }
+}
+
 // ── Null-safe alive check ─────────────────────────────────────────────────────
 function isAlive(mon) {
   return !!mon && mon.currentHp > 0 && !mon.fainted;
@@ -904,6 +1021,18 @@ Deno.serve(async (req) => {
       if (move.power) {
         // Accuracy was already resolved above; this block is hit-only resolution.
         let { dmg, typeEff } = calcDamage(poke, move, target, rng, log);
+        const preDamageHookResult = callAbilityHook(poke, "preDamage", {
+          source: poke,
+          target,
+          move,
+          side,
+          targetSide,
+          rng,
+          log,
+        });
+        if (preDamageHookResult?.damageMultiplier) {
+          dmg = Math.max(1, Math.floor(dmg * preDamageHookResult.damageMultiplier));
+        }
         // ── Relic damage modifiers (player attacker only) ─────────────────
         if (side === "player") {
           const isFirstAction = !state.surgeBatteryFired;
@@ -917,6 +1046,34 @@ Deno.serve(async (req) => {
         const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
         const defenderLabel = side === "player" ? `Rival's ${target.name}` : `your ${target.name}`;
         log.push(`${attackerLabel} used ${move.name}! Dealt ${dmg} damage to ${defenderLabel}.${effText}`);
+
+        callAbilityHook(poke, "postHit", {
+          source: poke,
+          target,
+          move,
+          side,
+          targetSide,
+          damage: dmg,
+          rng,
+          log,
+        });
+        callAbilityHook(target, "onContact", {
+          source: poke,
+          target,
+          move,
+          side: targetSide,
+          targetSide: side,
+          damage: dmg,
+          rng,
+          log,
+        });
+        applyMoveSecondaryEffects({
+          attacker: poke,
+          defender: target,
+          move,
+          rng,
+          log,
+        });
 
         if (target.currentHp === 0) {
           // ── focus_charm: survive at 1 HP once per battle ─────────────────
