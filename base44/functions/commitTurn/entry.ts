@@ -122,6 +122,8 @@ function getStat(mon, key) {
 
 // ── Damage formula ────────────────────────────────────────────────────────────
 function calcDamage(attacker, move, defender, rng, log) {
+  // NOTE: Accuracy/evasion checks are resolved in the move-action block before
+  // this function is called, so calcDamage assumes the move has already hit.
   if (!move.power) return { dmg: 0, typeEff: 1 };
   const lvl = attacker.level;
   const isSpecial = move.category === "special";
@@ -876,7 +878,31 @@ Deno.serve(async (req) => {
       action.finalTargetSlot = effectiveTargetSlot;
       action.wasRetargeted = retargeted;
 
+      // Hit-check ordering:
+      // 1) Consume PP for the selected move.
+      // 2) Roll accuracy once using the turn RNG.
+      // 3) On miss, log and skip all damage/effects for this action.
+      // 4) On hit, continue into damage/effect resolution.
+      const mv = poke.moves.find(m => m.id === move.id);
+      if (mv) mv.currentPp = Math.max(0, (mv.currentPp ?? move.pp) - 1);
+
+      const baseAccuracy = move.accuracy ?? 100;
+      // Future hooks: fold stat stages/abilities/items into these multipliers.
+      const accuracyStageMultiplier = 1;
+      const evasionStageMultiplier = 1;
+      const effectiveAccuracy = Math.max(
+        0,
+        Math.min(100, baseAccuracy * accuracyStageMultiplier / evasionStageMultiplier)
+      );
+      const hitRoll = rng.next() * 100;
+      if (hitRoll >= effectiveAccuracy) {
+        const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
+        log.push(`${attackerLabel} used ${move.name}, but it missed!`);
+        continue;
+      }
+
       if (move.power) {
+        // Accuracy was already resolved above; this block is hit-only resolution.
         let { dmg, typeEff } = calcDamage(poke, move, target, rng, log);
         // ── Relic damage modifiers (player attacker only) ─────────────────
         if (side === "player") {
@@ -891,9 +917,6 @@ Deno.serve(async (req) => {
         const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
         const defenderLabel = side === "player" ? `Rival's ${target.name}` : `your ${target.name}`;
         log.push(`${attackerLabel} used ${move.name}! Dealt ${dmg} damage to ${defenderLabel}.${effText}`);
-
-        const mv = poke.moves.find(m => m.id === move.id);
-        if (mv) mv.currentPp = Math.max(0, (mv.currentPp ?? move.pp) - 1);
 
         if (target.currentHp === 0) {
           // ── focus_charm: survive at 1 HP once per battle ─────────────────
@@ -945,8 +968,6 @@ Deno.serve(async (req) => {
       } else {
         const attackerLabel = side === "player" ? `Your ${poke.name}` : `Rival's ${poke.name}`;
         log.push(`${attackerLabel} used ${move.name}!`);
-        const mv = poke.moves.find(m => m.id === move.id);
-        if (mv) mv.currentPp = Math.max(0, (mv.currentPp ?? move.pp) - 1);
       }
     }
 
