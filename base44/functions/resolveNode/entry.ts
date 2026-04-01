@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { SPECIES_BY_ID, MOVES_BY_ID, LEARNSETS } from '../../../src/shared/staticDb.generated.js';
 
 // ── Modifier registry ──────────────────────────────────────────────────────────
 const MODIFIER_REGISTRY = {
@@ -122,36 +123,22 @@ const NODE_LABELS = {
 // Event relic drop chance (8%)
 const EVENT_RELIC_CHANCE = 0.08;
 
-const EVENT_SPECIES = {
-  10: { id: 10, name: "Caterpie", types: ["bug"], baseStats: { hp:45, atk:30, def:35, spa:20, spd:20, spe:45 }, abilities: ["shield_dust"] },
-  13: { id: 13, name: "Weedle", types: ["bug","poison"], baseStats: { hp:40, atk:35, def:30, spa:20, spd:20, spe:50 }, abilities: ["shield_dust"] },
-  16: { id: 16, name: "Pidgey", types: ["normal","flying"], baseStats: { hp:40, atk:45, def:40, spa:35, spd:35, spe:56 }, abilities: ["keen_eye"] },
-  21: { id: 21, name: "Spearow", types: ["normal","flying"], baseStats: { hp:40, atk:60, def:30, spa:31, spd:31, spe:70 }, abilities: ["keen_eye"] },
-  43: { id: 43, name: "Oddish", types: ["grass","poison"], baseStats: { hp:45, atk:50, def:55, spa:75, spd:65, spe:30 }, abilities: ["chlorophyll"] },
-  69: { id: 69, name: "Bellsprout", types: ["grass","poison"], baseStats: { hp:50, atk:75, def:35, spa:70, spd:30, spe:40 }, abilities: ["chlorophyll"] },
-};
+const EVENT_SPECIES_IDS = [10, 13, 16, 21, 43, 69];
+const EVENT_SPECIES = Object.fromEntries(EVENT_SPECIES_IDS.map((id) => [id, SPECIES_BY_ID[id]]));
 
 const EVENT_MOVES = {
-  tackle: { id: "tackle", pp: 35 },
-  string_shot: { id: "string_shot", pp: 40 },
-  poison_sting: { id: "poison_sting", pp: 35 },
-  gust: { id: "gust", pp: 35 },
-  peck: { id: "peck", pp: 35 },
-  growl: { id: "growl", pp: 40 },
-  absorb: { id: "absorb", pp: 25 },
-  growth: { id: "growth", pp: 20 },
-  vine_whip: { id: "vine_whip", pp: 25 },
+  tackle: { id: "tackle", pp: MOVES_BY_ID.tackle?.pp ?? 35 },
+  string_shot: { id: "string_shot", pp: MOVES_BY_ID.string_shot?.pp ?? 40 },
+  poison_sting: { id: "poison_sting", pp: MOVES_BY_ID.poison_sting?.pp ?? 35 },
+  gust: { id: "gust", pp: MOVES_BY_ID.gust?.pp ?? 35 },
+  peck: { id: "peck", pp: MOVES_BY_ID.peck?.pp ?? 35 },
+  growl: { id: "growl", pp: MOVES_BY_ID.growl?.pp ?? 40 },
+  absorb: { id: "absorb", pp: MOVES_BY_ID.absorb?.pp ?? 25 },
+  growth: { id: "growth", pp: MOVES_BY_ID.growth?.pp ?? 20 },
+  vine_whip: { id: "vine_whip", pp: MOVES_BY_ID.vine_whip?.pp ?? 25 },
 };
 
-
-const EVENT_LEARNSETS = {
-  10: ["tackle", "string_shot"],
-  13: ["poison_sting", "string_shot"],
-  16: ["tackle", "gust"],
-  21: ["peck", "growl"],
-  43: ["absorb", "growth"],
-  69: ["vine_whip", "growth"],
-};
+const EVENT_LEARNSETS = Object.fromEntries(EVENT_SPECIES_IDS.map((id) => [id, LEARNSETS[id]?.startMoves ?? ["tackle"]]));
 
 const EVENT_NATURES = ["Hardy","Lonely","Brave","Adamant","Naughty","Bold","Docile","Relaxed","Impish","Lax","Timid","Hasty","Serious","Jolly","Naive","Modest","Mild","Quiet","Bashful","Rash","Calm","Gentle","Sassy","Careful","Quirky"];
 
