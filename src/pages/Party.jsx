@@ -142,7 +142,12 @@ const PARTY_GENDER_RATIOS = {
   4: { male: 0.875, female: 0.125 },
   7: { male: 0.875, female: 0.125 },
   10: { male: 0.5, female: 0.5 },
+  13: { male: 0.5, female: 0.5 },
+  16: { male: 0.5, female: 0.5 },
+  21: { male: 0.5, female: 0.5 },
   25: { male: 0.5, female: 0.5 },
+  43: { male: 0.5, female: 0.5 },
+  69: { male: 0.5, female: 0.5 },
 };
 
 const NATURE_EFFECTS = {
