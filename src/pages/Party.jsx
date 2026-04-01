@@ -253,6 +253,42 @@ const MOVE_DATA = {
     target: "All enemies",
     description: "The user wags its tail cutely, making opposing Pokémon less wary. Lowers Defense.",
   },
+  poison_sting: {
+  name: "Poison Sting",
+  power: 15,
+  accuracy: 100,
+  target: "One enemy",
+  description: "A sharp poisonous stinger strikes the target.",
+},
+gust: {
+  name: "Gust",
+  power: 40,
+  accuracy: 100,
+  target: "One enemy",
+  description: "A gust of wind is whipped up by wings and launched at the target.",
+},
+peck: {
+  name: "Peck",
+  power: 35,
+  accuracy: 100,
+  target: "One enemy",
+  description: "The target is jabbed with a sharply pointed beak.",
+},
+absorb: {
+  name: "Absorb",
+  power: 20,
+  accuracy: 100,
+  target: "One enemy",
+  description: "A nutrient-draining attack that restores some HP to the user.",
+},
+growth: {
+  name: "Growth",
+  power: null,
+  accuracy: null,
+  target: "Self",
+  description: "The user’s body grows all at once, boosting battle readiness.",
+},
+
 };
 
 function hashString(str) {
