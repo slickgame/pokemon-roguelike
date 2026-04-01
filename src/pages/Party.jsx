@@ -61,6 +61,39 @@ const STARTER_SPECIES = {
       { id: "string_shot", name: "String Shot", pp: 40 },
     ],
   },
+  13: {
+    id: 13,
+    name: "Weedle",
+    types: ["bug", "poison"],
+    baseStats: { hp: 40, atk: 35, def: 30, spa: 20, spd: 20, spe: 50 },
+    abilities: ["shield_dust"],
+    startMoves: [
+      { id: "poison_sting", name: "Poison Sting", pp: 35 },
+      { id: "string_shot", name: "String Shot", pp: 40 },
+    ],
+  },
+  16: {
+    id: 16,
+    name: "Pidgey",
+    types: ["normal", "flying"],
+    baseStats: { hp: 40, atk: 45, def: 40, spa: 35, spd: 35, spe: 56 },
+    abilities: ["keen_eye"],
+    startMoves: [
+      { id: "tackle", name: "Tackle", pp: 35 },
+      { id: "gust", name: "Gust", pp: 35 },
+    ],
+  },
+  21: {
+    id: 21,
+    name: "Spearow",
+    types: ["normal", "flying"],
+    baseStats: { hp: 40, atk: 60, def: 30, spa: 31, spd: 31, spe: 70 },
+    abilities: ["keen_eye"],
+    startMoves: [
+      { id: "peck", name: "Peck", pp: 35 },
+      { id: "growl", name: "Growl", pp: 40 },
+    ],
+  },
   25: {
     id: 25,
     name: "Pikachu",
@@ -70,6 +103,28 @@ const STARTER_SPECIES = {
     startMoves: [
       { id: "thunder_shock", name: "ThunderShock", pp: 30 },
       { id: "growl", name: "Growl", pp: 40 },
+    ],
+  },
+  43: {
+    id: 43,
+    name: "Oddish",
+    types: ["grass", "poison"],
+    baseStats: { hp: 45, atk: 50, def: 55, spa: 75, spd: 65, spe: 30 },
+    abilities: ["chlorophyll"],
+    startMoves: [
+      { id: "absorb", name: "Absorb", pp: 25 },
+      { id: "growth", name: "Growth", pp: 20 },
+    ],
+  },
+  69: {
+    id: 69,
+    name: "Bellsprout",
+    types: ["grass", "poison"],
+    baseStats: { hp: 50, atk: 75, def: 35, spa: 70, spd: 30, spe: 40 },
+    abilities: ["chlorophyll"],
+    startMoves: [
+      { id: "vine_whip", name: "Vine Whip", pp: 25 },
+      { id: "growth", name: "Growth", pp: 20 },
     ],
   },
 };
