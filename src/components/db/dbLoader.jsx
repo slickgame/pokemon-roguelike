@@ -22,6 +22,15 @@ const SPECIES = [
   { id: 25, name: "Pikachu",    types: ["electric"],         baseStats: { hp:35, atk:55, def:40, spa:50, spd:50, spe:90 }, abilities: ["static"],     learnset: ["thunder_shock","growl","quick_attack"] },
   { id: 43, name: "Oddish",     types: ["grass","poison"],   baseStats: { hp:45, atk:50, def:55, spa:75, spd:65, spe:30 }, abilities: ["chlorophyll"], learnset: ["absorb","growth"] },
   { id: 69, name: "Bellsprout", types: ["grass","poison"],   baseStats: { hp:50, atk:75, def:35, spa:70, spd:30, spe:40 }, abilities: ["chlorophyll"], learnset: ["vine_whip","growth"] },
+  { id: 2,  name: "Ivysaur",    types: ["grass","poison"],   baseStats: { hp:60, atk:62, def:63, spa:80, spd:80, spe:60 }, abilities: ["overgrow"],    learnset: ["tackle","growl","vine_whip"] },
+  { id: 5,  name: "Charmeleon", types: ["fire"],             baseStats: { hp:58, atk:64, def:58, spa:80, spd:65, spe:80 }, abilities: ["blaze"],       learnset: ["scratch","growl","ember"] },
+  { id: 8,  name: "Wartortle",  types: ["water"],            baseStats: { hp:59, atk:63, def:80, spa:65, spd:80, spe:58 }, abilities: ["torrent"],     learnset: ["tackle","tail_whip","water_gun"] },
+  { id: 11, name: "Metapod",    types: ["bug"],              baseStats: { hp:50, atk:20, def:55, spa:25, spd:25, spe:30 }, abilities: ["shed_skin"],   learnset: ["tackle","string_shot"] },
+  { id: 14, name: "Kakuna",     types: ["bug","poison"],     baseStats: { hp:45, atk:25, def:50, spa:25, spd:25, spe:35 }, abilities: ["shed_skin"],   learnset: ["poison_sting","string_shot"] },
+  { id: 17, name: "Pidgeotto",  types: ["normal","flying"],  baseStats: { hp:63, atk:60, def:55, spa:50, spd:50, spe:71 }, abilities: ["keen_eye"],    learnset: ["tackle","gust"] },
+  { id: 22, name: "Fearow",     types: ["normal","flying"],  baseStats: { hp:65, atk:90, def:65, spa:61, spd:61, spe:100 }, abilities: ["keen_eye"],    learnset: ["peck","growl"] },
+  { id: 44, name: "Gloom",      types: ["grass","poison"],   baseStats: { hp:60, atk:65, def:70, spa:85, spd:75, spe:40 }, abilities: ["chlorophyll"], learnset: ["absorb","growth"] },
+  { id: 70, name: "Weepinbell", types: ["grass","poison"],   baseStats: { hp:65, atk:90, def:50, spa:85, spd:45, spe:55 }, abilities: ["chlorophyll"], learnset: ["vine_whip","growth"] },
 ];
 
 

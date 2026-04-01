@@ -72,6 +72,69 @@ const DB_SPECIES = [
     baseStats: { hp: 50, atk: 75, def: 35, spa: 70, spd: 30, spe: 40 },
     abilities: ["chlorophyll"],
   },
+  {
+    id: 2,
+    name: "Ivysaur",
+    types: ["grass", "poison"],
+    baseStats: { hp: 60, atk: 62, def: 63, spa: 80, spd: 80, spe: 60 },
+    abilities: ["overgrow"],
+  },
+  {
+    id: 5,
+    name: "Charmeleon",
+    types: ["fire"],
+    baseStats: { hp: 58, atk: 64, def: 58, spa: 80, spd: 65, spe: 80 },
+    abilities: ["blaze"],
+  },
+  {
+    id: 8,
+    name: "Wartortle",
+    types: ["water"],
+    baseStats: { hp: 59, atk: 63, def: 80, spa: 65, spd: 80, spe: 58 },
+    abilities: ["torrent"],
+  },
+  {
+    id: 11,
+    name: "Metapod",
+    types: ["bug"],
+    baseStats: { hp: 50, atk: 20, def: 55, spa: 25, spd: 25, spe: 30 },
+    abilities: ["shed_skin"],
+  },
+  {
+    id: 14,
+    name: "Kakuna",
+    types: ["bug", "poison"],
+    baseStats: { hp: 45, atk: 25, def: 50, spa: 25, spd: 25, spe: 35 },
+    abilities: ["shed_skin"],
+  },
+  {
+    id: 17,
+    name: "Pidgeotto",
+    types: ["normal", "flying"],
+    baseStats: { hp: 63, atk: 60, def: 55, spa: 50, spd: 50, spe: 71 },
+    abilities: ["keen_eye"],
+  },
+  {
+    id: 22,
+    name: "Fearow",
+    types: ["normal", "flying"],
+    baseStats: { hp: 65, atk: 90, def: 65, spa: 61, spd: 61, spe: 100 },
+    abilities: ["keen_eye"],
+  },
+  {
+    id: 44,
+    name: "Gloom",
+    types: ["grass", "poison"],
+    baseStats: { hp: 60, atk: 65, def: 70, spa: 85, spd: 75, spe: 40 },
+    abilities: ["chlorophyll"],
+  },
+  {
+    id: 70,
+    name: "Weepinbell",
+    types: ["grass", "poison"],
+    baseStats: { hp: 65, atk: 90, def: 50, spa: 85, spd: 45, spe: 55 },
+    abilities: ["chlorophyll"],
+  },
 ];
 
 // ── Learnset registry (authoritative source for starter + level-up moves) ─────
@@ -648,6 +711,11 @@ function hydrateFromPartyState(partySnap, speciesMap) {
     status: partySnap.status ?? null,
     statusTurns: 0,
     heldItem: partySnap.heldItem ?? null,
+    pendingEvolution: partySnap.pendingEvolution ?? null,
+    lastSkippedEvolutionLevel:
+      partySnap.lastSkippedEvolutionLevel === undefined
+        ? null
+        : partySnap.lastSkippedEvolutionLevel,
     moves,
     fainted: partySnap.fainted ?? false,
   };
@@ -708,6 +776,8 @@ function initPartyState(pickedIds, benchSpecies, seed) {
         fainted: false,
         status: null,
         heldItem: null,
+        pendingEvolution: null,
+        lastSkippedEvolutionLevel: null,
         moves: poke.moves.map((m) => ({
           id: m.id,
           pp: m.pp,
@@ -1009,6 +1079,11 @@ Deno.serve(async (req) => {
             fainted: poke.fainted ?? false,
             status: poke.status ?? null,
             heldItem: poke.heldItem ?? null,
+            pendingEvolution: poke.pendingEvolution ?? null,
+            lastSkippedEvolutionLevel:
+              poke.lastSkippedEvolutionLevel === undefined
+                ? null
+                : poke.lastSkippedEvolutionLevel,
             moves: (poke.moves ?? []).map((m) => ({
               id: m.id,
               pp: m.currentPp ?? m.pp,

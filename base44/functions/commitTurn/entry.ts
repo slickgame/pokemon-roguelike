@@ -1401,9 +1401,110 @@ const MOVE_DATA = {
   },
 };
 
-// Apply XP to a Pokémon and handle level-ups. Returns queued learn prompts.
+const EVOLUTION_SPECIES_REGISTRY = {
+  2: {
+    id: 2,
+    name: "Ivysaur",
+    types: ["grass", "poison"],
+    baseStats: { hp: 60, atk: 62, def: 63, spa: 80, spd: 80, spe: 60 },
+    abilities: ["overgrow"],
+  },
+  5: {
+    id: 5,
+    name: "Charmeleon",
+    types: ["fire"],
+    baseStats: { hp: 58, atk: 64, def: 58, spa: 80, spd: 65, spe: 80 },
+    abilities: ["blaze"],
+  },
+  8: {
+    id: 8,
+    name: "Wartortle",
+    types: ["water"],
+    baseStats: { hp: 59, atk: 63, def: 80, spa: 65, spd: 80, spe: 58 },
+    abilities: ["torrent"],
+  },
+  11: {
+    id: 11,
+    name: "Metapod",
+    types: ["bug"],
+    baseStats: { hp: 50, atk: 20, def: 55, spa: 25, spd: 25, spe: 30 },
+    abilities: ["shed_skin"],
+  },
+  14: {
+    id: 14,
+    name: "Kakuna",
+    types: ["bug", "poison"],
+    baseStats: { hp: 45, atk: 25, def: 50, spa: 25, spd: 25, spe: 35 },
+    abilities: ["shed_skin"],
+  },
+  17: {
+    id: 17,
+    name: "Pidgeotto",
+    types: ["normal", "flying"],
+    baseStats: { hp: 63, atk: 60, def: 55, spa: 50, spd: 50, spe: 71 },
+    abilities: ["keen_eye"],
+  },
+  22: {
+    id: 22,
+    name: "Fearow",
+    types: ["normal", "flying"],
+    baseStats: { hp: 65, atk: 90, def: 65, spa: 61, spd: 61, spe: 100 },
+    abilities: ["keen_eye"],
+  },
+  44: {
+    id: 44,
+    name: "Gloom",
+    types: ["grass", "poison"],
+    baseStats: { hp: 60, atk: 65, def: 70, spa: 85, spd: 75, spe: 40 },
+    abilities: ["chlorophyll"],
+  },
+  70: {
+    id: 70,
+    name: "Weepinbell",
+    types: ["grass", "poison"],
+    baseStats: { hp: 65, atk: 90, def: 50, spa: 85, spd: 45, spe: 55 },
+    abilities: ["chlorophyll"],
+  },
+};
+
+const EVOLUTION_REGISTRY = {
+  1: { method: "level", level: 16, targetSpeciesId: 2 },
+  4: { method: "level", level: 16, targetSpeciesId: 5 },
+  7: { method: "level", level: 16, targetSpeciesId: 8 },
+  10: { method: "level", level: 7, targetSpeciesId: 11 },
+  13: { method: "level", level: 7, targetSpeciesId: 14 },
+  16: { method: "level", level: 18, targetSpeciesId: 17 },
+  21: { method: "level", level: 20, targetSpeciesId: 22 },
+  43: { method: "level", level: 21, targetSpeciesId: 44 },
+  69: { method: "level", level: 21, targetSpeciesId: 70 },
+};
+
+function getEvolutionPromptIfEligible(poke) {
+  const evo = EVOLUTION_REGISTRY[poke.speciesId];
+  if (!evo || evo.method !== "level") return null;
+  if (poke.level < evo.level) return null;
+  if ((poke.lastSkippedEvolutionLevel ?? -1) === poke.level) return null;
+  const target = EVOLUTION_SPECIES_REGISTRY[evo.targetSpeciesId];
+  if (!target) return null;
+  return {
+    pokeName: poke.name,
+    pokeRef: poke,
+    level: poke.level,
+    fromSpeciesId: poke.speciesId,
+    fromSpeciesName: poke.name,
+    method: evo.method,
+    triggerLevel: evo.level,
+    targetSpeciesId: target.id,
+    targetSpeciesName: target.name,
+    targetTypes: target.types,
+    targetBaseStats: target.baseStats,
+    targetAbilities: target.abilities,
+  };
+}
+
+// Apply XP to a Pokémon and handle level-ups. Returns queued learn/evolution prompts.
 function applyXpToPoke(poke, xpAmount, log) {
-  if (!poke || xpAmount <= 0) return [];
+  if (!poke || xpAmount <= 0) return { learnQueue: [], evolutionQueue: [] };
   const beforeExp = poke.exp ?? 0;
   poke.exp = beforeExp + xpAmount;
   log.push(
@@ -1412,6 +1513,7 @@ function applyXpToPoke(poke, xpAmount, log) {
 
   const curve = getGrowthRateForSpecies(poke.speciesId);
   const learnQueue = [];
+  const evolutionQueue = [];
   let newLevel = getLevelFromExp(poke.exp, curve);
   while (newLevel > poke.level) {
     poke.level++;
@@ -1459,9 +1561,19 @@ function applyXpToPoke(poke, xpAmount, log) {
         }
       }
     }
+    const evoPrompt = getEvolutionPromptIfEligible(poke);
+    if (evoPrompt) {
+      poke.pendingEvolution = {
+        fromSpeciesId: evoPrompt.fromSpeciesId,
+        targetSpeciesId: evoPrompt.targetSpeciesId,
+        level: poke.level,
+        method: evoPrompt.method,
+      };
+      evolutionQueue.push(evoPrompt);
+    }
     newLevel = getLevelFromExp(poke.exp, curve);
   }
-  return learnQueue;
+  return { learnQueue, evolutionQueue };
 }
 
 // ── Build action list ─────────────────────────────────────────────────────────
@@ -1639,6 +1751,11 @@ function extractPartyState(playerSide) {
       fainted: p.fainted,
       status: p.status ?? null,
       heldItem: p.heldItem ?? null,
+      pendingEvolution: p.pendingEvolution ?? null,
+      lastSkippedEvolutionLevel:
+        p.lastSkippedEvolutionLevel === undefined
+          ? null
+          : p.lastSkippedEvolutionLevel,
       moves: (p.moves ?? []).map((m) => ({
         id: m.id,
         pp: m.currentPp ?? m.pp,
@@ -1719,6 +1836,7 @@ Deno.serve(async (req) => {
     const actionOrder = [];
     const inventoryDelta = {};
     const pendingLearnPrompts = []; // learn prompts to send to frontend
+    const pendingEvolutionPrompts = []; // evolution prompts to send to frontend
 
     // Track which enemy slots already awarded XP this turn (persisted in state)
     if (!state.xpAwardedEnemyIds) state.xpAwardedEnemyIds = {};
@@ -2088,10 +2206,25 @@ Deno.serve(async (req) => {
               for (const recipient of allPlayerPokes) {
                 if (!recipient) continue;
                 const prompts = applyXpToPoke(recipient, xpYield, log);
-                for (const prompt of prompts) {
+                for (const prompt of prompts.learnQueue) {
                   pendingLearnPrompts.push({
                     pokeName: prompt.pokeName,
                     moveData: prompt.moveData,
+                    level: prompt.level,
+                  });
+                }
+                for (const prompt of prompts.evolutionQueue) {
+                  pendingEvolutionPrompts.push({
+                    pokeName: prompt.pokeName,
+                    fromSpeciesId: prompt.fromSpeciesId,
+                    fromSpeciesName: prompt.fromSpeciesName,
+                    method: prompt.method,
+                    triggerLevel: prompt.triggerLevel,
+                    targetSpeciesId: prompt.targetSpeciesId,
+                    targetSpeciesName: prompt.targetSpeciesName,
+                    targetTypes: prompt.targetTypes,
+                    targetBaseStats: prompt.targetBaseStats,
+                    targetAbilities: prompt.targetAbilities,
                     level: prompt.level,
                   });
                 }
@@ -2207,6 +2340,7 @@ Deno.serve(async (req) => {
     state.lastRngUsed = rngUsed;
     // Store pending learn prompts in state so UI can show them
     state.pendingLearnPrompts = pendingLearnPrompts;
+    state.pendingEvolutionPrompts = pendingEvolutionPrompts;
 
     const newStatus = winner ? "finished" : "active";
     const updatePayload: Record<string, unknown> = {
@@ -2301,6 +2435,7 @@ Deno.serve(async (req) => {
       actionOrder,
       updatedInventory: inventory,
       pendingLearnPrompts,
+      pendingEvolutionPrompts,
     });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
