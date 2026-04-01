@@ -470,7 +470,13 @@
       "accuracy": 100,
       "pp": 25,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "secondaryEffects": [
+        {
+          "chance": 10,
+          "status": "burn"
+        }
+      ]
     },
     {
       "id": "growl",
@@ -481,7 +487,15 @@
       "accuracy": 100,
       "pp": 40,
       "priority": 0,
-      "target": "all_opponents"
+      "target": "all_opponents",
+      "effects": {
+        "stageChanges": {
+          "target": "all_opponents",
+          "changes": {
+            "atk": -1
+          }
+        }
+      }
     },
     {
       "id": "vine_whip",
@@ -514,7 +528,13 @@
       "accuracy": 100,
       "pp": 30,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "secondaryEffects": [
+        {
+          "chance": 10,
+          "status": "paralysis"
+        }
+      ]
     },
     {
       "id": "quick_attack",
@@ -536,7 +556,15 @@
       "accuracy": 95,
       "pp": 40,
       "priority": 0,
-      "target": "all_opponents"
+      "target": "all_opponents",
+      "effects": {
+        "stageChanges": {
+          "target": "all_opponents",
+          "changes": {
+            "spe": -1
+          }
+        }
+      }
     },
     {
       "id": "tail_whip",
@@ -547,7 +575,15 @@
       "accuracy": 100,
       "pp": 30,
       "priority": 0,
-      "target": "all_opponents"
+      "target": "all_opponents",
+      "effects": {
+        "stageChanges": {
+          "target": "all_opponents",
+          "changes": {
+            "def": -1
+          }
+        }
+      }
     },
     {
       "id": "poison_sting",
@@ -558,7 +594,13 @@
       "accuracy": 100,
       "pp": 35,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "secondaryEffects": [
+        {
+          "chance": 30,
+          "status": "poison"
+        }
+      ]
     },
     {
       "id": "gust",
@@ -591,7 +633,10 @@
       "accuracy": 100,
       "pp": 25,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "effects": {
+        "drain": 50
+      }
     },
     {
       "id": "growth",
@@ -602,7 +647,16 @@
       "accuracy": null,
       "pp": 20,
       "priority": 0,
-      "target": "self"
+      "target": "self",
+      "effects": {
+        "stageChanges": {
+          "target": "self",
+          "changes": {
+            "atk": 1,
+            "spa": 1
+          }
+        }
+      }
     }
   ],
   "abilities": [
