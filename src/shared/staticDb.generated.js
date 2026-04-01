@@ -472,7 +472,13 @@ export const STATIC_DB = {
       "accuracy": 100,
       "pp": 25,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "secondaryEffects": [
+        {
+          "chance": 10,
+          "status": "burn"
+        }
+      ]
     },
     {
       "id": "growl",
@@ -483,7 +489,15 @@ export const STATIC_DB = {
       "accuracy": 100,
       "pp": 40,
       "priority": 0,
-      "target": "all_opponents"
+      "target": "all_opponents",
+      "effects": {
+        "stageChanges": {
+          "target": "all_opponents",
+          "changes": {
+            "atk": -1
+          }
+        }
+      }
     },
     {
       "id": "vine_whip",
@@ -516,7 +530,13 @@ export const STATIC_DB = {
       "accuracy": 100,
       "pp": 30,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "secondaryEffects": [
+        {
+          "chance": 10,
+          "status": "paralysis"
+        }
+      ]
     },
     {
       "id": "quick_attack",
@@ -538,7 +558,15 @@ export const STATIC_DB = {
       "accuracy": 95,
       "pp": 40,
       "priority": 0,
-      "target": "all_opponents"
+      "target": "all_opponents",
+      "effects": {
+        "stageChanges": {
+          "target": "all_opponents",
+          "changes": {
+            "spe": -1
+          }
+        }
+      }
     },
     {
       "id": "tail_whip",
@@ -549,7 +577,15 @@ export const STATIC_DB = {
       "accuracy": 100,
       "pp": 30,
       "priority": 0,
-      "target": "all_opponents"
+      "target": "all_opponents",
+      "effects": {
+        "stageChanges": {
+          "target": "all_opponents",
+          "changes": {
+            "def": -1
+          }
+        }
+      }
     },
     {
       "id": "poison_sting",
@@ -560,7 +596,13 @@ export const STATIC_DB = {
       "accuracy": 100,
       "pp": 35,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "secondaryEffects": [
+        {
+          "chance": 30,
+          "status": "poison"
+        }
+      ]
     },
     {
       "id": "gust",
@@ -593,7 +635,10 @@ export const STATIC_DB = {
       "accuracy": 100,
       "pp": 25,
       "priority": 0,
-      "target": "single"
+      "target": "single",
+      "effects": {
+        "drain": 50
+      }
     },
     {
       "id": "growth",
@@ -604,7 +649,16 @@ export const STATIC_DB = {
       "accuracy": null,
       "pp": 20,
       "priority": 0,
-      "target": "self"
+      "target": "self",
+      "effects": {
+        "stageChanges": {
+          "target": "self",
+          "changes": {
+            "atk": 1,
+            "spa": 1
+          }
+        }
+      }
     }
   ],
   "abilities": [
@@ -1757,7 +1811,7 @@ export const STATIC_DB_SUMMARY = {
   },
   "hashes": {
     "species": "721351ebec7197d9a38acf2f376fff7496bff187dbcaf15518a5ec4b600eab11",
-    "moves": "22293ca5172be3f5a6989bf14e20343d43b89e7e04d344f4fc7cb20e9f479f6f",
+    "moves": "e13be0bede4fd1609954c37b505556ec4019f24dcf66395e694de6413fb4bc14",
     "abilities": "1b622572f767b9a2d9bc16256522abbdcb788e9d4ad0c0e1fa18a36836f539e6",
     "learnsets": "d1b9d4ff359edacbf348116b5a20c6b1d287ff1ad660b0a42f0aa94f27091949"
   }
