@@ -593,7 +593,7 @@ function applyXpToPoke(poke, xpAmount, log) {
 }
 
 // ── Build action list ─────────────────────────────────────────────────────────
-function buildActions(playerCommands, state, rng, allowEnemySwitch) {
+function buildActions(playerCommands, state, rng, allowEnemySwitch, log) {
   const SWITCH_PRIORITY = 7;
   const actions = [];
 
@@ -607,6 +607,11 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
     } else {
       const move = poke.moves.find(m => m.id === cmd.moveId);
       if (!move) continue;
+      const remainingPp = move.currentPp ?? move.pp;
+      if (remainingPp <= 0) {
+        log.push(`${poke.name} has no PP left for ${move.name}!`);
+        continue;
+      }
       const enemyTargetIdx = cmd.target?.slot ?? 0;
       actions.push({ side: "player", activeIdx: cmd.actorSlot, poke, move, cmd, priority: move.priority ?? 0, speed: getStat(poke, "spe"), isSwitch: false, isItem: false, enemyTargetIdx });
     }
@@ -626,6 +631,11 @@ function buildActions(playerCommands, state, rng, allowEnemySwitch) {
     if (!movePick) continue;
     const move = poke.moves.find(m => m.id === movePick.moveId);
     if (!move) continue;
+    const remainingPp = move.currentPp ?? move.pp;
+    if (remainingPp <= 0) {
+      log.push(`${poke.name} has no PP left for ${move.name}!`);
+      continue;
+    }
     actions.push({ side: "enemy", activeIdx: ei, poke, move, priority: move.priority ?? 0, speed: getStat(poke, "spe"), isSwitch: false, isItem: false, playerTargetIdx: movePick.targetIdx });
   }
 
@@ -776,7 +786,7 @@ Deno.serve(async (req) => {
     }
 
     const allowEnemySwitch = !state.enemySwitchUsed;
-    const actions = buildActions(playerCommands_, state, rng, allowEnemySwitch);
+    const actions = buildActions(playerCommands_, state, rng, allowEnemySwitch, log);
 
     for (const a of actions) {
       actionOrder.push(`${a.side}:${a.isSwitch ? "switch" : a.isItem ? `item:${a.cmd?.itemId}` : a.move?.id ?? "?"} (activeIdx ${a.activeIdx}, pri ${a.priority}, spd ${a.speed})`);
@@ -884,7 +894,12 @@ Deno.serve(async (req) => {
       // 3) On miss, log and skip all damage/effects for this action.
       // 4) On hit, continue into damage/effect resolution.
       const mv = poke.moves.find(m => m.id === move.id);
-      if (mv) mv.currentPp = Math.max(0, (mv.currentPp ?? move.pp) - 1);
+      const remainingPp = mv ? (mv.currentPp ?? mv.pp) : 0;
+      if (!mv || remainingPp <= 0) {
+        log.push(`${poke.name} has no PP left for ${move.name}!`);
+        continue;
+      }
+      mv.currentPp = Math.max(0, remainingPp - 1);
 
       const baseAccuracy = move.accuracy ?? 100;
       // Future hooks: fold stat stages/abilities/items into these multipliers.
