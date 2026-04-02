@@ -41,6 +41,15 @@ async function fetchAllSpeciesIds() {
   return ids;
 }
 
+async function fetchAllMoveIdsForVersionGroup() {
+  const vg = await fetchJson(`${API}/version-group/${VERSION_GROUP}`);
+  const ids = [...new Set((vg.moves ?? []).map((m) => toId(m.name)).filter(Boolean))].sort();
+  if (!ids.length) {
+    throw new Error(`No moves returned for version group ${VERSION_GROUP}.`);
+  }
+  return ids;
+}
+
 function targetFromApi(name) {
   const map = {
     selected_pokemon: 'single',
@@ -114,9 +123,32 @@ function buildMoveEffects(move) {
 
 const species = [];
 const learnsets = {};
-const moveIds = new Set();
 const abilityIds = new Set();
 const speciesIds = await fetchAllSpeciesIds();
+const moveIds = await fetchAllMoveIdsForVersionGroup();
+
+console.log(`Syncing ${moveIds.length} moves for version-group ${VERSION_GROUP}...`);
+
+const moves = [];
+for (const moveId of moveIds) {
+  const move = await fetchJson(`${API}/move/${moveId.replace(/_/g, '-')}`);
+  const { effects, secondaryEffects } = buildMoveEffects(move);
+  const entry = {
+    id: moveId,
+    name: toTitle(move.name),
+    type: toId(move.type.name),
+    category: move.damage_class.name === 'status' ? 'status' : move.damage_class.name,
+    power: move.power,
+    accuracy: move.accuracy,
+    pp: move.pp,
+    priority: move.priority,
+    target: targetFromApi(move.target?.name),
+  };
+  if (Object.keys(effects).length) entry.effects = effects;
+  if (secondaryEffects.length) entry.secondaryEffects = secondaryEffects;
+  moves.push(entry);
+}
+const allowedMoveIds = new Set(moves.map((m) => m.id));
 
 console.log(`Syncing ${speciesIds.length} species from PokeAPI...`);
 
@@ -140,8 +172,8 @@ for (const id of speciesIds) {
     const vg = m.version_group_details.find((d) => d.version_group.name === VERSION_GROUP && d.move_learn_method.name === 'level-up');
     if (!vg) continue;
     const moveId = toId(m.move.name);
+    if (!allowedMoveIds.has(moveId)) continue;
     levelUpEntries.push({ level: vg.level_learned_at, moveId });
-    moveIds.add(moveId);
   }
   levelUpEntries.sort((a, b) => a.level - b.level || a.moveId.localeCompare(b.moveId));
 
@@ -163,26 +195,6 @@ for (const id of speciesIds) {
     learnset: [...new Set([...learnsets[id].startMoves, ...levelUp.map((e) => e.moveId)])],
     genus: sp.genera.find((g) => g.language.name === 'en')?.genus ?? undefined,
   });
-}
-
-const moves = [];
-for (const moveId of [...moveIds].sort()) {
-  const move = await fetchJson(`${API}/move/${moveId.replace(/_/g, '-')}`);
-  const { effects, secondaryEffects } = buildMoveEffects(move);
-  const entry = {
-    id: moveId,
-    name: toTitle(move.name),
-    type: toId(move.type.name),
-    category: move.damage_class.name === 'status' ? 'status' : move.damage_class.name,
-    power: move.power,
-    accuracy: move.accuracy,
-    pp: move.pp,
-    priority: move.priority,
-    target: targetFromApi(move.target?.name),
-  };
-  if (Object.keys(effects).length) entry.effects = effects;
-  if (secondaryEffects.length) entry.secondaryEffects = secondaryEffects;
-  moves.push(entry);
 }
 
 const abilities = [];
