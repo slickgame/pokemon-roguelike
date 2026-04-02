@@ -16,218 +16,13 @@
         "spe": 45
       },
       "abilities": [
-        "overgrow"
+        "overgrow",
+        "chlorophyll"
       ],
       "learnset": [
         "tackle",
         "growl",
         "vine_whip"
-      ]
-    },
-    {
-      "id": 4,
-      "name": "Charmander",
-      "types": [
-        "fire"
-      ],
-      "baseStats": {
-        "hp": 39,
-        "atk": 52,
-        "def": 43,
-        "spa": 60,
-        "spd": 50,
-        "spe": 65
-      },
-      "abilities": [
-        "blaze"
-      ],
-      "learnset": [
-        "scratch",
-        "growl",
-        "ember"
-      ]
-    },
-    {
-      "id": 7,
-      "name": "Squirtle",
-      "types": [
-        "water"
-      ],
-      "baseStats": {
-        "hp": 44,
-        "atk": 48,
-        "def": 65,
-        "spa": 50,
-        "spd": 64,
-        "spe": 43
-      },
-      "abilities": [
-        "torrent"
-      ],
-      "learnset": [
-        "tackle",
-        "tail_whip",
-        "water_gun"
-      ]
-    },
-    {
-      "id": 10,
-      "name": "Caterpie",
-      "types": [
-        "bug"
-      ],
-      "baseStats": {
-        "hp": 45,
-        "atk": 30,
-        "def": 35,
-        "spa": 20,
-        "spd": 20,
-        "spe": 45
-      },
-      "abilities": [
-        "shield_dust"
-      ],
-      "learnset": [
-        "tackle",
-        "string_shot"
-      ]
-    },
-    {
-      "id": 13,
-      "name": "Weedle",
-      "types": [
-        "bug",
-        "poison"
-      ],
-      "baseStats": {
-        "hp": 40,
-        "atk": 35,
-        "def": 30,
-        "spa": 20,
-        "spd": 20,
-        "spe": 50
-      },
-      "abilities": [
-        "shield_dust"
-      ],
-      "learnset": [
-        "poison_sting",
-        "string_shot"
-      ]
-    },
-    {
-      "id": 16,
-      "name": "Pidgey",
-      "types": [
-        "normal",
-        "flying"
-      ],
-      "baseStats": {
-        "hp": 40,
-        "atk": 45,
-        "def": 40,
-        "spa": 35,
-        "spd": 35,
-        "spe": 56
-      },
-      "abilities": [
-        "keen_eye"
-      ],
-      "learnset": [
-        "tackle",
-        "gust"
-      ]
-    },
-    {
-      "id": 21,
-      "name": "Spearow",
-      "types": [
-        "normal",
-        "flying"
-      ],
-      "baseStats": {
-        "hp": 40,
-        "atk": 60,
-        "def": 30,
-        "spa": 31,
-        "spd": 31,
-        "spe": 70
-      },
-      "abilities": [
-        "keen_eye"
-      ],
-      "learnset": [
-        "peck",
-        "growl"
-      ]
-    },
-    {
-      "id": 25,
-      "name": "Pikachu",
-      "types": [
-        "electric"
-      ],
-      "baseStats": {
-        "hp": 35,
-        "atk": 55,
-        "def": 40,
-        "spa": 50,
-        "spd": 50,
-        "spe": 90
-      },
-      "abilities": [
-        "static"
-      ],
-      "learnset": [
-        "thunder_shock",
-        "growl",
-        "quick_attack"
-      ]
-    },
-    {
-      "id": 43,
-      "name": "Oddish",
-      "types": [
-        "grass",
-        "poison"
-      ],
-      "baseStats": {
-        "hp": 45,
-        "atk": 50,
-        "def": 55,
-        "spa": 75,
-        "spd": 65,
-        "spe": 30
-      },
-      "abilities": [
-        "chlorophyll"
-      ],
-      "learnset": [
-        "absorb",
-        "growth"
-      ]
-    },
-    {
-      "id": 69,
-      "name": "Bellsprout",
-      "types": [
-        "grass",
-        "poison"
-      ],
-      "baseStats": {
-        "hp": 50,
-        "atk": 75,
-        "def": 35,
-        "spa": 70,
-        "spd": 30,
-        "spe": 40
-      },
-      "abilities": [
-        "chlorophyll"
-      ],
-      "learnset": [
-        "vine_whip",
-        "growth"
       ]
     },
     {
@@ -246,12 +41,63 @@
         "spe": 60
       },
       "abilities": [
-        "overgrow"
+        "overgrow",
+        "chlorophyll"
       ],
       "learnset": [
         "tackle",
         "growl",
         "vine_whip"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Venusaur",
+      "types": [
+        "grass",
+        "poison"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 82,
+        "def": 83,
+        "spa": 100,
+        "spd": 100,
+        "spe": 80
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl",
+        "vine_whip"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 4,
+      "name": "Charmander",
+      "types": [
+        "fire"
+      ],
+      "baseStats": {
+        "hp": 39,
+        "atk": 52,
+        "def": 43,
+        "spa": 60,
+        "spd": 50,
+        "spe": 65
+      },
+      "abilities": [
+        "blaze",
+        "solar_power"
+      ],
+      "learnset": [
+        "scratch",
+        "growl",
+        "ember"
       ]
     },
     {
@@ -269,12 +115,63 @@
         "spe": 80
       },
       "abilities": [
-        "blaze"
+        "blaze",
+        "solar_power"
       ],
       "learnset": [
         "scratch",
         "growl",
         "ember"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Charizard",
+      "types": [
+        "fire",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 84,
+        "def": 78,
+        "spa": 109,
+        "spd": 85,
+        "spe": 100
+      },
+      "abilities": [
+        "blaze",
+        "solar_power"
+      ],
+      "learnset": [
+        "scratch",
+        "growl",
+        "ember"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 7,
+      "name": "Squirtle",
+      "types": [
+        "water"
+      ],
+      "baseStats": {
+        "hp": 44,
+        "atk": 48,
+        "def": 65,
+        "spa": 50,
+        "spd": 64,
+        "spe": 43
+      },
+      "abilities": [
+        "torrent",
+        "rain_dish"
+      ],
+      "learnset": [
+        "tackle",
+        "tail_whip",
+        "water_gun"
       ]
     },
     {
@@ -292,12 +189,61 @@
         "spe": 58
       },
       "abilities": [
-        "torrent"
+        "torrent",
+        "rain_dish"
       ],
       "learnset": [
         "tackle",
         "tail_whip",
         "water_gun"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Blastoise",
+      "types": [
+        "water"
+      ],
+      "baseStats": {
+        "hp": 79,
+        "atk": 83,
+        "def": 100,
+        "spa": 85,
+        "spd": 105,
+        "spe": 78
+      },
+      "abilities": [
+        "torrent",
+        "rain_dish"
+      ],
+      "learnset": [
+        "tackle",
+        "tail_whip",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 10,
+      "name": "Caterpie",
+      "types": [
+        "bug"
+      ],
+      "baseStats": {
+        "hp": 45,
+        "atk": 30,
+        "def": 35,
+        "spa": 20,
+        "spd": 20,
+        "spe": 45
+      },
+      "abilities": [
+        "shield_dust",
+        "run_away"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
       ]
     },
     {
@@ -323,6 +269,55 @@
       ]
     },
     {
+      "id": 12,
+      "name": "Butterfree",
+      "types": [
+        "bug",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 45,
+        "def": 50,
+        "spa": 90,
+        "spd": 80,
+        "spe": 70
+      },
+      "abilities": [
+        "compound_eyes",
+        "tinted_lens"
+      ],
+      "learnset": [
+        "tackle",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 13,
+      "name": "Weedle",
+      "types": [
+        "bug",
+        "poison"
+      ],
+      "baseStats": {
+        "hp": 40,
+        "atk": 35,
+        "def": 30,
+        "spa": 20,
+        "spd": 20,
+        "spe": 50
+      },
+      "abilities": [
+        "shield_dust",
+        "run_away"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ]
+    },
+    {
       "id": 14,
       "name": "Kakuna",
       "types": [
@@ -341,8 +336,59 @@
         "shed_skin"
       ],
       "learnset": [
-        "poison_sting",
+        "tackle",
         "string_shot"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Beedrill",
+      "types": [
+        "bug",
+        "poison"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 90,
+        "def": 40,
+        "spa": 45,
+        "spd": 80,
+        "spe": 75
+      },
+      "abilities": [
+        "swarm",
+        "sniper"
+      ],
+      "learnset": [
+        "tackle",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 16,
+      "name": "Pidgey",
+      "types": [
+        "normal",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 40,
+        "atk": 45,
+        "def": 40,
+        "spa": 35,
+        "spd": 35,
+        "spe": 56
+      },
+      "abilities": [
+        "keen_eye",
+        "tangled_feet",
+        "big_pecks"
+      ],
+      "learnset": [
+        "tackle",
+        "growl",
+        "quick_attack"
       ]
     },
     {
@@ -361,11 +407,116 @@
         "spe": 71
       },
       "abilities": [
-        "keen_eye"
+        "keen_eye",
+        "tangled_feet",
+        "big_pecks"
       ],
       "learnset": [
         "tackle",
-        "gust"
+        "growl",
+        "quick_attack"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Pidgeot",
+      "types": [
+        "normal",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 83,
+        "atk": 80,
+        "def": 75,
+        "spa": 70,
+        "spd": 70,
+        "spe": 101
+      },
+      "abilities": [
+        "keen_eye",
+        "tangled_feet",
+        "big_pecks"
+      ],
+      "learnset": [
+        "tackle",
+        "growl",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 19,
+      "name": "Rattata",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 30,
+        "atk": 56,
+        "def": 35,
+        "spa": 25,
+        "spd": 35,
+        "spe": 72
+      },
+      "abilities": [
+        "run_away",
+        "guts",
+        "hustle"
+      ],
+      "learnset": [
+        "tackle",
+        "tail_whip",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 20,
+      "name": "Raticate",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 81,
+        "def": 60,
+        "spa": 50,
+        "spd": 70,
+        "spe": 97
+      },
+      "abilities": [
+        "run_away",
+        "guts",
+        "hustle"
+      ],
+      "learnset": [
+        "tackle",
+        "tail_whip",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 21,
+      "name": "Spearow",
+      "types": [
+        "normal",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 40,
+        "atk": 60,
+        "def": 30,
+        "spa": 31,
+        "spd": 31,
+        "spe": 70
+      },
+      "abilities": [
+        "keen_eye"
+      ],
+      "learnset": [
+        "peck",
+        "growl"
       ]
     },
     {
@@ -392,6 +543,521 @@
       ]
     },
     {
+      "id": 23,
+      "name": "Species 23",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 24,
+      "name": "Species 24",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 25,
+      "name": "Pikachu",
+      "types": [
+        "electric"
+      ],
+      "baseStats": {
+        "hp": 35,
+        "atk": 55,
+        "def": 40,
+        "spa": 50,
+        "spd": 50,
+        "spe": 90
+      },
+      "abilities": [
+        "static"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "growl",
+        "quick_attack"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "Species 26",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "growl",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 27,
+      "name": "Species 27",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 28,
+      "name": "Species 28",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 29,
+      "name": "Species 29",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 30,
+      "name": "Species 30",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 31,
+      "name": "Nidoqueen",
+      "types": [
+        "poison",
+        "ground"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 92,
+        "def": 87,
+        "spa": 75,
+        "spd": 85,
+        "spe": 76
+      },
+      "abilities": [
+        "poison_point",
+        "rivalry",
+        "sheer_force"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 32,
+      "name": "Nidoran M",
+      "types": [
+        "poison"
+      ],
+      "baseStats": {
+        "hp": 46,
+        "atk": 57,
+        "def": 40,
+        "spa": 40,
+        "spd": 40,
+        "spe": 50
+      },
+      "abilities": [
+        "poison_point",
+        "rivalry",
+        "hustle"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 33,
+      "name": "Nidorino",
+      "types": [
+        "poison"
+      ],
+      "baseStats": {
+        "hp": 61,
+        "atk": 72,
+        "def": 57,
+        "spa": 55,
+        "spd": 55,
+        "spe": 65
+      },
+      "abilities": [
+        "poison_point",
+        "rivalry",
+        "hustle"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 34,
+      "name": "Nidoking",
+      "types": [
+        "poison",
+        "ground"
+      ],
+      "baseStats": {
+        "hp": 81,
+        "atk": 102,
+        "def": 77,
+        "spa": 85,
+        "spd": 75,
+        "spe": 85
+      },
+      "abilities": [
+        "poison_point",
+        "rivalry",
+        "sheer_force"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 35,
+      "name": "Clefairy",
+      "types": [
+        "fairy"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 45,
+        "def": 48,
+        "spa": 60,
+        "spd": 65,
+        "spe": 35
+      },
+      "abilities": [
+        "cute_charm",
+        "magic_guard",
+        "friend_guard"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 36,
+      "name": "Clefable",
+      "types": [
+        "fairy"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 70,
+        "def": 73,
+        "spa": 95,
+        "spd": 90,
+        "spe": 60
+      },
+      "abilities": [
+        "cute_charm",
+        "magic_guard",
+        "unaware"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 37,
+      "name": "Vulpix",
+      "types": [
+        "fire"
+      ],
+      "baseStats": {
+        "hp": 38,
+        "atk": 41,
+        "def": 40,
+        "spa": 50,
+        "spd": 65,
+        "spe": 65
+      },
+      "abilities": [
+        "flash_fire",
+        "drought"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 38,
+      "name": "Ninetales",
+      "types": [
+        "fire"
+      ],
+      "baseStats": {
+        "hp": 73,
+        "atk": 76,
+        "def": 75,
+        "spa": 81,
+        "spd": 100,
+        "spe": 100
+      },
+      "abilities": [
+        "flash_fire",
+        "drought"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 39,
+      "name": "Jigglypuff",
+      "types": [
+        "normal",
+        "fairy"
+      ],
+      "baseStats": {
+        "hp": 115,
+        "atk": 45,
+        "def": 20,
+        "spa": 45,
+        "spd": 25,
+        "spe": 20
+      },
+      "abilities": [
+        "cute_charm",
+        "competitive",
+        "friend_guard"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 40,
+      "name": "Wigglytuff",
+      "types": [
+        "normal",
+        "fairy"
+      ],
+      "baseStats": {
+        "hp": 140,
+        "atk": 70,
+        "def": 45,
+        "spa": 85,
+        "spd": 50,
+        "spe": 45
+      },
+      "abilities": [
+        "cute_charm",
+        "competitive",
+        "frisk"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 41,
+      "name": "Species 41",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 42,
+      "name": "Species 42",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 43,
+      "name": "Oddish",
+      "types": [
+        "grass",
+        "poison"
+      ],
+      "baseStats": {
+        "hp": 45,
+        "atk": 50,
+        "def": 55,
+        "spa": 75,
+        "spd": 65,
+        "spe": 30
+      },
+      "abilities": [
+        "chlorophyll"
+      ],
+      "learnset": [
+        "absorb",
+        "growth"
+      ]
+    },
+    {
       "id": 44,
       "name": "Gloom",
       "types": [
@@ -411,6 +1077,607 @@
       ],
       "learnset": [
         "absorb",
+        "growth"
+      ]
+    },
+    {
+      "id": 45,
+      "name": "Species 45",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "vine_whip",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 46,
+      "name": "Species 46",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 47,
+      "name": "Species 47",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 48,
+      "name": "Species 48",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 49,
+      "name": "Species 49",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 50,
+      "name": "Species 50",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 51,
+      "name": "Species 51",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 52,
+      "name": "Species 52",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 53,
+      "name": "Species 53",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 54,
+      "name": "Species 54",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 55,
+      "name": "Species 55",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 56,
+      "name": "Species 56",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 57,
+      "name": "Species 57",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 58,
+      "name": "Species 58",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 59,
+      "name": "Species 59",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 60,
+      "name": "Species 60",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 61,
+      "name": "Species 61",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 62,
+      "name": "Species 62",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 63,
+      "name": "Species 63",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 64,
+      "name": "Species 64",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 65,
+      "name": "Species 65",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 66,
+      "name": "Species 66",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 67,
+      "name": "Species 67",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 68,
+      "name": "Species 68",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 69,
+      "name": "Bellsprout",
+      "types": [
+        "grass",
+        "poison"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 75,
+        "def": 35,
+        "spa": 70,
+        "spd": 30,
+        "spe": 40
+      },
+      "abilities": [
+        "chlorophyll"
+      ],
+      "learnset": [
+        "vine_whip",
         "growth"
       ]
     },
@@ -436,6 +1703,1957 @@
         "vine_whip",
         "growth"
       ]
+    },
+    {
+      "id": 71,
+      "name": "Species 71",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "vine_whip",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 72,
+      "name": "Species 72",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 73,
+      "name": "Species 73",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 74,
+      "name": "Species 74",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 75,
+      "name": "Species 75",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 76,
+      "name": "Species 76",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 77,
+      "name": "Species 77",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 78,
+      "name": "Species 78",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 79,
+      "name": "Species 79",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 80,
+      "name": "Species 80",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 81,
+      "name": "Species 81",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 82,
+      "name": "Species 82",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 83,
+      "name": "Species 83",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 84,
+      "name": "Species 84",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 85,
+      "name": "Species 85",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 86,
+      "name": "Species 86",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 87,
+      "name": "Species 87",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 88,
+      "name": "Species 88",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 89,
+      "name": "Species 89",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 90,
+      "name": "Species 90",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 91,
+      "name": "Species 91",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 92,
+      "name": "Species 92",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 93,
+      "name": "Species 93",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 94,
+      "name": "Species 94",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 95,
+      "name": "Species 95",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 96,
+      "name": "Species 96",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 97,
+      "name": "Species 97",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 98,
+      "name": "Species 98",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 99,
+      "name": "Species 99",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 100,
+      "name": "Species 100",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 101,
+      "name": "Species 101",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 102,
+      "name": "Species 102",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "vine_whip",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 103,
+      "name": "Species 103",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "vine_whip",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 104,
+      "name": "Species 104",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 105,
+      "name": "Species 105",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 106,
+      "name": "Species 106",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 107,
+      "name": "Species 107",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 108,
+      "name": "Species 108",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 109,
+      "name": "Species 109",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 110,
+      "name": "Species 110",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 111,
+      "name": "Species 111",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 112,
+      "name": "Species 112",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 113,
+      "name": "Species 113",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 114,
+      "name": "Species 114",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "vine_whip",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 115,
+      "name": "Species 115",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 116,
+      "name": "Species 116",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 117,
+      "name": "Species 117",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 118,
+      "name": "Species 118",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "tail_whip"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 119,
+      "name": "Species 119",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "water_gun",
+        "tail_whip"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 120,
+      "name": "Species 120",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 121,
+      "name": "Species 121",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 122,
+      "name": "Species 122",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 123,
+      "name": "Species 123",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 124,
+      "name": "Species 124",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 125,
+      "name": "Species 125",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 126,
+      "name": "Species 126",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 127,
+      "name": "Species 127",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "scratch",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 128,
+      "name": "Species 128",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "tail_whip"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 129,
+      "name": "Species 129",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "string_shot"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 130,
+      "name": "Species 130",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 131,
+      "name": "Species 131",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 132,
+      "name": "Species 132",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 133,
+      "name": "Species 133",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "tail_whip",
+        "quick_attack"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 134,
+      "name": "Species 134",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 135,
+      "name": "Species 135",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "thunder_shock"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 136,
+      "name": "Species 136",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "ember"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 137,
+      "name": "Species 137",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 138,
+      "name": "Species 138",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 139,
+      "name": "Species 139",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 140,
+      "name": "Species 140",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 50,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "overgrow",
+        "chlorophyll"
+      ],
+      "learnset": [
+        "tackle",
+        "scratch"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 141,
+      "name": "Kabutops",
+      "types": [
+        "rock",
+        "water"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 115,
+        "def": 105,
+        "spa": 65,
+        "spd": 70,
+        "spe": 80
+      },
+      "abilities": [
+        "swift_swim",
+        "battle_armor",
+        "weak_armor"
+      ],
+      "learnset": [
+        "tackle",
+        "scratch"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 142,
+      "name": "Aerodactyl",
+      "types": [
+        "rock",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 105,
+        "def": 65,
+        "spa": 60,
+        "spd": 75,
+        "spe": 130
+      },
+      "abilities": [
+        "rock_head",
+        "pressure",
+        "unnerve"
+      ],
+      "learnset": [
+        "tackle",
+        "scratch"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 143,
+      "name": "Snorlax",
+      "types": [
+        "normal"
+      ],
+      "baseStats": {
+        "hp": 160,
+        "atk": 110,
+        "def": 65,
+        "spa": 65,
+        "spd": 110,
+        "spe": 30
+      },
+      "abilities": [
+        "immunity",
+        "thick_fat",
+        "gluttony"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 144,
+      "name": "Articuno",
+      "types": [
+        "ice",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 85,
+        "def": 100,
+        "spa": 95,
+        "spd": 125,
+        "spe": 85
+      },
+      "abilities": [
+        "pressure",
+        "snow_cloak"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 145,
+      "name": "Zapdos",
+      "types": [
+        "electric",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 90,
+        "def": 85,
+        "spa": 125,
+        "spd": 90,
+        "spe": 100
+      },
+      "abilities": [
+        "pressure",
+        "static"
+      ],
+      "learnset": [
+        "thunder_shock",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 146,
+      "name": "Moltres",
+      "types": [
+        "fire",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 100,
+        "def": 90,
+        "spa": 125,
+        "spd": 85,
+        "spe": 90
+      },
+      "abilities": [
+        "pressure",
+        "flame_body"
+      ],
+      "learnset": [
+        "ember",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 147,
+      "name": "Dratini",
+      "types": [
+        "dragon"
+      ],
+      "baseStats": {
+        "hp": 41,
+        "atk": 64,
+        "def": 45,
+        "spa": 50,
+        "spd": 50,
+        "spe": 50
+      },
+      "abilities": [
+        "shed_skin",
+        "marvel_scale"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 148,
+      "name": "Dragonair",
+      "types": [
+        "dragon"
+      ],
+      "baseStats": {
+        "hp": 61,
+        "atk": 84,
+        "def": 65,
+        "spa": 70,
+        "spd": 70,
+        "spe": 70
+      },
+      "abilities": [
+        "shed_skin",
+        "marvel_scale"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 149,
+      "name": "Dragonite",
+      "types": [
+        "dragon",
+        "flying"
+      ],
+      "baseStats": {
+        "hp": 91,
+        "atk": 134,
+        "def": 95,
+        "spa": 100,
+        "spd": 100,
+        "spe": 80
+      },
+      "abilities": [
+        "inner_focus",
+        "multiscale"
+      ],
+      "learnset": [
+        "tackle",
+        "water_gun"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 150,
+      "name": "Mewtwo",
+      "types": [
+        "psychic"
+      ],
+      "baseStats": {
+        "hp": 106,
+        "atk": 110,
+        "def": 90,
+        "spa": 154,
+        "spd": 90,
+        "spe": 130
+      },
+      "abilities": [
+        "pressure",
+        "unnerve"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
+    },
+    {
+      "id": 151,
+      "name": "Mew",
+      "types": [
+        "psychic"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 100,
+        "def": 100,
+        "spa": 100,
+        "spd": 100,
+        "spe": 100
+      },
+      "abilities": [
+        "synchronize"
+      ],
+      "learnset": [
+        "tackle",
+        "growl"
+      ],
+      "genus": "Unknown Pokémon"
     }
   ],
   "moves": [
@@ -661,9 +3879,14 @@
   ],
   "abilities": [
     {
-      "id": "overgrow",
-      "name": "Overgrow",
-      "description": "Powers up Grass-type moves when HP is low."
+      "id": "battle_armor",
+      "name": "Battle Armor",
+      "description": ""
+    },
+    {
+      "id": "big_pecks",
+      "name": "Big Pecks",
+      "description": ""
     },
     {
       "id": "blaze",
@@ -671,19 +3894,74 @@
       "description": "Powers up Fire-type moves when HP is low."
     },
     {
-      "id": "torrent",
-      "name": "Torrent",
-      "description": "Powers up Water-type moves when HP is low."
+      "id": "chlorophyll",
+      "name": "Chlorophyll",
+      "description": "Boosts Speed in sunshine."
     },
     {
-      "id": "shield_dust",
-      "name": "Shield Dust",
-      "description": "Blocks the added effects of attacks taken."
+      "id": "competitive",
+      "name": "Competitive",
+      "description": ""
     },
     {
-      "id": "static",
-      "name": "Static",
-      "description": "May paralyze an attacker that makes contact."
+      "id": "compound_eyes",
+      "name": "Compound Eyes",
+      "description": ""
+    },
+    {
+      "id": "cute_charm",
+      "name": "Cute Charm",
+      "description": ""
+    },
+    {
+      "id": "drought",
+      "name": "Drought",
+      "description": ""
+    },
+    {
+      "id": "flame_body",
+      "name": "Flame Body",
+      "description": ""
+    },
+    {
+      "id": "flash_fire",
+      "name": "Flash Fire",
+      "description": ""
+    },
+    {
+      "id": "friend_guard",
+      "name": "Friend Guard",
+      "description": ""
+    },
+    {
+      "id": "frisk",
+      "name": "Frisk",
+      "description": ""
+    },
+    {
+      "id": "gluttony",
+      "name": "Gluttony",
+      "description": ""
+    },
+    {
+      "id": "guts",
+      "name": "Guts",
+      "description": ""
+    },
+    {
+      "id": "hustle",
+      "name": "Hustle",
+      "description": ""
+    },
+    {
+      "id": "immunity",
+      "name": "Immunity",
+      "description": ""
+    },
+    {
+      "id": "inner_focus",
+      "name": "Inner Focus",
+      "description": ""
     },
     {
       "id": "keen_eye",
@@ -691,9 +3969,139 @@
       "description": "Prevents other Pokémon from lowering accuracy."
     },
     {
-      "id": "chlorophyll",
-      "name": "Chlorophyll",
-      "description": "Boosts Speed in sunshine."
+      "id": "magic_guard",
+      "name": "Magic Guard",
+      "description": ""
+    },
+    {
+      "id": "marvel_scale",
+      "name": "Marvel Scale",
+      "description": ""
+    },
+    {
+      "id": "multiscale",
+      "name": "Multiscale",
+      "description": ""
+    },
+    {
+      "id": "overgrow",
+      "name": "Overgrow",
+      "description": "Powers up Grass-type moves when HP is low."
+    },
+    {
+      "id": "poison_point",
+      "name": "Poison Point",
+      "description": ""
+    },
+    {
+      "id": "pressure",
+      "name": "Pressure",
+      "description": ""
+    },
+    {
+      "id": "rain_dish",
+      "name": "Rain Dish",
+      "description": ""
+    },
+    {
+      "id": "rivalry",
+      "name": "Rivalry",
+      "description": ""
+    },
+    {
+      "id": "rock_head",
+      "name": "Rock Head",
+      "description": ""
+    },
+    {
+      "id": "run_away",
+      "name": "Run Away",
+      "description": ""
+    },
+    {
+      "id": "shed_skin",
+      "name": "Shed Skin",
+      "description": ""
+    },
+    {
+      "id": "sheer_force",
+      "name": "Sheer Force",
+      "description": ""
+    },
+    {
+      "id": "shield_dust",
+      "name": "Shield Dust",
+      "description": "Blocks the added effects of attacks taken."
+    },
+    {
+      "id": "sniper",
+      "name": "Sniper",
+      "description": ""
+    },
+    {
+      "id": "snow_cloak",
+      "name": "Snow Cloak",
+      "description": ""
+    },
+    {
+      "id": "solar_power",
+      "name": "Solar Power",
+      "description": ""
+    },
+    {
+      "id": "static",
+      "name": "Static",
+      "description": "May paralyze an attacker that makes contact."
+    },
+    {
+      "id": "swarm",
+      "name": "Swarm",
+      "description": ""
+    },
+    {
+      "id": "swift_swim",
+      "name": "Swift Swim",
+      "description": ""
+    },
+    {
+      "id": "synchronize",
+      "name": "Synchronize",
+      "description": ""
+    },
+    {
+      "id": "tangled_feet",
+      "name": "Tangled Feet",
+      "description": ""
+    },
+    {
+      "id": "thick_fat",
+      "name": "Thick Fat",
+      "description": ""
+    },
+    {
+      "id": "tinted_lens",
+      "name": "Tinted Lens",
+      "description": ""
+    },
+    {
+      "id": "torrent",
+      "name": "Torrent",
+      "description": "Powers up Water-type moves when HP is low."
+    },
+    {
+      "id": "unaware",
+      "name": "Unaware",
+      "description": ""
+    },
+    {
+      "id": "unnerve",
+      "name": "Unnerve",
+      "description": ""
+    },
+    {
+      "id": "weak_armor",
+      "name": "Weak Armor",
+      "description": ""
     }
   ],
   "learnsets": {
@@ -1656,6 +5064,18 @@
       "startMoves": [
         "tackle",
         "water_gun"
+      ],
+      "levelUp": []
+    },
+    "131": {
+      "startMoves": [
+        "tackle"
+      ],
+      "levelUp": []
+    },
+    "132": {
+      "startMoves": [
+        "tackle"
       ],
       "levelUp": []
     },

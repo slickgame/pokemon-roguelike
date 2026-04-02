@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "test:typechart": "node scripts/validate-typechart.mjs",
     "db:generate": "node scripts/generate-static-db.mjs",
-    "db:check": "node scripts/check-static-db.mjs"
+    "db:check": "node scripts/check-static-db.mjs",
+    "db:validate": "node scripts/validate-static-db.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.24",
