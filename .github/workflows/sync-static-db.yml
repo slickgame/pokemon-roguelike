@@ -1,0 +1,70 @@
+name: Sync Static DB
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_species_id:
+        description: "Max species ID to sync (default 151)"
+        required: false
+        default: "151"
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync DB from PokeAPI
+        env:
+          MAX_SPECIES_ID: ${{ github.event.inputs.max_species_id || '151' }}
+        run: |
+          for attempt in 1 2 3; do
+            echo "Sync attempt $attempt/3"
+            node scripts/sync-official-db.mjs && exit 0
+            if [ "$attempt" -eq 3 ]; then
+              echo "Sync failed after 3 attempts"
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+
+      - name: Generate static DB artifact
+        run: npm run db:generate
+
+      - name: Validate DB
+        run: npm run db:validate
+
+      - name: Check generated DB integrity
+        run: npm run db:check
+
+      - name: Commit updated DB artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/static-db-source.json src/shared/staticDb.generated.js
+          if git diff --cached --quiet; then
+            echo "No DB changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(db): sync static DB from PokeAPI"
+          git push
