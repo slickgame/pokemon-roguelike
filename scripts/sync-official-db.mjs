@@ -41,13 +41,26 @@ async function fetchAllSpeciesIds() {
   return ids;
 }
 
-async function fetchAllMoveIdsForVersionGroup() {
-  const vg = await fetchJson(`${API}/version-group/${VERSION_GROUP}`);
-  const ids = [...new Set((vg.moves ?? []).map((m) => toId(m.name)).filter(Boolean))].sort();
-  if (!ids.length) {
-    throw new Error(`No moves returned for version group ${VERSION_GROUP}.`);
+async function fetchMoveIdsFromSpecies(speciesIds) {
+  const pokemonById = new Map();
+  const moveIds = new Set();
+
+  for (const id of speciesIds) {
+    const p = await fetchJson(`${API}/pokemon/${id}`);
+    pokemonById.set(id, p);
+
+    for (const m of p.moves ?? []) {
+      const vg = m.version_group_details?.find((d) => d.version_group?.name === VERSION_GROUP && d.move_learn_method?.name === 'level-up');
+      if (!vg) continue;
+      moveIds.add(toId(m.move.name));
+    }
   }
-  return ids;
+
+  const ids = [...moveIds].sort();
+  if (!ids.length) {
+    throw new Error(`No level-up moves found for version group ${VERSION_GROUP} across species ${speciesIds[0]}-${speciesIds[speciesIds.length - 1]}.`);
+  }
+  return { ids, pokemonById };
 }
 
 function targetFromApi(name) {
@@ -125,7 +138,7 @@ const species = [];
 const learnsets = {};
 const abilityIds = new Set();
 const speciesIds = await fetchAllSpeciesIds();
-const moveIds = await fetchAllMoveIdsForVersionGroup();
+const { ids: moveIds, pokemonById } = await fetchMoveIdsFromSpecies(speciesIds);
 
 console.log(`Syncing ${moveIds.length} moves for version-group ${VERSION_GROUP}...`);
 
@@ -153,7 +166,7 @@ const allowedMoveIds = new Set(moves.map((m) => m.id));
 console.log(`Syncing ${speciesIds.length} species from PokeAPI...`);
 
 for (const id of speciesIds) {
-  const p = await fetchJson(`${API}/pokemon/${id}`);
+  const p = pokemonById.get(id) ?? await fetchJson(`${API}/pokemon/${id}`);
   const sp = await fetchJson(`${API}/pokemon-species/${id}`);
 
   const sortedStats = {};
