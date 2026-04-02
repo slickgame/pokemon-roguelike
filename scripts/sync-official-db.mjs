@@ -1,8 +1,11 @@
 import { writeFile } from 'node:fs/promises';
 
-const GEN1_MAX_ID = 151;
 const VERSION_GROUP = 'red-blue';
 const API = 'https://pokeapi.co/api/v2';
+const INCLUDE_HIDDEN_ABILITIES = true;
+const SPECIES_LIST_LIMIT = 20000;
+const MIN_SPECIES_ID = Number(process.env.MIN_SPECIES_ID ?? 1);
+const MAX_SPECIES_ID = Number(process.env.MAX_SPECIES_ID ?? Number.POSITIVE_INFINITY);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -17,6 +20,35 @@ async function fetchJson(url, retries = 3) {
 
 function toId(name) { return name.replace(/-/g, '_'); }
 function toTitle(name) { return name.split('-').map((p) => p[0].toUpperCase() + p.slice(1)).join(' '); }
+
+function idFromResourceUrl(url) {
+  const m = url.match(/\/(\d+)\/?$/);
+  if (!m) return null;
+  return Number(m[1]);
+}
+
+async function fetchAllSpeciesIds() {
+  const list = await fetchJson(`${API}/pokemon-species?limit=${SPECIES_LIST_LIMIT}`);
+  const ids = (list.results ?? [])
+    .map((entry) => idFromResourceUrl(entry.url))
+    .filter((id) => Number.isInteger(id) && id > 0)
+    .filter((id) => id >= MIN_SPECIES_ID && id <= MAX_SPECIES_ID)
+    .sort((a, b) => a - b);
+
+  if (!ids.length) {
+    throw new Error('No species IDs returned from pokemon-species endpoint.');
+  }
+  return ids;
+}
+
+async function fetchAllMoveIdsForVersionGroup() {
+  const vg = await fetchJson(`${API}/version-group/${VERSION_GROUP}`);
+  const ids = [...new Set((vg.moves ?? []).map((m) => toId(m.name)).filter(Boolean))].sort();
+  if (!ids.length) {
+    throw new Error(`No moves returned for version group ${VERSION_GROUP}.`);
+  }
+  return ids;
+}
 
 function targetFromApi(name) {
   const map = {
@@ -91,50 +123,14 @@ function buildMoveEffects(move) {
 
 const species = [];
 const learnsets = {};
-const moveIds = new Set();
 const abilityIds = new Set();
+const speciesIds = await fetchAllSpeciesIds();
+const moveIds = await fetchAllMoveIdsForVersionGroup();
 
-for (let id = 1; id <= GEN1_MAX_ID; id++) {
-  const p = await fetchJson(`${API}/pokemon/${id}`);
-  const sp = await fetchJson(`${API}/pokemon-species/${id}`);
-
-  const sortedStats = {};
-  const statMap = { hp: 'hp', attack: 'atk', defense: 'def', 'special-attack': 'spa', 'special-defense': 'spd', speed: 'spe' };
-  for (const s of p.stats) sortedStats[statMap[s.stat.name]] = s.base_stat;
-
-  const normalAbilities = p.abilities.filter((a) => !a.is_hidden).sort((a, b) => a.slot - b.slot);
-  const abilities = normalAbilities.map((a) => toId(a.ability.name));
-  for (const a of abilities) abilityIds.add(a);
-
-  const levelUpEntries = [];
-  for (const m of p.moves) {
-    const vg = m.version_group_details.find((d) => d.version_group.name === VERSION_GROUP && d.move_learn_method.name === 'level-up');
-    if (!vg) continue;
-    const moveId = toId(m.move.name);
-    levelUpEntries.push({ level: vg.level_learned_at, moveId });
-    moveIds.add(moveId);
-  }
-  levelUpEntries.sort((a, b) => a.level - b.level || a.moveId.localeCompare(b.moveId));
-
-  const startMoves = levelUpEntries.filter((e) => e.level <= 1).map((e) => e.moveId);
-  const dedupStart = [...new Set(startMoves)].slice(-4);
-  const levelUp = levelUpEntries.filter((e) => e.level > 1);
-
-  learnsets[id] = { startMoves: dedupStart.length ? dedupStart : levelUp.slice(0, 4).map((e) => e.moveId), levelUp };
-
-  species.push({
-    id,
-    name: toTitle(p.name),
-    types: p.types.sort((a, b) => a.slot - b.slot).map((t) => toId(t.type.name)),
-    baseStats: sortedStats,
-    abilities,
-    learnset: [...new Set([...learnsets[id].startMoves, ...levelUp.map((e) => e.moveId)])],
-    genus: sp.genera.find((g) => g.language.name === 'en')?.genus ?? undefined,
-  });
-}
+console.log(`Syncing ${moveIds.length} moves for version-group ${VERSION_GROUP}...`);
 
 const moves = [];
-for (const moveId of [...moveIds].sort()) {
+for (const moveId of moveIds) {
   const move = await fetchJson(`${API}/move/${moveId.replace(/_/g, '-')}`);
   const { effects, secondaryEffects } = buildMoveEffects(move);
   const entry = {
@@ -152,6 +148,54 @@ for (const moveId of [...moveIds].sort()) {
   if (secondaryEffects.length) entry.secondaryEffects = secondaryEffects;
   moves.push(entry);
 }
+const allowedMoveIds = new Set(moves.map((m) => m.id));
+
+console.log(`Syncing ${speciesIds.length} species from PokeAPI...`);
+
+for (const id of speciesIds) {
+  const p = await fetchJson(`${API}/pokemon/${id}`);
+  const sp = await fetchJson(`${API}/pokemon-species/${id}`);
+
+  const sortedStats = {};
+  const statMap = { hp: 'hp', attack: 'atk', defense: 'def', 'special-attack': 'spa', 'special-defense': 'spd', speed: 'spe' };
+  for (const s of p.stats) sortedStats[statMap[s.stat.name]] = s.base_stat;
+
+  const candidateAbilities = INCLUDE_HIDDEN_ABILITIES
+    ? p.abilities
+    : p.abilities.filter((a) => !a.is_hidden);
+  const sortedAbilities = candidateAbilities.sort((a, b) => a.slot - b.slot);
+  const abilities = [...new Set(sortedAbilities.map((a) => toId(a.ability.name)))];
+  for (const a of abilities) abilityIds.add(a);
+
+  const levelUpEntries = [];
+  for (const m of p.moves) {
+    const vg = m.version_group_details.find((d) => d.version_group.name === VERSION_GROUP && d.move_learn_method.name === 'level-up');
+    if (!vg) continue;
+    const moveId = toId(m.move.name);
+    if (!allowedMoveIds.has(moveId)) continue;
+    levelUpEntries.push({ level: vg.level_learned_at, moveId });
+  }
+  levelUpEntries.sort((a, b) => a.level - b.level || a.moveId.localeCompare(b.moveId));
+
+  const startMoves = levelUpEntries.filter((e) => e.level <= 1).map((e) => e.moveId);
+  const dedupStart = [...new Set(startMoves)].slice(-4);
+  const levelUp = levelUpEntries.filter((e) => e.level > 1);
+
+  learnsets[id] = {
+    startMoves: dedupStart.length ? dedupStart : levelUp.slice(0, 4).map((e) => e.moveId),
+    levelUp,
+  };
+
+  species.push({
+    id,
+    name: toTitle(p.name),
+    types: p.types.sort((a, b) => a.slot - b.slot).map((t) => toId(t.type.name)),
+    baseStats: sortedStats,
+    abilities,
+    learnset: [...new Set([...learnsets[id].startMoves, ...levelUp.map((e) => e.moveId)])],
+    genus: sp.genera.find((g) => g.language.name === 'en')?.genus ?? undefined,
+  });
+}
 
 const abilities = [];
 for (const abilityId of [...abilityIds].sort()) {
@@ -167,4 +211,7 @@ console.log('Wrote data/static-db-source.json', {
   moves: moves.length,
   abilities: abilities.length,
   learnsets: Object.keys(learnsets).length,
+  includeHiddenAbilities: INCLUDE_HIDDEN_ABILITIES,
+  firstSpeciesId: speciesIds[0],
+  lastSpeciesId: speciesIds[speciesIds.length - 1],
 });
