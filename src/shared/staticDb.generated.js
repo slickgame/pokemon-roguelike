@@ -3387,21 +3387,23 @@ export const STATIC_DB = {
     },
     {
       "id": 141,
-      "name": "Species 141",
+      "name": "Kabutops",
       "types": [
-        "normal"
+        "rock",
+        "water"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 60,
+        "atk": 115,
+        "def": 105,
+        "spa": 65,
+        "spd": 70,
+        "spe": 80
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "swift_swim",
+        "battle_armor",
+        "weak_armor"
       ],
       "learnset": [
         "tackle",
@@ -3411,21 +3413,23 @@ export const STATIC_DB = {
     },
     {
       "id": 142,
-      "name": "Species 142",
+      "name": "Aerodactyl",
       "types": [
-        "normal"
+        "rock",
+        "flying"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 80,
+        "atk": 105,
+        "def": 65,
+        "spa": 60,
+        "spd": 75,
+        "spe": 130
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "rock_head",
+        "pressure",
+        "unnerve"
       ],
       "learnset": [
         "tackle",
@@ -3435,21 +3439,22 @@ export const STATIC_DB = {
     },
     {
       "id": 143,
-      "name": "Species 143",
+      "name": "Snorlax",
       "types": [
         "normal"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 160,
+        "atk": 110,
+        "def": 65,
+        "spa": 65,
+        "spd": 110,
+        "spe": 30
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "immunity",
+        "thick_fat",
+        "gluttony"
       ],
       "learnset": [
         "tackle",
@@ -3459,21 +3464,22 @@ export const STATIC_DB = {
     },
     {
       "id": 144,
-      "name": "Species 144",
+      "name": "Articuno",
       "types": [
-        "normal"
+        "ice",
+        "flying"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 90,
+        "atk": 85,
+        "def": 100,
+        "spa": 95,
+        "spd": 125,
+        "spe": 85
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "pressure",
+        "snow_cloak"
       ],
       "learnset": [
         "tackle",
@@ -3483,21 +3489,22 @@ export const STATIC_DB = {
     },
     {
       "id": 145,
-      "name": "Species 145",
+      "name": "Zapdos",
       "types": [
-        "normal"
+        "electric",
+        "flying"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 90,
+        "atk": 90,
+        "def": 85,
+        "spa": 125,
+        "spd": 90,
+        "spe": 100
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "pressure",
+        "static"
       ],
       "learnset": [
         "thunder_shock",
@@ -3507,21 +3514,22 @@ export const STATIC_DB = {
     },
     {
       "id": 146,
-      "name": "Species 146",
+      "name": "Moltres",
       "types": [
-        "normal"
+        "fire",
+        "flying"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 90,
+        "atk": 100,
+        "def": 90,
+        "spa": 125,
+        "spd": 85,
+        "spe": 90
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "pressure",
+        "flame_body"
       ],
       "learnset": [
         "ember",
@@ -3531,21 +3539,21 @@ export const STATIC_DB = {
     },
     {
       "id": 147,
-      "name": "Species 147",
+      "name": "Dratini",
       "types": [
-        "normal"
+        "dragon"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
+        "hp": 41,
+        "atk": 64,
+        "def": 45,
         "spa": 50,
         "spd": 50,
         "spe": 50
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "shed_skin",
+        "marvel_scale"
       ],
       "learnset": [
         "tackle",
@@ -3555,21 +3563,21 @@ export const STATIC_DB = {
     },
     {
       "id": 148,
-      "name": "Species 148",
+      "name": "Dragonair",
       "types": [
-        "normal"
+        "dragon"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 61,
+        "atk": 84,
+        "def": 65,
+        "spa": 70,
+        "spd": 70,
+        "spe": 70
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "shed_skin",
+        "marvel_scale"
       ],
       "learnset": [
         "tackle",
@@ -3579,21 +3587,22 @@ export const STATIC_DB = {
     },
     {
       "id": 149,
-      "name": "Species 149",
+      "name": "Dragonite",
       "types": [
-        "normal"
+        "dragon",
+        "flying"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 91,
+        "atk": 134,
+        "def": 95,
+        "spa": 100,
+        "spd": 100,
+        "spe": 80
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "inner_focus",
+        "multiscale"
       ],
       "learnset": [
         "tackle",
@@ -3603,21 +3612,21 @@ export const STATIC_DB = {
     },
     {
       "id": 150,
-      "name": "Species 150",
+      "name": "Mewtwo",
       "types": [
-        "normal"
+        "psychic"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 106,
+        "atk": 110,
+        "def": 90,
+        "spa": 154,
+        "spd": 90,
+        "spe": 130
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "pressure",
+        "unnerve"
       ],
       "learnset": [
         "tackle",
@@ -3627,21 +3636,20 @@ export const STATIC_DB = {
     },
     {
       "id": 151,
-      "name": "Species 151",
+      "name": "Mew",
       "types": [
-        "normal"
+        "psychic"
       ],
       "baseStats": {
-        "hp": 50,
-        "atk": 50,
-        "def": 50,
-        "spa": 50,
-        "spd": 50,
-        "spe": 50
+        "hp": 100,
+        "atk": 100,
+        "def": 100,
+        "spa": 100,
+        "spd": 100,
+        "spe": 100
       },
       "abilities": [
-        "overgrow",
-        "chlorophyll"
+        "synchronize"
       ],
       "learnset": [
         "tackle",
@@ -3873,6 +3881,11 @@ export const STATIC_DB = {
   ],
   "abilities": [
     {
+      "id": "battle_armor",
+      "name": "Battle Armor",
+      "description": ""
+    },
+    {
       "id": "big_pecks",
       "name": "Big Pecks",
       "description": ""
@@ -3908,6 +3921,11 @@ export const STATIC_DB = {
       "description": ""
     },
     {
+      "id": "flame_body",
+      "name": "Flame Body",
+      "description": ""
+    },
+    {
       "id": "flash_fire",
       "name": "Flash Fire",
       "description": ""
@@ -3923,6 +3941,11 @@ export const STATIC_DB = {
       "description": ""
     },
     {
+      "id": "gluttony",
+      "name": "Gluttony",
+      "description": ""
+    },
+    {
       "id": "guts",
       "name": "Guts",
       "description": ""
@@ -3930,6 +3953,16 @@ export const STATIC_DB = {
     {
       "id": "hustle",
       "name": "Hustle",
+      "description": ""
+    },
+    {
+      "id": "immunity",
+      "name": "Immunity",
+      "description": ""
+    },
+    {
+      "id": "inner_focus",
+      "name": "Inner Focus",
       "description": ""
     },
     {
@@ -3943,6 +3976,16 @@ export const STATIC_DB = {
       "description": ""
     },
     {
+      "id": "marvel_scale",
+      "name": "Marvel Scale",
+      "description": ""
+    },
+    {
+      "id": "multiscale",
+      "name": "Multiscale",
+      "description": ""
+    },
+    {
       "id": "overgrow",
       "name": "Overgrow",
       "description": "Powers up Grass-type moves when HP is low."
@@ -3953,6 +3996,11 @@ export const STATIC_DB = {
       "description": ""
     },
     {
+      "id": "pressure",
+      "name": "Pressure",
+      "description": ""
+    },
+    {
       "id": "rain_dish",
       "name": "Rain Dish",
       "description": ""
@@ -3960,6 +4008,11 @@ export const STATIC_DB = {
     {
       "id": "rivalry",
       "name": "Rivalry",
+      "description": ""
+    },
+    {
+      "id": "rock_head",
+      "name": "Rock Head",
       "description": ""
     },
     {
@@ -3988,6 +4041,11 @@ export const STATIC_DB = {
       "description": ""
     },
     {
+      "id": "snow_cloak",
+      "name": "Snow Cloak",
+      "description": ""
+    },
+    {
       "id": "solar_power",
       "name": "Solar Power",
       "description": ""
@@ -4003,8 +4061,23 @@ export const STATIC_DB = {
       "description": ""
     },
     {
+      "id": "swift_swim",
+      "name": "Swift Swim",
+      "description": ""
+    },
+    {
+      "id": "synchronize",
+      "name": "Synchronize",
+      "description": ""
+    },
+    {
       "id": "tangled_feet",
       "name": "Tangled Feet",
+      "description": ""
+    },
+    {
+      "id": "thick_fat",
+      "name": "Thick Fat",
       "description": ""
     },
     {
@@ -4020,6 +4093,16 @@ export const STATIC_DB = {
     {
       "id": "unaware",
       "name": "Unaware",
+      "description": ""
+    },
+    {
+      "id": "unnerve",
+      "name": "Unnerve",
+      "description": ""
+    },
+    {
+      "id": "weak_armor",
+      "name": "Weak Armor",
       "description": ""
     }
   ],
@@ -5143,13 +5226,13 @@ export const STATIC_DB_SUMMARY = {
   "counts": {
     "species": 151,
     "moves": 15,
-    "abilities": 30,
+    "abilities": 45,
     "learnsets": 151
   },
   "hashes": {
-    "species": "fe219edc5228d1e3bd2fc19b1ecf70bf16b741b3f2fc02c78a60cd0767826fa7",
+    "species": "53ca09ab6ec3c3a5b525d2cf7721f2352f40da7910b0eaf5e41f88ee875f2397",
     "moves": "e13be0bede4fd1609954c37b505556ec4019f24dcf66395e694de6413fb4bc14",
-    "abilities": "53283b9e532d01c6411369f56f5ba639bd39b31070122bac45e5e4500a2bab4c",
+    "abilities": "ecdbffb46981346e6535bed44e187281ce17fc041fca80ff0e1f8cd15c1a28d1",
     "learnsets": "9f167cf20079a20687dbc2529e45f8a194ef5d473a9de1e6500471627e5cf46c"
   }
 };
