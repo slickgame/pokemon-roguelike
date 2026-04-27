@@ -6520,7 +6520,7 @@
     {
       "id": "chlorophyll",
       "name": "Chlorophyll",
-      "description": "Raises SPEED in sunshine."
+      "description": "Boosts the Pokémon’s Speed in sunshine."
     },
     {
       "id": "clear_body",
@@ -6715,7 +6715,7 @@
     {
       "id": "levitate",
       "name": "Levitate",
-      "description": "Gives full immunity to all Ground-type moves."
+      "description": "Not hit by GROUND attacks."
     },
     {
       "id": "lightning_rod",
@@ -6790,7 +6790,7 @@
     {
       "id": "overgrow",
       "name": "Overgrow",
-      "description": "Powers up Grass-type moves in a pinch."
+      "description": "Ups GRASS moves in a pinch."
     },
     {
       "id": "own_tempo",
@@ -6850,12 +6850,12 @@
     {
       "id": "rock_head",
       "name": "Rock Head",
-      "description": "Protects the Pokémon from recoil damage."
+      "description": "Prevents recoil damage."
     },
     {
       "id": "run_away",
       "name": "Run Away",
-      "description": "Makes escaping easier."
+      "description": "Enables a sure getaway from wild Pokémon."
     },
     {
       "id": "sand_force",
@@ -7025,7 +7025,7 @@
     {
       "id": "water_absorb",
       "name": "Water Absorb",
-      "description": "Restores HP if hit by a Water-type move."
+      "description": "Changes water into HP."
     },
     {
       "id": "water_veil",

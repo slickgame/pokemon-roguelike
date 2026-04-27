@@ -6522,7 +6522,7 @@ export const STATIC_DB = {
     {
       "id": "chlorophyll",
       "name": "Chlorophyll",
-      "description": "Raises SPEED in sunshine."
+      "description": "Boosts the Pokémon’s Speed in sunshine."
     },
     {
       "id": "clear_body",
@@ -6717,7 +6717,7 @@ export const STATIC_DB = {
     {
       "id": "levitate",
       "name": "Levitate",
-      "description": "Gives full immunity to all Ground-type moves."
+      "description": "Not hit by GROUND attacks."
     },
     {
       "id": "lightning_rod",
@@ -6792,7 +6792,7 @@ export const STATIC_DB = {
     {
       "id": "overgrow",
       "name": "Overgrow",
-      "description": "Powers up Grass-type moves in a pinch."
+      "description": "Ups GRASS moves in a pinch."
     },
     {
       "id": "own_tempo",
@@ -6852,12 +6852,12 @@ export const STATIC_DB = {
     {
       "id": "rock_head",
       "name": "Rock Head",
-      "description": "Protects the Pokémon from recoil damage."
+      "description": "Prevents recoil damage."
     },
     {
       "id": "run_away",
       "name": "Run Away",
-      "description": "Makes escaping easier."
+      "description": "Enables a sure getaway from wild Pokémon."
     },
     {
       "id": "sand_force",
@@ -7027,7 +7027,7 @@ export const STATIC_DB = {
     {
       "id": "water_absorb",
       "name": "Water Absorb",
-      "description": "Restores HP if hit by a Water-type move."
+      "description": "Changes water into HP."
     },
     {
       "id": "water_veil",
@@ -10821,7 +10821,7 @@ export const STATIC_DB_SUMMARY = {
   "hashes": {
     "species": "4b794fa815eca424ae76a657c16458d2bcd1a7ad7eaaab77171e0574803de188",
     "moves": "b3b50e22775a53de34ec9d0380e0b14dfceb349f3ef310de50ac58f820dbf529",
-    "abilities": "1957d79ff2a527583205b945ecfa28572612017cdc798bbfcbf73877dd22dc6e",
+    "abilities": "0962d7a6e8d821bfb8d6bcf5ea83a18551283c13ff5699eda03a1eaa7f3f53f2",
     "learnsets": "b6746749a8a285778fb7290d48cb355b1d275324102fa85f859e3ca7cff2be26"
   }
 };
