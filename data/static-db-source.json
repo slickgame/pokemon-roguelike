@@ -6520,7 +6520,7 @@
     {
       "id": "chlorophyll",
       "name": "Chlorophyll",
-      "description": "Boosts the Pokémon’s Speed in sunshine."
+      "description": "Raises SPEED in sunshine."
     },
     {
       "id": "clear_body",
@@ -6855,7 +6855,7 @@
     {
       "id": "run_away",
       "name": "Run Away",
-      "description": "Enables a sure getaway from wild Pokémon."
+      "description": "Makes escaping easier."
     },
     {
       "id": "sand_force",

@@ -6522,7 +6522,7 @@ export const STATIC_DB = {
     {
       "id": "chlorophyll",
       "name": "Chlorophyll",
-      "description": "Boosts the Pokémon’s Speed in sunshine."
+      "description": "Raises SPEED in sunshine."
     },
     {
       "id": "clear_body",
@@ -6857,7 +6857,7 @@ export const STATIC_DB = {
     {
       "id": "run_away",
       "name": "Run Away",
-      "description": "Enables a sure getaway from wild Pokémon."
+      "description": "Makes escaping easier."
     },
     {
       "id": "sand_force",
@@ -10821,7 +10821,7 @@ export const STATIC_DB_SUMMARY = {
   "hashes": {
     "species": "4b794fa815eca424ae76a657c16458d2bcd1a7ad7eaaab77171e0574803de188",
     "moves": "b3b50e22775a53de34ec9d0380e0b14dfceb349f3ef310de50ac58f820dbf529",
-    "abilities": "0962d7a6e8d821bfb8d6bcf5ea83a18551283c13ff5699eda03a1eaa7f3f53f2",
+    "abilities": "8a2a7e6c80229e99b0ba7c7c4c3ff822357936a3b2fef649db946b3bc5d2d978",
     "learnsets": "b6746749a8a285778fb7290d48cb355b1d275324102fa85f859e3ca7cff2be26"
   }
 };
